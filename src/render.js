@@ -1,4 +1,8 @@
-function runloop(elapsed) {
+//render points
+//render lines
+//render linefills
+
+function runLoop(elapsed) {
   each(programs, function (program, key) {
     gl.useProgram(program)
     program.time && gl.uniform1f(program.time, pathgl.time = elapsed / 1000)
@@ -9,11 +13,24 @@ function runloop(elapsed) {
   return stopRendering && ! gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)
 }
 
-function drawCircles () {
-  gl.bufferData(gl.ARRAY_BUFFER, allCircles, gl.DYNAMIC_DRAW);
-  gl.vertexAttribPointer(vertexAttributeLocation, 2, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(vertexAttributeLocation);
-  gl.drawArrays(gl.POINTS, 0, allCircles);
+function drawCircles() {
+  var allCircles = canvas.__scene__.filter(function (d) {
+                     return d instanceof types['circle']
+                   }).map(function (d) {
+                     return [d.attr.cx, d.attr.cy, d.attr.r]
+                   })
+
+  allCircles = allCircles.reduce(function (buffer, circle, i) {
+                 buffer[i] = circle[0]
+                 buffer[i * 2] = circle[1]
+                 buffer[i * 3] = circle[2]
+                 return buffer
+               }, new Float32Array(allCircles.length * 3))
+
+  gl.bufferData(gl.ARRAY_BUFFER, allCircles, gl.DYNAMIC_DRAW)
+  gl.vertexAttribPointer(program.vertexPosition, 3, gl.FLOAT, false, 0, 0)
+  gl.enableVertexAttribArray(program.vertexPosition)
+  gl.drawArrays(gl.POINTS, 0, allCircles)
 }
 
 function addToBuffer(datum) {

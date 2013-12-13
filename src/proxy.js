@@ -1,5 +1,5 @@
 var proto = {
-  circle: { r: buildCircle, cx: noop, cy: noop }
+  circle: { r: noop, cx: noop, cy: noop, render: renderCircles}
 , ellipse: {cx: buildEllipse, cy: buildEllipse, rx: buildEllipse, ry: buildEllipse } //point
 , line: { x1: buildLine, y1: buildLine, x2: buildLine, y2: buildLine } //line
 , path: { d: buildPath, pathLength: buildPath} //lines
@@ -22,9 +22,7 @@ var allCircles = new Float32Array(1e6);
 
 //stroke-width
 
-function renderCircles() {
-
-}
+function renderCircles() {}
 
 var baseProto = {
   querySelectorAll: noop
