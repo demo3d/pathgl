@@ -515,6 +515,7 @@ function RenderTarget (screen) {
   return { update: update }
 
   function update () {
+    if (! program == prog) gl.use(program = prog)
     bindTextures()
     beforeRender(gl)
     pathgl.uniform('clock', new Date - start)
@@ -882,6 +883,11 @@ function extend (a, b) {
 
 function pointInPolygon(x, y, shape) {};var textures = { null: [] }
 
+//texture data - img,canv,vid, url, 
+//tetxure target - construct render target
+//texture shader - construct render target & add mesh
+
+
 pathgl.texture = function (image, options, target) {
   var self = Object.create(Texture)
   var tex = gl.createTexture()
@@ -891,7 +897,8 @@ pathgl.texture = function (image, options, target) {
   if (null == image) image = false
   if (isShader(image)) {
     var program = createProgram(gl, simulation_vs, image, ['uv', 'pos'])
-        image = null
+    tex.program = program
+    image = false
   }
 
   if ('string' == typeof image) image = parseImage(image)
@@ -999,9 +1006,9 @@ function drawTo(texture, callback) {
 , 'attribute vec2 pos;'
 
 , '  varying vec2 vUv;'
-,'  void main() {'
-,'  vec2 vUv = vec2(uv.x, 1.0 - uv.y);'
-,'  gl_Position = vec4( pos.xy, 1.0 , 1.0);'
+, '  void main() {'
+, '  vUv = vec2(uv.x, 1.0 - uv.y);'
+, '  gl_Position = vec4( pos.xy, 1.0 , 1.0);'
 ,
 , '  }'
 ].join('\n')

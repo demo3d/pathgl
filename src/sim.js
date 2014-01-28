@@ -4,9 +4,9 @@ var simulation_vs = [
 , 'attribute vec2 pos;'
 
 , '  varying vec2 vUv;'
-,'  void main() {'
-,'  vec2 vUv = vec2(uv.x, 1.0 - uv.y);'
-,'  gl_Position = vec4( pos.xy, 1.0 , 1.0);'
+, '  void main() {'
+, '  vUv = vec2(uv.x, 1.0 - uv.y);'
+, '  gl_Position = vec4( pos.xy, 1.0 , 1.0);'
 ,
 , '  }'
 ].join('\n')

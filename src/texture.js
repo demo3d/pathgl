@@ -1,5 +1,10 @@
 var textures = { null: [] }
 
+//texture data - img,canv,vid, url, 
+//tetxure target - construct render target
+//texture shader - construct render target & add mesh
+
+
 pathgl.texture = function (image, options, target) {
   var self = Object.create(Texture)
   var tex = gl.createTexture()
@@ -9,7 +14,8 @@ pathgl.texture = function (image, options, target) {
   if (null == image) image = false
   if (isShader(image)) {
     var program = createProgram(gl, simulation_vs, image, ['uv', 'pos'])
-        image = null
+    tex.program = program
+    image = false
   }
 
   if ('string' == typeof image) image = parseImage(image)

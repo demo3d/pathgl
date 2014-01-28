@@ -88,6 +88,7 @@ function RenderTarget (screen) {
   return { update: update }
 
   function update () {
+    if (! program == prog) gl.use(program = prog)
     bindTextures()
     beforeRender(gl)
     pathgl.uniform('clock', new Date - start)
