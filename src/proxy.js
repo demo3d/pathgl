@@ -69,10 +69,6 @@ var proto = {
 , text: { x: noop, y: noop, dx: noop, dy: noop }
 }
 
-
-
-proto.circle.buffer.count = 0
-
 var baseProto = extend(Object.create(null), {
   querySelectorAll: querySelectorAll
 , children: Object.freeze([])
@@ -170,7 +166,7 @@ function removeChild(el) {
     el.buffer[el.index + k] = 0
 
   el.buffer.changed = true
-  el.buffer.count -= 1
+  //el.buffer.count -= 1
 }
 
 var attrDefaults = {
@@ -198,7 +194,7 @@ function constructProxy(type) {
     var child = new type()
       , buffer = child.buffer
 
-    canvas.__scene__.push(child)
+    var count = canvas.__scene__.push(child) - 1
 
     var numArrays = 4
 
@@ -207,16 +203,16 @@ function constructProxy(type) {
     child.parentNode = child.parentElement = canvas
 
     var i = child.indices =
-      type.name == 'line' ? [buffer.count, buffer.count + 1] :
-      type.name == 'circle' ? [buffer.count * 4] :
+      type.name == 'line' ? [count, count + 1] :
+      type.name == 'circle' ? [count * 4] :
       []
 
     i.forEach(function (i) {
-      buffer[i] = buffer.count + i % 2
+      buffer[i] = count + i % 2
     })
 
     if (type.name !== 'path') {
-      buffer.count += type.name == 'line' ? 2 : 1
+      count += type.name == 'line' ? 2 : 1
     }
 
     return child

@@ -65,6 +65,10 @@ function createProgram(vs, fs) {
   gl.deleteShader(vs)
   gl.deleteShader(fs)
 
+  gl.bindAttribLocation(program, 0, "pos")
+  gl.bindAttribLocation(program, 1, "fill")
+  gl.bindAttribLocation(program, 2, "stroke")
+
   gl.linkProgram(program)
   gl.useProgram(program)
 
@@ -76,15 +80,6 @@ function createProgram(vs, fs) {
        , resolution: [0, 0]
        , clock: [0]
        }, bindUniform)
-
-  program.vPos = gl.getAttribLocation(program, "pos")
-  gl.enableVertexAttribArray(program.vPos)
-
-  program.vFill = gl.getAttribLocation(program, "fill")
-  gl.enableVertexAttribArray(program.vFill)
-
-  program.vStroke = gl.getAttribLocation(program, "stroke")
-  gl.enableVertexAttribArray(program.vStroke)
 
   return program
 }

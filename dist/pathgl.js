@@ -91,6 +91,11 @@ function createProgram(vs, fs) {
   gl.deleteShader(vs)
   gl.deleteShader(fs)
 
+  gl.bindAttribLocation(program, 0, "pos")
+  gl.bindAttribLocation(program, 1, "fill")
+  gl.bindAttribLocation(program, 2, "stroke")
+
+
   gl.linkProgram(program)
   gl.useProgram(program)
 
@@ -102,15 +107,6 @@ function createProgram(vs, fs) {
        , resolution: [0, 0]
        , clock: [0]
        }, bindUniform)
-
-  program.vPos = gl.getAttribLocation(program, "pos")
-  gl.enableVertexAttribArray(program.vPos)
-
-  program.vFill = gl.getAttribLocation(program, "fill")
-  gl.enableVertexAttribArray(program.vFill)
-
-  program.vStroke = gl.getAttribLocation(program, "stroke")
-  gl.enableVertexAttribArray(program.vStroke)
 
   return program
 }
@@ -241,7 +237,7 @@ function initContext(canvas) {
   return gl && extend(gl, { viewportWidth: canvas.width, viewportHeight: canvas.height })
 }
 ;function parse (str, stroke) {
-  var buffer = [], lb = this.buffer, pb = this.posBuffer, indices = this.indices, count = lb.count
+  var buffer = [], lb = this.buffer, pb = this.posBuffer, indices = this.indices, count = 0
     , pos = [0, 0], l = indices.length, i = 0
     , origin = [0, 0]
 
@@ -279,38 +275,37 @@ function drawPoints(elapsed) {
   var pointBuffer = canvas.pb
   var pointPosBuffer = canvas.ppb
   oncep()
-  if (! pointBuffer.count) return
-
+  //if (! pointBuffer.count) return
 
   if (pointBuffer.changed) {
     gl.bindBuffer(gl.ARRAY_BUFFER, p1)
-    gl.enableVertexAttribArray(program.vPos)
     gl.bufferData(gl.ARRAY_BUFFER, pointPosBuffer, gl.DYNAMIC_DRAW)
-    gl.vertexAttribPointer(program.vPos, 4, gl.FLOAT, false, 0, 0)
+    gl.vertexAttribPointer(0, 4, gl.FLOAT, false, 0, 0)
+    gl.enableVertexAttribArray(0)
 
     gl.bindBuffer(gl.ARRAY_BUFFER, p2)
-    gl.enableVertexAttribArray(program.vStroke)
     gl.bufferData(gl.ARRAY_BUFFER, colorBuffer, gl.DYNAMIC_DRAW)
-    gl.vertexAttribPointer(program.vStroke, 1, gl.FLOAT, false, 0, 0)
+    gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 0, 0)
+    gl.enableVertexAttribArray(1)
 
     gl.bindBuffer(gl.ARRAY_BUFFER, p3)
-    gl.enableVertexAttribArray(program.vFill)
     gl.bufferData(gl.ARRAY_BUFFER, colorBuffer, gl.DYNAMIC_DRAW)
-    gl.vertexAttribPointer(program.vFill, 1, gl.FLOAT, false, 0, 0)
+    gl.vertexAttribPointer(2, 1, gl.FLOAT, false, 0, 0)
+    gl.enableVertexAttribArray(2)
 
+    window.prog = program
     pathgl.uniform('type', 1)
 
     // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, p4)
     // gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, pointBuffer, gl.DYNAMIC_DRAW)
     pointBuffer.changed = false
   }
-  gl.drawArrays(gl.POINTS, 0, pointBuffer.count)
+  gl.drawArrays(gl.POINTS, 0, 2e5)
 
   // gl.drawElements(gl.POINTS, pointBuffer.count * 4, gl.UNSIGNED_SHORT, 0)
 }
 ;var lineBuffer = new Uint16Array(4e4)
 var linePosBuffer = new Float32Array(4e4)
-lineBuffer.count = 0
 
 lb = lineBuffer
 lpb = linePosBuffer
@@ -325,7 +320,7 @@ function once (fn) {
 }
 function drawLines(){
   once()
-  if (lb.count < 1) return
+  return
 
   gl.bindBuffer(gl.ARRAY_BUFFER, b1)
   gl.enableVertexAttribArray(program.vPos)
@@ -346,7 +341,7 @@ function drawLines(){
 
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b4)
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, lineBuffer, gl.DYNAMIC_DRAW)
-  gl.drawElements(gl.LINES, lb.count * 3, gl.UNSIGNED_SHORT, 0)
+  gl.drawElements(gl.LINES, 1e6, gl.UNSIGNED_SHORT, 0)
 
 }
 ;function drawPolygons() {
@@ -484,10 +479,6 @@ var proto = {
 , text: { x: noop, y: noop, dx: noop, dy: noop }
 }
 
-
-
-proto.circle.buffer.count = 0
-
 var baseProto = extend(Object.create(null), {
   querySelectorAll: querySelectorAll
 , children: Object.freeze([])
@@ -585,7 +576,7 @@ function removeChild(el) {
     el.buffer[el.index + k] = 0
 
   el.buffer.changed = true
-  el.buffer.count -= 1
+  //el.buffer.count -= 1
 }
 
 var attrDefaults = {
@@ -613,7 +604,7 @@ function constructProxy(type) {
     var child = new type()
       , buffer = child.buffer
 
-    canvas.__scene__.push(child)
+    var count = canvas.__scene__.push(child) - 1
 
     var numArrays = 4
 
@@ -622,16 +613,16 @@ function constructProxy(type) {
     child.parentNode = child.parentElement = canvas
 
     var i = child.indices =
-      type.name == 'line' ? [buffer.count, buffer.count + 1] :
-      type.name == 'circle' ? [buffer.count * 4] :
+      type.name == 'line' ? [count, count + 1] :
+      type.name == 'circle' ? [count * 4] :
       []
 
     i.forEach(function (i) {
-      buffer[i] = buffer.count + i % 2
+      buffer[i] = count + i % 2
     })
 
     if (type.name !== 'path') {
-      buffer.count += type.name == 'line' ? 2 : 1
+      count += type.name == 'line' ? 2 : 1
     }
 
     return child

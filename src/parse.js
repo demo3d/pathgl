@@ -1,5 +1,5 @@
 function parse (str, stroke) {
-  var buffer = [], lb = this.buffer, pb = this.posBuffer, indices = this.indices, count = lb.count
+  var buffer = [], lb = this.buffer, pb = this.posBuffer, indices = this.indices, count = 0
     , pos = [0, 0], l = indices.length, i = 0
     , origin = [0, 0]
 
