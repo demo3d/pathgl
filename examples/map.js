@@ -149,7 +149,7 @@ function draw_history(err, hist) {
     .enter()
     .append('circle')
     .attr({ class:'point'
-          , fill: function(d){ return d3.hsl(Math.random()*360, .9, 0.5) }
+          , fill: function(d){ return d3.hsl(Math.random()*120 + 120, .9, 0.5) }
           , cx: function(d){ return d.location[0] }
           , cy: function(d){ return d.location[1] }
           , cz: function(d){ return + d.year }

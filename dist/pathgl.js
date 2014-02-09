@@ -26,12 +26,13 @@ function parseColor (v) {
 }
 ;pathgl.vertexShader = [
   'precision mediump float;'
+
 , 'uniform float type;'
 , 'uniform float clock;'
-
 , 'uniform vec2 mouse;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
+
 , 'attribute vec4 pos;'
 , 'attribute float fill;'
 , 'attribute float stroke;'
@@ -94,7 +95,6 @@ function createProgram(vs, fs) {
   gl.bindAttribLocation(program, 0, "pos")
   gl.bindAttribLocation(program, 1, "fill")
   gl.bindAttribLocation(program, 2, "stroke")
-
 
   gl.linkProgram(program)
   gl.useProgram(program)
