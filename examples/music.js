@@ -15,9 +15,9 @@ var midY = size.height / 2
 
 var audio = d3.select('.right').append('audio')
             .attr('src', 'data/overture.mp3')
+            .attr('autoplay', true)
 
 var node = audio.on('play', initAudio).node()
-node.play()
 
 var lines = s.selectAll('line').data(d3.range(numLines).map(function () { return {a: 0}}))
             .enter()

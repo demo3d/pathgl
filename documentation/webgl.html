@@ -40,7 +40,8 @@
 		<svg></svg>
 		<canvas height></canvas>
 		<div class="blurb"></div>
-		<div class="blurb"><p>This page serves as an introduction to webgl for those who have never used it.</p>
+		<div class="blurb"><p>These docs are extremely in progress. Check back Feb 11 </p>
+<p>This page serves as an introduction to webgl for those who have never used it.</p>
 <p>What does WebGL do?</p>
 <ol>
 <li>cpu sends list of points to gpu</li>
@@ -49,7 +50,20 @@
 </ol>
 <p>The second two stages run completely on your graphics card. This means we want to
 offload as much work as we can to them, so that your cpu is free to do other things,
-like handle user input</p>
+like handle user input.</p>
+<p>Most data visualization code does not rebuffer new data on every frame. The geometry
+is roughly static. By animating static geometries using only shaders, we can animate
+millions of elements at 60fps, even on your phone.</p>
+<p>Perceptual and interactive scalability should be limited by the chosen resolution of
+the visualized data, not the number of records. I present a method for drawing
+millions of data points using d3&#39;s high level of abstraction and webGL&#39;s performance and
+control.</p>
+<p>You can reach a point with d3 where, between the conceptual simplicity, the minimal
+api, and the power of webgl, you are able to write only code that
+matters. And, once there, you are able to achieve a very high degree of focus, such
+as you would when playing Go, or playing a musical instrument, or meditating. And
+then, as with those activities, there can be a feeling of elation that accompanies
+that mental state of focus.</p>
 </div>
   </div>
 	</div>
