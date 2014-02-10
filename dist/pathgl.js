@@ -39,7 +39,6 @@ function parseColor (v) {
 
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
-, 'varying float v_type;'
 
 , 'vec3 unpack_color(float col) {'
 , '    if (col == 0.) return vec3(0);'
@@ -55,7 +54,6 @@ function parseColor (v) {
 , '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
 
 , '    gl_PointSize =  replace_radius;'
-, '    v_type = (fill > 0. ? 1. : 0.);'
 , '    v_fill = vec4(unpack_color(fill), 1.);'
 , '    v_stroke = replace_stroke;'
 , '}'
@@ -92,12 +90,16 @@ function createProgram(vs, fs) {
   gl.deleteShader(vs)
   gl.deleteShader(fs)
 
+  gl.bindAttribLocation(program, 0,  "pos")
+  gl.bindAttribLocation(program, 1, "fill")
+  gl.bindAttribLocation(program, 2, "stroke")
+
   gl.linkProgram(program)
   gl.useProgram(program)
-  program.pos = gl.getAttribLocation(program, "pos")
-  program.fill = gl.getAttribLocation(program, "fill")
-  program.stroke = gl.getAttribLocation(program, "stroke")
 
+  program.pos = 0;
+  program.fill = 1;
+  program.stroke = 2;
 
   if (! gl.getProgramParameter(program, gl.LINK_STATUS)) throw name + ': ' + gl.getProgramInfoLog(program)
 
@@ -268,15 +270,17 @@ pathgl.uniform = function (attr, value) {
   if (program[attr]) return program[attr](value)
 };var p1, p2, p3, p4
 
-var oncep = once(function initBuffersp() {
+function initBuffersp() {
   p1 = gl.createBuffer(), p2 = gl.createBuffer(), p3 = gl.createBuffer(), p4 = gl.createBuffer()
-})
+}
 
 function drawPoints(elapsed) {
+  if( !p1) initBuffersp()
+
   var pointBuffer = canvas.pb
   var pointPosBuffer = canvas.ppb
-  oncep()
-  //if (! pointBuffer.count) return
+
+  if (! pointCount) return
   if (pointsChanged) {
     gl.bindBuffer(gl.ARRAY_BUFFER, p1)
     gl.bufferData(gl.ARRAY_BUFFER, pointPosBuffer, gl.DYNAMIC_DRAW)
@@ -292,54 +296,47 @@ function drawPoints(elapsed) {
     gl.bufferData(gl.ARRAY_BUFFER, colorBuffer, gl.DYNAMIC_DRAW)
     gl.vertexAttribPointer(program.stroke, 1, gl.FLOAT, false, 0, 0)
     gl.enableVertexAttribArray(program.stroke)
+
     pathgl.uniform('type', 1)
     // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, p4)
     // gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, pointBuffer, gl.DYNAMIC_DRAW)
     pointsChanged = false
   }
-  gl.drawArrays(gl.POINTS, 0, 2e5)
+  gl.drawArrays(gl.POINTS, 0, pointCount)
 
   // gl.drawElements(gl.POINTS, pointBuffer.count * 4, gl.UNSIGNED_SHORT, 0)
 }
 ;var lineBuffer = new Uint16Array(4e4)
 var linePosBuffer = new Float32Array(4e4)
-
-lb = lineBuffer
-lpb = linePosBuffer
-
+var b1, b2, b3, b4
 function initBuffers () {
   b1 = gl.createBuffer(), b2 = gl.createBuffer(), b3 = gl.createBuffer(), b4 = gl.createBuffer()
 }
 
-var once = once(initBuffers)
-function once (fn) {
-  return function () { fn && (fn(), fn = null) }
-}
 function drawLines(){
-  once()
-  return
+  if (! b1) initBuffers()
+  if (! lineCount) return
+  if (linesChanged){
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, b1)
-  gl.enableVertexAttribArray(program.vPos)
-  gl.bufferData(gl.ARRAY_BUFFER, linePosBuffer, gl.DYNAMIC_DRAW)
-  gl.vertexAttribPointer(program.vPos, 2, gl.FLOAT, false, 0, 0)
+    gl.bindBuffer(gl.ARRAY_BUFFER, b1)
+    gl.bufferData(gl.ARRAY_BUFFER, linePosBuffer, gl.DYNAMIC_DRAW)
+    gl.vertexAttribPointer(program.pos, 2, gl.FLOAT, false, 0, 0)
+    gl.enableVertexAttribArray(program.pos)
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, b2)
-  gl.enableVertexAttribArray(program.vStroke)
-  gl.bufferData(gl.ARRAY_BUFFER, colorBuffer, gl.DYNAMIC_DRAW)
-  gl.vertexAttribPointer(program.vStroke, 1, gl.FLOAT, false, 0, 0)
+    gl.bindBuffer(gl.ARRAY_BUFFER, b2)
+    gl.bufferData(gl.ARRAY_BUFFER, colorBuffer, gl.DYNAMIC_DRAW)
+    gl.vertexAttribPointer(program.fill, 1, gl.FLOAT, false, 0, 0)
+    gl.enableVertexAttribArray(program.fill)
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, b3)
-  gl.enableVertexAttribArray(program.vFill)
-  gl.bufferData(gl.ARRAY_BUFFER, colorBuffer, gl.DYNAMIC_DRAW)
-  gl.vertexAttribPointer(program.vFill, 1, gl.FLOAT, false, 0, 0)
+    gl.bindBuffer(gl.ARRAY_BUFFER, b3)
+    gl.bufferData(gl.ARRAY_BUFFER, colorBuffer, gl.DYNAMIC_DRAW)
+    gl.vertexAttribPointer(program.stroke, 1, gl.FLOAT, false, 0, 0)
+    gl.enableVertexAttribArray(program.stroke)
 
-  pathgl.uniform('type', 0)
-
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b4)
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, lineBuffer, gl.DYNAMIC_DRAW)
-  gl.drawElements(gl.LINES, 1e6, gl.UNSIGNED_SHORT, 0)
-
+    pathgl.uniform('type', 0)
+    linesChanged = false
+  }
+  gl.drawArrays(gl.LINES, 0, lineCount)
 }
 ;function drawPolygons() {
 
@@ -408,6 +405,9 @@ var chunker = //taken from sizle
 ;var bSize = 8e5
 var colorBuffer = new Float32Array(bSize)
 var pointsChanged = true
+var pointCount = 0
+var lineCount = 0
+var linesChanged = true
 
 var proto = {
   circle: { r: function (v) {
@@ -510,6 +510,7 @@ var baseProto = extend(Object.create(null), {
 
 , setAttribute: function (name, value) {
     pointsChanged = true
+    linesChanged = true
     this.attr[name] = value
     this[name] && this[name](value)
   }
@@ -573,7 +574,7 @@ function removeChild(el) {
   for(var k = 0; k < 4; k++)
     el.buffer[el.index + k] = 0
 
-  el.buffer.changed = true
+  //el.buffer.changed = true
   //el.buffer.count -= 1
 }
 
@@ -597,6 +598,7 @@ for (var i  = 0; i < lineBuffer.length; i+=3) {
   lineBuffer[i + 2] = i / 3
 }
 
+
 function constructProxy(type) {
   return function (el) {
     var child = new type()
@@ -619,9 +621,15 @@ function constructProxy(type) {
       buffer[i] = count + i % 2
     })
 
-    if (type.name !== 'path') {
+    if (type.name !== 'path')
       count += type.name == 'line' ? 2 : 1
-    }
+
+    if (type.name == 'line')
+      lineCount += 1
+    window.lc = lineCount
+    window.cb = colorBuffer
+    if (type.name == 'circle')
+      pointCount += 1
 
     return child
   }

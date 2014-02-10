@@ -1,6 +1,9 @@
 var bSize = 8e5
 var colorBuffer = new Float32Array(bSize)
 var pointsChanged = true
+var pointCount = 0
+var lineCount = 0
+var linesChanged = true
 
 var proto = {
   circle: { r: function (v) {
@@ -103,6 +106,7 @@ var baseProto = extend(Object.create(null), {
 
 , setAttribute: function (name, value) {
     pointsChanged = true
+    linesChanged = true
     this.attr[name] = value
     this[name] && this[name](value)
   }
@@ -166,7 +170,7 @@ function removeChild(el) {
   for(var k = 0; k < 4; k++)
     el.buffer[el.index + k] = 0
 
-  el.buffer.changed = true
+  //el.buffer.changed = true
   //el.buffer.count -= 1
 }
 
@@ -190,6 +194,7 @@ for (var i  = 0; i < lineBuffer.length; i+=3) {
   lineBuffer[i + 2] = i / 3
 }
 
+
 function constructProxy(type) {
   return function (el) {
     var child = new type()
@@ -212,9 +217,15 @@ function constructProxy(type) {
       buffer[i] = count + i % 2
     })
 
-    if (type.name !== 'path') {
+    if (type.name !== 'path')
       count += type.name == 'line' ? 2 : 1
-    }
+
+    if (type.name == 'line')
+      lineCount += 1
+    window.lc = lineCount
+    window.cb = colorBuffer
+    if (type.name == 'circle')
+      pointCount += 1
 
     return child
   }

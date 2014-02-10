@@ -1,42 +1,23 @@
-examples.mosaic = function (selector){
-  var c = d3.select(selector)
-          .attr(size)
-          .call(pathgl)
+var c = d3.select(selector)
+        .attr(size)
+        .call(pathgl)
 
-  c.append('circle')
-  .attr({
-    r: 10
-  , cx: 0
-  , cy: 50
-  , fill: 'pink'
-  })
+c.selectAll('rect').data(d3.range(500)).enter().append('rect')
+.attr('x', function (d) { return d})
+.attr('y', function (d) { return d % 10})
+.attr('height', 10)
+.attr('width', 10)
+.attr('fill', pathgl.texture('obama'))
 
-  c.append('circle')
-  .attr({
-    r: 10
-  , cx: 200
-  , cy: 300
-  , fill: 'blue'
-  })
+// navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia
 
-  c.append('circle')
-  .attr({
-    r: 10
-  , cx: 900
-  , cy: 300
-  , fill: 'red'
-  })
+// var video = document.createElement('video')
+// video.height = video.width = 300
+// video.autoplay = true
+// video.loop = true
 
-  navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia
+// navigator.getUserMedia({ video: true }, function(stream) {
+//   video.src = window.URL.createObjectURL(stream);
+// }, function(error) {})
 
-  var video = document.createElement('video')
-  video.height = video.width = 300
-  video.autoplay = true
-  video.loop = true
-
-  navigator.getUserMedia({ video: true }, function(stream) {
-    video.src = window.URL.createObjectURL(stream);
-  }, function(error) {})
-
-  //videoTexture = pathgl.Texture(video)
-}
+//videoTexture = pathgl.Texture(video)

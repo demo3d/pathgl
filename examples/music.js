@@ -24,8 +24,8 @@ var lines = s.selectAll('line').data(d3.range(numLines).map(function () { return
               x1: size.width >> 1
             , y1: size.height >> 1
             , stroke: function () { return "hsl(" + Math.random() * 360 + ",100%, 50%)" }
-            , x2: function (d, i) { return Math.cos(i * 2) * innerWidth }
-            , y2: function (d, i) { return Math.sin(i * 2) * innerHeight }
+            , x2: function (d, i) { return Math.cos(i * 2) * 300 }
+            , y2: function (d, i) { return Math.sin(i * 2) * 300 }
             })
 //"hsl(" + Math.random() * 360 + ",100%, 50%)"
 

@@ -13,7 +13,6 @@ pathgl.vertexShader = [
 
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
-, 'varying float v_type;'
 
 , 'vec3 unpack_color(float col) {'
 , '    if (col == 0.) return vec3(0);'
@@ -29,7 +28,6 @@ pathgl.vertexShader = [
 , '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
 
 , '    gl_PointSize =  replace_radius;'
-, '    v_type = (fill > 0. ? 1. : 0.);'
 , '    v_fill = vec4(unpack_color(fill), 1.);'
 , '    v_stroke = replace_stroke;'
 , '}'
@@ -66,12 +64,16 @@ function createProgram(vs, fs) {
   gl.deleteShader(vs)
   gl.deleteShader(fs)
 
+  gl.bindAttribLocation(program, 0,  "pos")
+  gl.bindAttribLocation(program, 1, "fill")
+  gl.bindAttribLocation(program, 2, "stroke")
+
   gl.linkProgram(program)
   gl.useProgram(program)
-  program.pos = gl.getAttribLocation(program, "pos")
-  program.fill = gl.getAttribLocation(program, "fill")
-  program.stroke = gl.getAttribLocation(program, "stroke")
 
+  program.pos = 0;
+  program.fill = 1;
+  program.stroke = 2;
 
   if (! gl.getProgramParameter(program, gl.LINK_STATUS)) throw name + ': ' + gl.getProgramInfoLog(program)
 
