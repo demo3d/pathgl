@@ -66,12 +66,12 @@ function createProgram(vs, fs) {
   gl.deleteShader(vs)
   gl.deleteShader(fs)
 
-  gl.bindAttribLocation(program, 0, "pos")
-  gl.bindAttribLocation(program, 1, "fill")
-  gl.bindAttribLocation(program, 2, "stroke")
-
   gl.linkProgram(program)
   gl.useProgram(program)
+  program.pos = gl.getAttribLocation(program, "pos")
+  program.fill = gl.getAttribLocation(program, "fill")
+  program.stroke = gl.getAttribLocation(program, "stroke")
+
 
   if (! gl.getProgramParameter(program, gl.LINK_STATUS)) throw name + ': ' + gl.getProgramInfoLog(program)
 
@@ -128,7 +128,8 @@ if(d3) {
     this.each(function(d) {
       for(var attr in obj)
         this.posBuffer[this.indices[0] + this.schema.indexOf(attr)] = obj[attr](d)
-    }).node().buffer.changed = true
+    })
+      pointsChanged = true
     return this
   }
 

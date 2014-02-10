@@ -1,5 +1,6 @@
 var bSize = 8e5
 var colorBuffer = new Float32Array(bSize)
+var pointsChanged = true
 
 var proto = {
   circle: { r: function (v) {
@@ -101,7 +102,7 @@ var baseProto = extend(Object.create(null), {
   }
 
 , setAttribute: function (name, value) {
-    this.buffer.changed = true
+    pointsChanged = true
     this.attr[name] = value
     this[name] && this[name](value)
   }

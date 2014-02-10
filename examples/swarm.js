@@ -1,4 +1,4 @@
-d3.select('canvas').call(pathgl)
+d3.select('canvas').attr(size).call(pathgl)
 .selectAll("circle")
 .data(d3.range(2e5))
 .enter().append("circle")
