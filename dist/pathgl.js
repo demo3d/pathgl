@@ -336,6 +336,7 @@ function drawLines(){
     pathgl.uniform('type', 0)
     linesChanged = false
   }
+
   gl.drawArrays(gl.LINES, 0, lineCount)
 }
 ;function drawPolygons() {

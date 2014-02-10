@@ -1,3 +1,5 @@
+var Audio = window.AudioContext || window.webkitAudioContext
+
 var analyzer
 
 var numLines = 2048
@@ -51,7 +53,7 @@ d3.timer(function () {
 dropAndLoad(document.querySelector('.right'), initDnD, "ArrayBuffer")
 
 function initAudio() {
-  var audioContext = new webkitAudioContext();
+  var audioContext = new Audio();
   window.analyzer = audioContext.createAnalyser();
   var source = audioContext.createMediaElementSource(this);
   source.connect(analyzer);
@@ -60,7 +62,7 @@ function initAudio() {
 }
 
 function initDnD (arrayBuffer) {
-  window.audioCtx = new webkitAudioContext()
+  window.audioCtx = new Audio()
   window.analyser = audioCtx.createAnalyser()
 
   if (window.source)
