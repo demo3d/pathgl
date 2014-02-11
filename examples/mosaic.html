@@ -40,29 +40,36 @@
 		<svg></svg>
 		<canvas height></canvas>
 		<div class="blurb"></div>
-		<script>var c = d3.select(selector)
+		<script>var c = d3.select('canvas')
         .attr(size)
         .call(pathgl)
 
-c.selectAll('rect').data(d3.range(500)).enter().append('rect')
-.attr('x', function (d) { return d})
-.attr('y', function (d) { return d % 10})
-.attr('height', 10)
-.attr('width', 10)
-.attr('fill', pathgl.texture('obama'))
+var col = 20
+var s = size.width / col
+var row = size.height / s
 
-// navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia
+c.selectAll('rect').data(d3.range(row * col)).enter().append('circle')
+.attr('cx', function (d) { return s/2 + s * (d % col) })
+.attr('cy', function (d) { return s/2 + s * ~~(d / col) })
+.attr('r', s / 2)
+.attr('fill', 'pink')
 
-// var video = document.createElement('video')
-// video.height = video.width = 300
-// video.autoplay = true
-// video.loop = true
+function getVideo () {
+  navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia
 
-// navigator.getUserMedia({ video: true }, function(stream) {
-//   video.src = window.URL.createObjectURL(stream);
-// }, function(error) {})
+  var video = document.createElement('video')
+  video.height = size.height
+  video.height = size.width
+  video.autoplay = true
+  video.loop = true
 
-//videoTexture = pathgl.Texture(video)
+  navigator.getUserMedia({ video: true }, function(stream) {
+    video.src = window.URL.createObjectURL(stream);
+  }, function(error) {})
+
+  videoTexture = pathgl.texture(video)
+  document.body.appendChild(video)
+}
 </script>
   </div>
 	</div>
