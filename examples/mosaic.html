@@ -45,8 +45,8 @@
         .call(pathgl)
 
 var col = 20
-var s = size.width / col
-var row = size.height / s
+  , s = size.width / col
+  , row = size.height / s
 
 c.selectAll('rect').data(d3.range(row * col)).enter().append('circle')
 .attr('cx', function (d) { return s/2 + s * (d % col) })
