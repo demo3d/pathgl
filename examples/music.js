@@ -36,7 +36,7 @@ function play () {
               , x2: function (d, i) { return Math.cos(i * 2) * 300 }
               , y2: function (d, i) { return Math.sin(i * 2) * 300 }
               })
-  //"hsl(" + Math.random() * 360 + ",100%, 50%)"
+
   dropAndLoad(document.querySelector('.right'), initDnD, "ArrayBuffer")
   d3.timer(function () {
     if (! analyzer) return
@@ -47,8 +47,6 @@ function play () {
     analyzer.getByteFrequencyData(freqData)
     var min = d3.min(timeData)
 
-    // freqData = sort(freqData)
-    // timeData = sort(timeData)
     var dMax = 0
     lines.each(function (d, i) {
       var freq  = freqData[i % 1024] * 3
@@ -56,7 +54,7 @@ function play () {
       d.v = freq
       d.a = freq + d.diff
     })
-    .attr('stroke', function (d) { return "hsl(" + Math.abs(d.diff / dMax * 10 + 240) + ",90%, 80%)" })
+    .attr('stroke', function (d) { return "hsl(" + Math.abs(d.diff / dMax * 10 + 240) + ",100%, 50%)" })
     .attr('x2', function (d, i) { return midX + (Math.cos(i) * d.a) })
     .attr('y2', function (d, i) { return midY + (Math.sin(i) * d.a)})
     d3.select('canvas').node().gl.lineWidth(2)

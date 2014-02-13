@@ -1,6 +1,3 @@
-
-
-
 var selector = 'svg'
 var width = size.width,
     height = size.height,
@@ -8,7 +5,8 @@ var width = size.width,
     velocity = [.03, -.001],
     time = Date.now();
 
-var proj = d3.geo.equirectangular().scale(158).translate([size.width / 2, size.height / 2])
+var simplify = d3.geo.transform({ point: function(x, y, z) { this.stream.point(x, y); } })
+var proj = d3.geo.equirectangular().scale(158).translate([size.width / 2, size.height / 2]).precision(1)
   , path = d3.geo.path().projection(proj)
 
 var svg = d3.select(selector)
@@ -40,12 +38,12 @@ function draw_world(err, world) {
   .attr('dashed-array', '10 5 7 3')
   .attr('stroke', '#999')
 
-  svg.selectAll("path")
-  .data(topojson.feature(world, world.objects.countries).features)
-  .enter().append("path")
+  svg.append("path")
+  .datum(topojson.mesh(world, world.objects.land))
   .attr({ class: 'world'
         , d: path
         , fill: '#333'
+        , 'stroke': '#333'
         })
 }
 
@@ -81,7 +79,6 @@ function draw_history(err, hist) {
   .append('path').datum(hist)
   .attr('class', 'slider')
   .attr('fill', 'indianred')
-  .attr('stroke', 'indianred')
   .attr('d', area)
 
   svg
@@ -91,10 +88,11 @@ function draw_history(err, hist) {
     .attr('transform','translate('+d3.mouse(this)[0]+',0)')
   })
   .on('mouseout', function ( ){ d3.select('line').attr('stroke-width',1) })
+  var brush = d3.svg.brush().x(x).on("brush", brushmove).extent([-500, -400])
 
   var b = svg.append("g")
           .attr("class", "brush")
-          .call(d3.svg.brush().x(x).on("brush", brushmove).extent([-500, -400]))
+          .call(brush)
           .attr('transform', 'translate(' + [0, height * .9] +  ')')
           .selectAll("rect")
           .attr('fill', 'blue')
@@ -104,6 +102,7 @@ function draw_history(err, hist) {
   function brushmove() {
     adnan(d3.event.target.extent());
   }
+
 
   function adnan (s) {
     pathgl.uniform('dates', s)
