@@ -46,6 +46,7 @@
     "uglify-js": "2.4.0",
     "glsl-unit": "0.0.7",
     "marked": "0.3.1",
+    "express": "~3.4.8",
 
     "qunit": "~0.5.8",
     "karma": "~0.10.9",

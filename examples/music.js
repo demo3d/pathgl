@@ -1,3 +1,5 @@
+d3.select('.blurb').html('<a src="https://itunes.apple.com/us/album/a-thousand-faces-act-1/id708559811">Overture by Beats Antique</a>')
+
 var Audio = window.AudioContext || window.webkitAudioContext
 
 var analyzer
@@ -85,7 +87,7 @@ function initDnD (arrayBuffer) {
 }
 
 function dropAndLoad(dropElement, callback, readFormat) {
-  var readFormat = readFormat || "DataUrl"
+  readFormat = readFormat || "DataUrl"
 
   dropElement.addEventListener('dragover', function(e) {
     e.stopPropagation()

@@ -268,6 +268,36 @@ function initContext(canvas) {
 
 pathgl.uniform = function (attr, value) {
   if (program[attr]) return program[attr](value)
+}
+
+
+pathgl.applyCSS = applyCSSRules
+
+function applyCSSRules () {
+  var k =d3.selectAll('style')[0].map(function () { return this.sheet })
+         .reduce(function (acc, item) {
+           var itemRules = {}
+           each(item.cssRules, function (rules, i) {
+             var l = rules.length, cssom = {}
+             while(l--) {
+               var name = rules[rules[l]]
+               cssom[name] = rules[name]
+             }
+             itemRules[rules.selectorText] = cssom
+           })
+             return extend(acc, itemRules)
+         }, {})
+
+  each(k, function (styles, selector) {
+    d3.select(selector).attr(styles)
+  })
+}
+
+function matchesSelector(selector) {
+  if (isNode(selector)) return this == selector
+  if (isFinite(selector.length)) return !!~flatten(selector).indexOf(this)
+  for (var selectors = selector.split(','), tokens, dividedTokens; selector = selectors.pop(); tokens = selector.split(tokenizr).slice(0))
+    if (interpret.apply(this, q(tokens.pop())) && (!tokens.length || ancestorMatch(this, tokens, selector.match(dividers)))) return true
 };var p1, p2, p3, p4
 
 function initBuffersp() {
