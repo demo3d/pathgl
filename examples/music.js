@@ -1,10 +1,10 @@
-d3.select('.blurb').html('<a src="https://itunes.apple.com/us/album/a-thousand-faces-act-1/id708559811">Overture by Beats Antique</a>')
+d3.select('.blurb').html('<a src="http://beatsantique.bandcamp.com/album/a-thousand-faces-act-1">Overture by Beats Antique</a>')
 
 var Audio = window.AudioContext || window.webkitAudioContext
 
 var analyzer
 
-var numLines = 2048
+var numLines = 1024
 var s = d3.select('canvas')
         .attr(size)
         .call(pathgl)
@@ -14,12 +14,12 @@ var scale = Math.PI * 2 / numLines
 var midX = size.width / 2
 var midY = size.height / 2
 
-
 var audio = d3.select('.right').append('audio')
             .attr('src', 'data/overture.mp3')
-            .attr('autoplay', true)
+            .attr('preload', 'auto')
+            .attr('loop', true)
 
-var node = audio.on('play', initAudio).node()
+var node = audio.on('loadeddata', initAudio).node()
 
 var lines = s.selectAll('line').data(d3.range(numLines).map(function () { return {a: 0}}))
             .enter()
@@ -32,24 +32,29 @@ var lines = s.selectAll('line').data(d3.range(numLines).map(function () { return
             , y2: function (d, i) { return Math.sin(i * 2) * 300 }
             })
 //"hsl(" + Math.random() * 360 + ",100%, 50%)"
-
+function sort (a) {
+  return [].sort.call(a, function (a, b) {
+           return b - a
+         })
+}
 d3.timer(function () {
   if (! analyzer) return
-  var freqData = new Uint8Array(analyzer.frequencyBinCount)
-  var timeData = new Uint8Array(analyzer.frequencyBinCount)
+  freqData = new Uint8Array(analyzer.fftSize)
+  timeData = new Uint8Array(analyzer.fftSize)
 
   analyzer.getByteTimeDomainData(timeData)
   analyzer.getByteFrequencyData(freqData)
+  var min = d3.min(timeData)
+  // freqData = sort(freqData)
+  // timeData = sort(timeData)
   lines.each(function (d, i) {
-    var freq  = (i > 1024 ? freqData : timeData)[i % 1024]
+    var freq  = freqData[i % 1024]  + timeData[i % 1024] - min * .7
     d.diff = d.a - freq
     d.a = freq
   })
   .attr('stroke', function (d) { return "hsl(" + Math.abs(d.diff * 10 + 200) + ",100%, 50%)" })
   .attr('x2', function (d, i) { return midX + (Math.cos(i) * d.a) })
   .attr('y2', function (d, i) { return midY + (Math.sin(i) * d.a)})
-
-  //s.node().style.background = "hsl(" + d3.sum(byteFreq) * 5 + ",100%, 50%)"
 })
 
 dropAndLoad(document.querySelector('.right'), initDnD, "ArrayBuffer")
@@ -60,7 +65,10 @@ function initAudio() {
   var source = audioContext.createMediaElementSource(this);
   source.connect(analyzer);
   analyzer.connect(audioContext.destination);
-  this.play();
+  this.play()
+  this.currentTime = 83
+  this.volume = .1
+  this.playbackRate = 1
 }
 
 function initDnD (arrayBuffer) {

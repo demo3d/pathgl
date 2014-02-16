@@ -200,7 +200,7 @@ function constructProxy(type) {
     var child = new type()
       , buffer = child.buffer
 
-    var count = canvas.__scene__.push(child) - 1
+    var count = canvas.__scene__.push(child) * 2
 
     var numArrays = 4
 
@@ -222,8 +222,7 @@ function constructProxy(type) {
 
     if (type.name == 'line')
       lineCount += 1
-    window.lc = lineCount
-    window.cb = colorBuffer
+
     if (type.name == 'circle')
       pointCount += 1
 

@@ -30,7 +30,7 @@ function hexColor( hex ) {
          , (hex & 255 ) / 255]
 }
 
-function hsl(h, s, l) {
+function parse_hsl(h, s, l) {
   // h,s,l ranges are in 0.0 - 1.0
   if ( s === 0 ) {
     return [l, l, l]
@@ -61,7 +61,7 @@ function setStyle(style) {
 
   if (/^hsl/i.test(style)) {
     var hsl = style.split(/,|\(/).map(parseFloat)
-    return setHSL(hsl[1] / 360 , hsl[2] / 100, hsl[3] / 100)
+    return parse_hsl(hsl[1] / 360 , hsl[2] / 100, hsl[3] / 100)
   }
 
   if (/^rgb\((\d+), ?(\d+), ?(\d+)\)$/i.test(style)) {
@@ -90,7 +90,7 @@ function setStyle(style) {
     return hexColor(parseInt(color[1] + color[1] + color[2] + color[2] + color[3] + color[3], 16))
   }
 
-  return null 
+  return null
 }
 
 var cssColors = {
@@ -735,7 +735,7 @@ function constructProxy(type) {
     var child = new type()
       , buffer = child.buffer
 
-    var count = canvas.__scene__.push(child) - 1
+    var count = canvas.__scene__.push(child) * 2
 
     var numArrays = 4
 
@@ -757,8 +757,7 @@ function constructProxy(type) {
 
     if (type.name == 'line')
       lineCount += 1
-    window.lc = lineCount
-    window.cb = colorBuffer
+
     if (type.name == 'circle')
       pointCount += 1
 
