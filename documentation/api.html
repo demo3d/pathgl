@@ -40,33 +40,49 @@
 		<svg></svg>
 		<canvas height></canvas>
 		<div class="blurb"></div>
-		<div class="blurb"><p>pathgl([element])
-Takes a canvas element, css3 selector, or d3 selection as an argument
+		<div class="blurb"><h4 id="pathgl-element-">pathgl([element])</h4>
+<blockquote>
+<p>Takes a canvas element, css3 selector, or d3 selection as an argument
 if webgl is not available, returns null
 otherwise the canvas element is returned
 If called without arguments, appends a 960x500 webgl canvas to the sceern.</p>
-<p>pathgl.texture(image)
-Takes a string, image tag or typed array
+</blockquote>
+<h4 id="pathgl-texture-image-">pathgl.texture(image)</h4>
+<blockquote>
+<p>Takes a string, image tag or typed array
 The string needs to be either a url, css3 selector, or fragment shader.
 returns an object which represents the texture&#39;s location in video memory.
-you can pass this object as the fill of any element</p>
-<p>pathgl.context()
-returns the WebGL context, or null if webgl is not available.
-Useful for svg compatible code, or directly acessing the webgl context</p>
-<p>pathgl.uniform(name, [value])
-Set a variable that is global to all shader contexts.
+you can pass this object as the fill or stroke attribute of any element</p>
+</blockquote>
+<h4 id="pathgl-uniform-name-value-">pathgl.uniform(name, [value])</h4>
+<blockquote>
+<p>Set a variable that is global to all shader contexts.
 If called without a value, will return previously set value.</p>
-<p>pathgl.registerShader(&#39;name&#39;, &#39;function text&#39;)</p>
-<p>d3.selection.prototype.shader(name, expression)
-Inline&#39;s an abitrary string into the shader that renders the current mark.
+</blockquote>
+<h4 id="d3-selection-shader-name-glsl_expression-">d3.selection.shader(name, GLSL_expression)</h4>
+<blockquote>
+<p>Inline&#39;s an abitrary string into the shader that renders this selection
 The expression language is untyped GLSl.
 Any svg attribute from that mark can be used in the expression.
-For more information, please see shaders.</p>
-<p>d3.transition.prototype.shaderTween(name, expression)
-...</p>
+For more information, please see the <a href="http://pathgl.com/documentation/shaders">shader documentation</a>.</p>
+</blockquote>
+<h4 id="pathgl-registershader-name-glsl_expression-">pathgl.registerShader(&#39;name&#39;, GLSL_expression)</h4>
+<blockquote>
+<p>Adds a function to all shaders to be used in any 
+Use this to create custom effects, or create more complex expressions than can fit
+on a single line</p>
+</blockquote>
+<h4 id="pathgl-context-">pathgl.context()</h4>
+<blockquote>
+<p>returns the WebGL context, or null if webgl was not available</p>
+</blockquote>
+<h4 id="d3-transition-shader-name-expression-">d3.transition.shader(name, expression)</h4>
+<blockquote>
+<p>...</p>
+</blockquote>
 <p>Currently, the scene graphi API is private and subject to rapid change.
-Instead of manipulating pathgl marks directly, use a library like d3 to manipulate
-the screen from a sane layer of abstraction.</p>
+Instead of manipulating pathgl marks directly, use a library like d3 to build your
+scene.</p>
 </div>
   </div>
 	</div>

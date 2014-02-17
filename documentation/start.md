@@ -1,6 +1,3 @@
-Pathgl extends d3 to run directly on your graphics card for improved perfomance and
-expression.
-
 Download the latest version and include in your html.
 
 Or link directly to the latest release, copy this snippet:

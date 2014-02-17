@@ -40,21 +40,32 @@
 		<svg></svg>
 		<canvas height></canvas>
 		<div class="blurb"></div>
-		<div class="blurb"><p>These docs are extremely in progress. Check back Feb 11 </p>
-<p>This page serves as an introduction to webgl for those who have never used it.</p>
-<p>What does WebGL do?</p>
+		<div class="blurb"><h3 id="how-does-webgl-work-">How does Webgl work?</h3>
 <ol>
 <li>javascript sends list of points to GPU</li>
-<li>gpu converts points to </li>
-<li>vertex shader places points on screen</li>
+<li>vertex shader places points</li>
+<li>points are assembeled into triangles</li>
+<li>triangles are chopped up into pixels</li>
 <li>fragment shader colors pixels</li>
+<li>framebuffer is draw to screen (optional)</li>
 </ol>
-<p>The second two stages run completely on your graphics card. This means we want to
-offload as much work as we can to them, so that your cpu is free to do other things,
+<p>Stages 2 and 5 are programmable using GLSL.
+We want to offload as much work as we can to them, so that your cpu is free to do other things,
 like handle user input.</p>
-<p>Most data visualization code does not rebuffer new data on every frame. The geometry
-is roughly static. By animating static geometries using only shaders, we can animate
-millions of elements at 60fps, even on your phone.</p>
+<h2 id="1-geometry-specifications">1. Geometry Specifications</h2>
+<p>PathGL converts your selections into WebGL accessible memory locations called
+buffers. These buffers are then sent to the GPU every frame to be drawn.</p>
+<p>If no atttributes have changed, the draw is effectively cached and happens
+extremely quickly. That means, every time you call .attr on a selection, you
+are wiping out the gpu cache. Instead, try to move as much logic as possible
+to shaders. This will let you mostly bypass the overhead of javascript, the web
+browser and the numerous layers of security checks. </p>
+<h2 id="4-rasterization">4. Rasterization</h2>
+<p>The rasterizer </p>
+<h2 id="6-framebuffers">6. Framebuffers</h2>
+<p>By default, the frameBuffer is draw directly to the screen. However, pathGL lets you
+create offscreen rendering targets, or render into a texture. This is useful for
+allowing post processing effects like blurs, color filters, and FXAA.</p>
 </div>
   </div>
 	</div>
