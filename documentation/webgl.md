@@ -1,6 +1,5 @@
-###How does Webgl work?
+#How does Webgl work?
   WebGL has a pipeline architecture, much like the assembly line used to build a car.
-
 
 1. javascript sends list of points to GPU
 2. vertex shader places points

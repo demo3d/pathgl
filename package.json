@@ -1,20 +1,19 @@
 {
   "name": "pathgl",
   "version": "0.1.0",
-  "description": "..",
+  "description": "The best 2d webgl renderer for datavis, art, explorable explanations and anything your heart dreams of.",
   "scripts": {
     "start": "node lib/build.js",
     "build": "node lib/build.js 'build'",
+    "publish": "sh lib/zip.sh",
     "test": "karma run"
   },
   "keywords": [
-    "pathgl",
-    "path",
     "d3",
     "visualization",
-    "svg",
-    "animation",
     "webgl",
+    "virtualdom",
+    "animation",
     "rendering",
     "motiongraphics"
   ],
