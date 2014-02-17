@@ -31,13 +31,24 @@ function bindEvents(canvas) {
   setInterval(function () {
     pathgl.uniform('resolution', [canvas.width, canvas.height])
   }, 50)
+  canvas.addEventListener('click', clicked)
   canvas.addEventListener('mousemove', mousemoved)
-  canvas.addEventListener('touchmove', mousemoved)
-  canvas.addEventListener('touchstart', mousemoved)
+  canvas.addEventListener('touchmove', touchmoved)
+  canvas.addEventListener('touchstart', touchmoved)
+}
+
+function clicked() {
+
 }
 
 function mousemoved(e) {
   var rect = canvas.getBoundingClientRect()
+  pathgl.uniform('mouse', [ e.clientX - rect.left - canvas.clientLeft, e.clientY - rect.top - canvas.clientTop ])
+}
+
+function touchmoved(e) {
+  var rect = canvas.getBoundingClientRect()
+  e = e.touches[0]
   pathgl.uniform('mouse', [ e.clientX - rect.left - canvas.clientLeft, e.clientY - rect.top - canvas.clientTop ])
 }
 
