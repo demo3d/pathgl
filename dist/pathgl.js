@@ -127,16 +127,19 @@ var cssColors = {
 ;pathgl.vertexShader = [
   'precision mediump float;'
 
-, 'uniform float type;'
 , 'uniform float clock;'
 , 'uniform vec2 mouse;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
 
 , 'attribute vec4 pos;'
+//attribute vec4 color f, s, fo, so
 , 'attribute float fill;'
 , 'attribute float stroke;'
+, 'attribute vec4 transform;'
+, 'attribute vec4 fugue;'
 
+, 'varying float type;'
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
 
@@ -153,6 +156,7 @@ var cssColors = {
 
 , '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
 
+, '    type = fugue.x;'
 , '    gl_PointSize =  replace_radius;'
 , '    v_fill = vec4(unpack_color(fill), 1.);'
 , '    v_stroke = replace_stroke;'
@@ -161,7 +165,7 @@ var cssColors = {
 
 pathgl.fragmentShader = [
   'precision mediump float;'
-, 'uniform float type;'
+, 'varying float type;'
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
 
@@ -193,6 +197,9 @@ function createProgram(vs, fs) {
   gl.bindAttribLocation(program, 0,  "pos")
   gl.bindAttribLocation(program, 1, "fill")
   gl.bindAttribLocation(program, 2, "stroke")
+  //gl.bindAttribLocation(program, 3, "transform")
+  gl.bindAttribLocation(program, 4, "fugue")
+
 
   gl.linkProgram(program)
   gl.useProgram(program)
@@ -200,6 +207,7 @@ function createProgram(vs, fs) {
   program.pos = 0;
   program.fill = 1;
   program.stroke = 2;
+  program.fugue = 4;
 
   if (! gl.getProgramParameter(program, gl.LINK_STATUS)) throw name + ': ' + gl.getProgramInfoLog(program)
 
@@ -316,7 +324,7 @@ function bindEvents(canvas) {
   canvas.addEventListener('touchstart', touchmoved)
 }
 
-function clicked() {
+function clicked () {
 
 }
 
@@ -412,7 +420,10 @@ function matchesSelector(selector) {
 };var p1, p2, p3, p4
 
 function initBuffersp() {
-  p1 = gl.createBuffer(), p2 = gl.createBuffer(), p3 = gl.createBuffer(), p4 = gl.createBuffer()
+  p1 = gl.createBuffer()
+  p2 = gl.createBuffer()
+  p3 = gl.createBuffer()
+  p4 = gl.createBuffer()
 }
 
 function drawPoints(elapsed) {
@@ -438,7 +449,11 @@ function drawPoints(elapsed) {
     gl.vertexAttribPointer(program.stroke, 1, gl.FLOAT, false, 0, 0)
     gl.enableVertexAttribArray(program.stroke)
 
-    pathgl.uniform('type', 1)
+    gl.bindBuffer(gl.ARRAY_BUFFER, p4)
+    gl.bufferData(gl.ARRAY_BUFFER, fBuffer, gl.DYNAMIC_DRAW)
+    gl.vertexAttribPointer(program.fugue, 4, gl.FLOAT, false, 0, 0)
+    gl.enableVertexAttribArray(program.fugue)
+
     // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, p4)
     // gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, pointBuffer, gl.DYNAMIC_DRAW)
     pointsChanged = false
@@ -551,6 +566,7 @@ var pointCount = 0
 var lineCount = 0
 var linesChanged = true
 
+var fBuffer = new Float32Array(bSize)
 var proto = {
   circle: { r: function (v) {
               this.posBuffer[this.indices[0] + 2] = v
@@ -582,7 +598,7 @@ var proto = {
           , schema: ['cx', 'cy', 'r', 'cz']
           }
 , ellipse: { cx: noop, cy: noop, rx: noop, ry: noop } //points
-, rect: { width: noop, height: noop, x: noop, y: noop, rx: roundedCorner, ry:  roundedCorner}
+, rect: { width: noop, height: noop, x: noop, y: noop, rx: noop , ry:  noop }
 
 , image: { 'xlink:href': noop, height: noop, width: noop, x: noop, y: noop }
 
@@ -667,8 +683,6 @@ var baseProto = extend(Object.create(null), {
 , removeEventListener: noop
 , addEventListener: event
 })
-
-var roundedCorner = noop
 
 var types = [
   function circle () {}
@@ -769,13 +783,14 @@ function constructProxy(type) {
     if (type.name == 'line')
       lineCount += 1
 
-    if (type.name == 'circle')
+    if (type.name == 'circle') {
       pointCount += 1
-
+      fBuffer[pointCount * 4] = 1
+    }
     return child
   }
 }
-
+window.fb = fBuffer
 var e = {}
 
 function event (type, listener) {}

@@ -1,16 +1,19 @@
 pathgl.vertexShader = [
   'precision mediump float;'
 
-, 'uniform float type;'
 , 'uniform float clock;'
 , 'uniform vec2 mouse;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
 
 , 'attribute vec4 pos;'
+//attribute vec4 color f, s, fo, so
 , 'attribute float fill;'
 , 'attribute float stroke;'
+, 'attribute vec4 transform;'
+, 'attribute vec4 fugue;'
 
+, 'varying float type;'
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
 
@@ -27,6 +30,7 @@ pathgl.vertexShader = [
 
 , '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
 
+, '    type = fugue.x;'
 , '    gl_PointSize =  replace_radius;'
 , '    v_fill = vec4(unpack_color(fill), 1.);'
 , '    v_stroke = replace_stroke;'
@@ -35,7 +39,7 @@ pathgl.vertexShader = [
 
 pathgl.fragmentShader = [
   'precision mediump float;'
-, 'uniform float type;'
+, 'varying float type;'
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
 
@@ -67,6 +71,9 @@ function createProgram(vs, fs) {
   gl.bindAttribLocation(program, 0,  "pos")
   gl.bindAttribLocation(program, 1, "fill")
   gl.bindAttribLocation(program, 2, "stroke")
+  //gl.bindAttribLocation(program, 3, "transform")
+  gl.bindAttribLocation(program, 4, "fugue")
+
 
   gl.linkProgram(program)
   gl.useProgram(program)
@@ -74,6 +81,7 @@ function createProgram(vs, fs) {
   program.pos = 0;
   program.fill = 1;
   program.stroke = 2;
+  program.fugue = 4;
 
   if (! gl.getProgramParameter(program, gl.LINK_STATUS)) throw name + ': ' + gl.getProgramInfoLog(program)
 

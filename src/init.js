@@ -37,7 +37,7 @@ function bindEvents(canvas) {
   canvas.addEventListener('touchstart', touchmoved)
 }
 
-function clicked() {
+function clicked () {
 
 }
 

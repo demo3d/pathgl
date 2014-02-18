@@ -1,7 +1,10 @@
 var p1, p2, p3, p4
 
 function initBuffersp() {
-  p1 = gl.createBuffer(), p2 = gl.createBuffer(), p3 = gl.createBuffer(), p4 = gl.createBuffer()
+  p1 = gl.createBuffer()
+  p2 = gl.createBuffer()
+  p3 = gl.createBuffer()
+  p4 = gl.createBuffer()
 }
 
 function drawPoints(elapsed) {
@@ -27,7 +30,11 @@ function drawPoints(elapsed) {
     gl.vertexAttribPointer(program.stroke, 1, gl.FLOAT, false, 0, 0)
     gl.enableVertexAttribArray(program.stroke)
 
-    pathgl.uniform('type', 1)
+    gl.bindBuffer(gl.ARRAY_BUFFER, p4)
+    gl.bufferData(gl.ARRAY_BUFFER, fBuffer, gl.DYNAMIC_DRAW)
+    gl.vertexAttribPointer(program.fugue, 4, gl.FLOAT, false, 0, 0)
+    gl.enableVertexAttribArray(program.fugue)
+
     // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, p4)
     // gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, pointBuffer, gl.DYNAMIC_DRAW)
     pointsChanged = false

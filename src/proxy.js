@@ -5,6 +5,7 @@ var pointCount = 0
 var lineCount = 0
 var linesChanged = true
 
+var fBuffer = new Float32Array(bSize)
 var proto = {
   circle: { r: function (v) {
               this.posBuffer[this.indices[0] + 2] = v
@@ -36,7 +37,7 @@ var proto = {
           , schema: ['cx', 'cy', 'r', 'cz']
           }
 , ellipse: { cx: noop, cy: noop, rx: noop, ry: noop } //points
-, rect: { width: noop, height: noop, x: noop, y: noop, rx: roundedCorner, ry:  roundedCorner}
+, rect: { width: noop, height: noop, x: noop, y: noop, rx: noop , ry:  noop }
 
 , image: { 'xlink:href': noop, height: noop, width: noop, x: noop, y: noop }
 
@@ -121,8 +122,6 @@ var baseProto = extend(Object.create(null), {
 , removeEventListener: noop
 , addEventListener: event
 })
-
-var roundedCorner = noop
 
 var types = [
   function circle () {}
@@ -223,13 +222,14 @@ function constructProxy(type) {
     if (type.name == 'line')
       lineCount += 1
 
-    if (type.name == 'circle')
+    if (type.name == 'circle') {
       pointCount += 1
-
+      fBuffer[pointCount * 4] = 1
+    }
     return child
   }
 }
-
+window.fb = fBuffer
 var e = {}
 
 function event (type, listener) {}

@@ -39,7 +39,8 @@
 		<svg></svg>
 		<canvas height></canvas>
 		<div class="blurb"></div>
-		<script>d3.select('canvas').attr(size).call(pathgl)
+		<script>
+d3.select('canvas').attr(size).call(pathgl)
 .selectAll("circle")
 .data(d3.range(2e5))
 .enter().append("circle")
