@@ -582,7 +582,6 @@ var proto = {
               this.posBuffer[this.indices[0] + 3] = v
             }
           , fill: function (v) {
-
               colorBuffer[this.indices[0] / 4] = parseColor(v)
             }
 
@@ -598,9 +597,26 @@ var proto = {
           , schema: ['cx', 'cy', 'r', 'cz']
           }
 , ellipse: { cx: noop, cy: noop, rx: noop, ry: noop } //points
-, rect: { width: noop, height: noop, x: noop, y: noop, rx: noop , ry:  noop }
-
-, image: { 'xlink:href': noop, height: noop, width: noop, x: noop, y: noop }
+, rect: { fill: function (v) {
+            colorBuffer[this.indices[0] / 4] = parseColor(v)
+          }
+        , width: function (v) {
+            this.posBuffer[this.indices[0] + 2] = v
+          }
+        , height: function (v) {
+            this.posBuffer[this.indices[0] + 3] = v
+          }
+        , x: function (v){
+            this.posBuffer[this.indices[0] + 0] = v
+          }
+        , y: function (v) {
+            this.posBuffer[this.indices[0] + 1] = v
+          }
+        , rx: noop,
+          ry:  noop,
+          posBuffer: canvas.ppb
+        }
+  //, image: { 'xlink:href': noop, height: noop, width: noop, x: noop, y: noop }
 
 , line: { x1: function (v) { this.posBuffer[this.indices[0] * 2] = v }
         , y1: function (v) { this.posBuffer[this.indices[0] * 2 + 1] = v }
@@ -613,7 +629,7 @@ var proto = {
             this.indices.forEach(function (i) {
               colorBuffer[i] = parseInt(fill.toString().slice(1), 16)
             })
-           }
+          }
         }
 , path: { d: buildPath
         , pathLength: noop
@@ -758,7 +774,7 @@ for (var i  = 0; i < lineBuffer.length; i+=3) {
 function constructProxy(type) {
   return function (el) {
     var child = new type()
-      , buffer = child.buffer
+      , buffer = child.buffer || []
 
     var count = canvas.__scene__.push(child) * 2
 
@@ -771,6 +787,7 @@ function constructProxy(type) {
     var i = child.indices =
       type.name == 'line' ? [count, count + 1] :
       type.name == 'circle' ? [count * 4] :
+      type.name == 'rect' ? [count * 4] :
       []
 
     i.forEach(function (i) {
@@ -786,6 +803,11 @@ function constructProxy(type) {
     if (type.name == 'circle') {
       pointCount += 1
       fBuffer[pointCount * 4] = 1
+    }
+
+    if (type.name == 'rect') {
+      pointCount += 1
+      fBuffer[pointCount * 4] = 0
     }
     return child
   }
