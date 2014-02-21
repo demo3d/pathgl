@@ -1,25 +1,23 @@
 function Mesh (primitive, bufferlist) {
-  this.buffers = {}
+  var buffers = {}
+    , count = 0
 
-}
+  return {draw: draw
+         , set: set
+         , addAttr: addAttr
+         , removeAttr: removeAttr
+         , boundingBox: boundingBox}
 
-
-Mesh.prototype = {
-  draw: function () {
+  function draw (offset) {
     for (var b in this.buffers) {
-      this.buffers[b]
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers[b].buffer)
-      gl.vertexAttribPointer(this.buffers[b].loc, this.buffers[b].length, gl.FLOAT, false, 0, 0)
-      gl.enableVertexAttribArray(this.buffers[b].loc)
-      if (this.buffers[b].changed)
-        gl.bufferData(gl.array_buffer, this.buffers[b].array)
+      buffers[b]
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers[b].buffer)
+      gl.vertexAttribPointer(buffers[b].loc, buffers[b].length, gl.FLOAT, false, 0, 0)
+      gl.enableVertexAttribArray(buffers[b].loc)
+      if (buffers[b].changed)
+        gl.bufferData(gl.array_buffer, buffers[b].array)
     }
 
-    gl.drawArrays(this.primitive, this.offset, this.count)
-
+    gl.drawArrays(primitive, offset, count)
   }
-, set: function () {}
-, addAttr: function () {}
-, removeAttr: function () {}
-, boundingBox: function () {}
 }

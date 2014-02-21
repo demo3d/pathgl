@@ -33,6 +33,7 @@
 			<h3>Rendering Mode</h3>
 			<label for="svg">SVG<input type="radio" name="mode" id="svg"></label>
 			<label for="webgl">WebGL<input type="radio" name="mode" checked="1" id="webgl"></label>
+			<img src="/hawk.jpg">
 		</div>
 	</div>
 	<div class="right" id="scroll">
@@ -46,17 +47,19 @@ var c = d3.select('canvas')
 
 var col = 20
   , s = size.width / col
-  , row = size.height / s
+  , row = Math.round(size.height / s)
 
-r =c.selectAll('rect').data(d3.range(row * col)).enter().append('rect')
+var tex = pathgl.texture('img')
+console.log('why')
+
+r = c.selectAll('rect').data(d3.range(row * col * 2 + 1)).enter().append('rect')
 .attr('x', function (d) { return s/2 + s * (d % col) })
 .attr('y', function (d) { return s/2 + s * ~~(d / col) })
 .attr('width', s / 2)
 .attr('fill', function () { return "hsl(" + Math.random() * 360 + ",100%, 50%)" })
 
 d3.timer(function () {
-  r
-  .filter(function (d) { return Math.random() > .9 })
+  r.filter(function (d) { return Math.random() > .9 })
   .attr('fill', function () { return "hsl(" + Math.random() * 360 + ",100%, 50%)" })
 })
 

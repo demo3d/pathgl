@@ -124,7 +124,32 @@ var cssColors = {
 , "tomato": 0xFF6347, "turquoise": 0x40E0D0, "violet": 0xEE82EE, "wheat": 0xF5DEB3, "white": 0xFFFFFF, "whitesmoke": 0xF5F5F5
 , "yellow": 0xFFFF00, "yellowgreen": 0x9ACD32
 }
-;pathgl.vertexShader = [
+;pathgl.texture = function (image, options) {
+  if ('string'== typeof image) image = document.querySelector(image)
+  //selector
+  //shader
+  //video
+  //image tag
+  //image data
+  //image url
+  //video url
+  //framebuffer
+  options = options || {}
+  this.format = options.format || gl.RGBA
+  this.type = options.type || gl.UNSIGNED_BYTE
+  var text = gl.createTexture()
+  gl.bindTexture(gl.TEXTURE_2D, text)
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 150]))
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1)
+  gl.bindTexture(gl.TEXTURE_2D, text)
+  image.addEventListener('load', function () {
+    console.log('1')
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,gl.UNSIGNED_BYTE, image)
+    //gl.generateMipmap(gl.TEXTURE_2D)
+  })
+}
+
+pathgl.texture.prototype;pathgl.vertexShader = [
   'precision mediump float;'
 
 , 'uniform float clock;'
@@ -166,13 +191,15 @@ var cssColors = {
 pathgl.fragmentShader = [
   'precision mediump float;'
 , 'varying float type;'
+, 'uniform sampler2D texture;'
+, 'uniform vec2 resolution;'
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
 
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = v_stroke;'
+, '    gl_FragColor = texture2D(texture, gl_FragCoord.xy / resolution.xy);'
 , '}'
 ].join('\n')
 

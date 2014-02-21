@@ -33,28 +33,28 @@
 			<h3>Rendering Mode</h3>
 			<label for="svg">SVG<input type="radio" name="mode" id="svg"></label>
 			<label for="webgl">WebGL<input type="radio" name="mode" checked="1" id="webgl"></label>
+			<img src="/hawk.jpg">
 		</div>
 	</div>
 	<div class="right" id="scroll">
 		<svg></svg>
 		<canvas height></canvas>
 		<div class="blurb"></div>
-		<div class="blurb"><p>Download the latest version and include in your html.</p>
-<p>Or link directly to the latest release, copy this snippet:</p>
-<p>&lt;script src=&quot;http://adnanwahab.com/pathgl/dist/pathgl.min.js&quot;
-charset=&quot;utf-8&quot;&gt;&lt;/script&gt;
-or Using npm and running npm install pathgl --save
+		<div class="blurb"><p>Download the latest version and include it in your html.
+Or link directly to the latest release, copy this snippet:</p>
+<p>&lt;script src=&quot;http://adnanwahab.com/pathgl/dist/pathgl.min.js&quot;&gt;&lt;/script&gt;
 
-&lt;script src=&quot;http://adnanwahab.com/pathgl/dist/pathgl.min.js&quot;
-charset=&quot;utf-8&quot;&gt;&lt;/script&gt;
-&lt;script&gt;
+</p>
+<p>&lt;script&gt;
 d3.select(&#39;canvas&#39;).call(pathgl)
 .append(&#39;circle&#39;)
 .attr(&#39;r&#39;, 100)
 .attr(&#39;cx&#39;, 50)
 .attr(&#39;cy&#39;, 50)
 &lt;/script&gt;
+
 </p>
+<p>pathgl extends the d3 &#39;language&#39; with 2 new primitives: shaders and textures.</p>
 </div>
   </div>
 	</div>
