@@ -19,7 +19,7 @@ pathgl.texture = function (image, options) {
   image.addEventListener('load', function () {
     console.log('1')
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,gl.UNSIGNED_BYTE, image)
-    //gl.generateMipmap(gl.TEXTURE_2D)
+    gl.generateMipmap(gl.TEXTURE_2D)
   })
 }
 

@@ -145,7 +145,7 @@ var cssColors = {
   image.addEventListener('load', function () {
     console.log('1')
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,gl.UNSIGNED_BYTE, image)
-    //gl.generateMipmap(gl.TEXTURE_2D)
+    gl.generateMipmap(gl.TEXTURE_2D)
   })
 }
 
@@ -199,7 +199,7 @@ pathgl.fragmentShader = [
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = texture2D(texture, gl_FragCoord.xy / resolution.xy);'
+, '    gl_FragColor = texture2D(texture, gl_PointCoord);'
 , '}'
 ].join('\n')
 
