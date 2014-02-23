@@ -53,7 +53,12 @@ function touchmoved(e) {
 }
 
 function monkeyPatch(canvas) {
-  return extend(canvas, {
+  extend(window.d3.selection.prototype, {
+    pAttr: d3_pAttr
+  , shader: d3_shader
+  })
+
+  extend(canvas, {
     appendChild: appendChild
   , querySelectorAll: querySelectorAll
   , querySelector: function (s) { return this.querySelectorAll(s)[0] }
@@ -71,3 +76,28 @@ function initContext(canvas) {
   var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
   return gl && extend(gl, { viewportWidth: canvas.width, viewportHeight: canvas.height })
 }
+
+function d3_pAttr(obj) {
+  //check if svg
+  this.each(function(d) {
+    for(var attr in obj)
+      this.posBuffer[this.indices[0] + this.schema.indexOf(attr)] = obj[attr](d)
+  })
+    pointsChanged = true
+  return this
+}
+
+
+function d3_shader(attr, name) {
+  if(arguments.length == 2) {
+    var args = {}
+    args[attr] = name
+  }
+  initProgram(args || attr)
+  return this
+}
+
+var raf = window.requestAnimationFrame
+       || window.webkitRequestAnimationFrame
+       || window.mozRequestAnimationFrame
+       || function(callback) { window.setTimeout(callback, 1000 / 60) }

@@ -125,30 +125,61 @@ var cssColors = {
 , "yellow": 0xFFFF00, "yellowgreen": 0x9ACD32
 }
 ;pathgl.texture = function (image, options) {
-  if ('string'== typeof image) image = document.querySelector(image)
-  //selector
-  //shader
-  //video
-  //image tag
-  //image data
-  //image url
-  //video url
-  //framebuffer
-  options = options || {}
-  this.format = options.format || gl.RGBA
-  this.type = options.type || gl.UNSIGNED_BYTE
-  var text = gl.createTexture()
-  gl.bindTexture(gl.TEXTURE_2D, text)
+  if ('number' == typeof image) image = constructOffscreenRenderer(image)
+  if ('string' == typeof image) image = parseImage(image)
+
+  var self = {
+    image: image
+  , data: gl.createTexture()
+  , width: image.width
+  , height: image.height
+  }
+
+  return extend(Object.create(Texture), options, self).loaded()
+}
+
+var Texture = {
+  update: update
+, loaded: function ( )  {
+    var image = this.image
+    ;(image.complete || image.readyState == 4) ?
+      this.update() : image.addEventListener('load', this.update.bind(this))
+    return this
+  }
+, unfold: function (attrList) {
+    return pathgl.shader()
+  }
+}
+
+function update() {
+  gl.bindTexture(gl.TEXTURE_2D, this.data)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-  image.addEventListener('load', function () {
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
-  })
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image)
+  if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
-pathgl.texture.prototype;pathgl.vertexShader = [
+function constructOffscreenRenderer() {}
+//selector
+//shader
+//video
+//image tag
+//image data
+//image url
+//video url
+//framebuffer
+function parseImage (image) {
+  var query = document.querySelector(image)
+  if (query) return query
+}
+
+function isShader() {
+  return false
+}
+;pathgl.vertexShader = [
   'precision mediump float;'
 
 , 'uniform float clock;'
@@ -246,7 +277,6 @@ function createProgram(vs, fs) {
 
   return program
 }
-
 function initProgram (subst) {
   each(subst, function (v, k, o) {
     if (k == 'cx') o['x'] = v
@@ -284,34 +314,7 @@ function bindUniform(val, key) {
   })(val)
 }
 
-if(d3) {
-  d3.selection.prototype.pAttr = function (obj) {
-    //check if svg
-    this.each(function(d) {
-      for(var attr in obj)
-        this.posBuffer[this.indices[0] + this.schema.indexOf(attr)] = obj[attr](d)
-    })
-      pointsChanged = true
-    return this
-  }
-
-  d3.selection.prototype.shader = function (attr, name) {
-    if(arguments.length == 2) {
-      var args = {}
-      args[attr] = name
-    }
-    initProgram(args || attr)
-    return this
-  }
-}
-var raf = (function(){
-  return window.requestAnimationFrame       ||
-          window.webkitRequestAnimationFrame ||
-          window.mozRequestAnimationFrame    ||
-          function( callback ){
-            window.setTimeout(callback, 1000 / 60);
-          };
-})();;var stopRendering = false
+pathgl.shader = function () {};var stopRendering = false
 
 pathgl.stop = function () { stopRendering = true }
 
@@ -366,7 +369,12 @@ function touchmoved(e) {
 }
 
 function monkeyPatch(canvas) {
-  return extend(canvas, {
+  extend(window.d3.selection.prototype, {
+    pAttr: d3_pAttr
+  , shader: d3_shader
+  })
+
+  extend(canvas, {
     appendChild: appendChild
   , querySelectorAll: querySelectorAll
   , querySelector: function (s) { return this.querySelectorAll(s)[0] }
@@ -384,6 +392,31 @@ function initContext(canvas) {
   var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
   return gl && extend(gl, { viewportWidth: canvas.width, viewportHeight: canvas.height })
 }
+
+function d3_pAttr(obj) {
+  //check if svg
+  this.each(function(d) {
+    for(var attr in obj)
+      this.posBuffer[this.indices[0] + this.schema.indexOf(attr)] = obj[attr](d)
+  })
+    pointsChanged = true
+  return this
+}
+
+
+function d3_shader(attr, name) {
+  if(arguments.length == 2) {
+    var args = {}
+    args[attr] = name
+  }
+  initProgram(args || attr)
+  return this
+}
+
+var raf = window.requestAnimationFrame
+       || window.webkitRequestAnimationFrame
+       || window.mozRequestAnimationFrame
+       || function(callback) { window.setTimeout(callback, 1000 / 60) }
 ;function parse (str, stroke) {
   var buffer = [], lb = this.buffer, pb = this.posBuffer, indices = this.indices, count = 0
     , pos = [0, 0], l = indices.length, i = 0
@@ -930,6 +963,10 @@ function clamp (a, x) {
 
 function range(a, b) {
   return Array(Math.abs(b - a)).join().split(',').map(function (d, i) { return i + a })
+}
+
+function powerOfTwo(x) {
+  return x && ! (x & (x - 1))
 }
 ;  return init(canvas)
 } }()

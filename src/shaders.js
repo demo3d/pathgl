@@ -96,7 +96,6 @@ function createProgram(vs, fs) {
 
   return program
 }
-
 function initProgram (subst) {
   each(subst, function (v, k, o) {
     if (k == 'cx') o['x'] = v
@@ -134,31 +133,4 @@ function bindUniform(val, key) {
   })(val)
 }
 
-if(d3) {
-  d3.selection.prototype.pAttr = function (obj) {
-    //check if svg
-    this.each(function(d) {
-      for(var attr in obj)
-        this.posBuffer[this.indices[0] + this.schema.indexOf(attr)] = obj[attr](d)
-    })
-      pointsChanged = true
-    return this
-  }
-
-  d3.selection.prototype.shader = function (attr, name) {
-    if(arguments.length == 2) {
-      var args = {}
-      args[attr] = name
-    }
-    initProgram(args || attr)
-    return this
-  }
-}
-var raf = (function(){
-  return window.requestAnimationFrame       ||
-          window.webkitRequestAnimationFrame ||
-          window.mozRequestAnimationFrame    ||
-          function( callback ){
-            window.setTimeout(callback, 1000 / 60);
-          };
-})();
+pathgl.shader = function () {}

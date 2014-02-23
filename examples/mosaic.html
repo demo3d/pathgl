@@ -2,7 +2,7 @@
 <head>
 	<meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
+	<title> We feel free because we lack the very language to articulate our unfreedom </title>
 	<script src="//pathgl.com/lib/d3.js"></script>
 	<script src="//pathgl.com/lib/setup.js"></script>
 	<script src="//pathgl.com/lib/topojson.v1.min.js"></script>
@@ -33,8 +33,8 @@
 			<h3>Rendering Mode</h3>
 			<label for="svg">SVG<input type="radio" name="mode" id="svg"></label>
 			<label for="webgl">WebGL<input type="radio" name="mode" checked="1" id="webgl"></label>
-			<img src="/leaves.jpg">
-			
+			<img class="t" src="/test.png">
+			<img class="l" src="/leaves.jpg">
 		</div>
 	</div>
 	<div class="right" id="scroll">
@@ -50,18 +50,19 @@ var col = 20
   , s = size.width / col
   , row = Math.round(size.height / s)
 
-var tex = pathgl.texture('img')
+//var textures = [].map.call(document.querySelector('img'), pathgl.texture)
+pathgl.texture('.l')
 
 r = c.selectAll('rect').data(d3.range(row * col * 2 + 1)).enter().append('rect')
 .attr('x', function (d) { return s/2 + s * (d % col) })
 .attr('y', function (d) { return s/2 + s * ~~(d / col) })
 .attr('width', s / 2)
-.attr('fill', function () { return "hsl(" + Math.random() * 360 + ",100%, 50%)" })
+.attr('fill', 'pink')
 
-d3.timer(function () {
-  r.filter(function (d) { return Math.random() > .9 })
-  .attr('fill', function () { return "hsl(" + Math.random() * 360 + ",100%, 50%)" })
-})
+// d3.timer(function () {
+//   r.filter(function (d) { return Math.random() > .9 })
+//   .attr('fill', function () { return "hsl(" + Math.random() * 360 + ",100%, 50%)" })
+// })
 
 function getVideo () {
   navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia
@@ -76,10 +77,15 @@ function getVideo () {
     video.src = window.URL.createObjectURL(stream);
   }, function(error) {})
 
-  videoTexture = pathgl.texture(video)
+  //videoTexture = pathgl.texture(video)
   document.body.appendChild(video)
 }
-</script>
+
+
+//
+//
+//
+//</script>
   </div>
 	</div>
 </body>
