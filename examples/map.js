@@ -1,4 +1,5 @@
 var selector = 'svg'
+var size = {width: .85 * innerWidth, height: innerHeight}
 var width = size.width,
     height = size.height,
     rotate = [10, -10],

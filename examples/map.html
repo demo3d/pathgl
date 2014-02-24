@@ -3,9 +3,8 @@
 	<meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title> We feel free because we lack the very language to articulate our unfreedom </title>
-	<script src="//pathgl.com/lib/d3.js"></script>
-	<script src="//pathgl.com/lib/setup.js"></script>
-	<script src="//pathgl.com/lib/topojson.v1.min.js"></script>
+	<script src="/lib/d3.js"></script>
+	<script src="/lib/topojson.v1.min.js"></script>
 	
 	<script src="/dist/pathgl.js"></script>
   <link rel="stylesheet" href="/lib/adnan.css">
@@ -43,6 +42,7 @@
 		<div class="blurb"></div>
 		<script>
 var selector = 'svg'
+var size = {width: .85 * innerWidth, height: innerHeight}
 var width = size.width,
     height = size.height,
     rotate = [10, -10],

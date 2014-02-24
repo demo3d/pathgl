@@ -1,5 +1,5 @@
 pathgl.texture = function (image, options) {
-  if ('number' == typeof image) image = constructOffscreenRenderer(image)
+  if (null == image) image = constructOffscreenRenderer(image)
   if ('string' == typeof image) image = parseImage(image)
 
   var self = {
@@ -25,6 +25,9 @@ var Texture = {
   }
 , repeat: function () {
     setInterval(this.update.bind(this), 15)
+  }
+, appendChild: function () {
+
   }
 }
 
@@ -60,6 +63,7 @@ function constructOffscreenRenderer(num) {
 function parseImage (image) {
   var query = document.querySelector(image)
   if (query) return query
+  return extend(new Image(), { src: image })
 }
 
 function isShader() {

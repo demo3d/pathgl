@@ -3,9 +3,8 @@
 	<meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title> We feel free because we lack the very language to articulate our unfreedom </title>
-	<script src="//pathgl.com/lib/d3.js"></script>
-	<script src="//pathgl.com/lib/setup.js"></script>
-	<script src="//pathgl.com/lib/topojson.v1.min.js"></script>
+	<script src="/lib/d3.js"></script>
+	<script src="/lib/topojson.v1.min.js"></script>
 	
 	<script src="/dist/pathgl.js"></script>
   <link rel="stylesheet" href="/lib/adnan.css">
@@ -46,6 +45,8 @@ d3.select('.blurb')
 .html('<a class="play" src="http://beatsantique.bandcamp.com/album/a-thousand-faces-act-1">Play Overture by Beats Antique</a>')
 
 d3.select('.play').on('click', play)
+
+var size = {width: .85 * innerWidth, height: innerHeight}
 
 var Audio = window.AudioContext || window.webkitAudioContext
   , numLines = 1024 * 2

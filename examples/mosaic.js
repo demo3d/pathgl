@@ -1,7 +1,10 @@
-setTimeout(getVideo, 5000)
+//setTimeout(getVideo, 5000)
+
+var size = { width: .85 * innerWidth, height: innerHeight }
 
 var c = d3.select('canvas')
-        .attr(size)
+        .attr('height', size.height)
+        .attr('width', size.width)
         .call(pathgl)
 
 var col = 20

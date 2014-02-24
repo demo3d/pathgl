@@ -3,6 +3,8 @@ d3.select('.blurb')
 
 d3.select('.play').on('click', play)
 
+var size = {width: .85 * innerWidth, height: innerHeight}
+
 var Audio = window.AudioContext || window.webkitAudioContext
   , numLines = 1024 * 2
   , midX = size.width / 2

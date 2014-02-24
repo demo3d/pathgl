@@ -3,9 +3,8 @@
 	<meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title> We feel free because we lack the very language to articulate our unfreedom </title>
-	<script src="//pathgl.com/lib/d3.js"></script>
-	<script src="//pathgl.com/lib/setup.js"></script>
-	<script src="//pathgl.com/lib/topojson.v1.min.js"></script>
+	<script src="/lib/d3.js"></script>
+	<script src="/lib/topojson.v1.min.js"></script>
 	
 	<script src="/dist/pathgl.js"></script>
   <link rel="stylesheet" href="/lib/adnan.css">
@@ -42,10 +41,13 @@
 		<canvas height></canvas>
 		<div class="blurb"></div>
 		<script>
-setTimeout(getVideo, 5000)
+//setTimeout(getVideo, 5000)
+
+var size = { width: .85 * innerWidth, height: innerHeight }
 
 var c = d3.select('canvas')
-        .attr(size)
+        .attr('height', size.height)
+        .attr('width', size.width)
         .call(pathgl)
 
 var col = 20
