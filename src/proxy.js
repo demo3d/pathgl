@@ -61,7 +61,6 @@ var proto = {
         , y1: function (v) { this.posBuffer[this.indices[0] * 2 + 1] = v }
         , x2: function (v) { this.posBuffer[this.indices[1] * 2] = v }
         , y2: function (v) { this.posBuffer[this.indices[1] * 2  + 1] = v }
-        , buffer: lineBuffer
         , posBuffer: linePosBuffer
         , stroke: function (v) {
             var fill = parseColor(v)
@@ -72,7 +71,6 @@ var proto = {
         }
 , path: { d: buildPath
         , pathLength: noop
-        , buffer: lineBuffer
         , posBuffer: linePosBuffer
         , stroke: function (v) {
             var fill = parseColor(v)
@@ -202,13 +200,6 @@ var attrDefaults = {
 , y: 0
 , opacity: .999
 }
-
-for (var i  = 0; i < lineBuffer.length; i+=3) {
-  lineBuffer[i] = i / 3
-  lineBuffer[i + 1] = i / 3
-  lineBuffer[i + 2] = i / 3
-}
-
 
 function constructProxy(type) {
   return function (el) {

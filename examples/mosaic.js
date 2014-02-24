@@ -7,7 +7,6 @@ var col = 20
   , row = Math.round(size.height / s)
 
 var tex = pathgl.texture('img')
-console.log('why')
 
 r = c.selectAll('rect').data(d3.range(row * col * 2 + 1)).enter().append('rect')
 .attr('x', function (d) { return s/2 + s * (d % col) })

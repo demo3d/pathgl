@@ -139,13 +139,12 @@ var cssColors = {
   this.type = options.type || gl.UNSIGNED_BYTE
   var text = gl.createTexture()
   gl.bindTexture(gl.TEXTURE_2D, text)
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 150]))
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1)
-  gl.bindTexture(gl.TEXTURE_2D, text)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
   image.addEventListener('load', function () {
-    console.log('1')
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,gl.UNSIGNED_BYTE, image)
-    gl.generateMipmap(gl.TEXTURE_2D)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
   })
 }
 
@@ -649,7 +648,6 @@ var proto = {
         , y1: function (v) { this.posBuffer[this.indices[0] * 2 + 1] = v }
         , x2: function (v) { this.posBuffer[this.indices[1] * 2] = v }
         , y2: function (v) { this.posBuffer[this.indices[1] * 2  + 1] = v }
-        , buffer: lineBuffer
         , posBuffer: linePosBuffer
         , stroke: function (v) {
             var fill = parseColor(v)
@@ -660,7 +658,6 @@ var proto = {
         }
 , path: { d: buildPath
         , pathLength: noop
-        , buffer: lineBuffer
         , posBuffer: linePosBuffer
         , stroke: function (v) {
             var fill = parseColor(v)
@@ -790,13 +787,6 @@ var attrDefaults = {
 , y: 0
 , opacity: .999
 }
-
-for (var i  = 0; i < lineBuffer.length; i+=3) {
-  lineBuffer[i] = i / 3
-  lineBuffer[i + 1] = i / 3
-  lineBuffer[i + 2] = i / 3
-}
-
 
 function constructProxy(type) {
   return function (el) {
