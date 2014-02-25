@@ -97,7 +97,7 @@ function createProgram(vs, fs) {
   return program
 }
 function initProgram (subst) {
-  each(subst, function (v, k, o) {
+  each(subst || {}, function (v, k, o) {
     if (k == 'cx') o['x'] = v
     if (k == 'cy') o['y'] = v
 

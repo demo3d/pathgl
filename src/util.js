@@ -43,3 +43,7 @@ function range(a, b) {
 function powerOfTwo(x) {
   return x && ! (x & (x - 1))
 }
+
+
+function pointInPolygon(x, y, shape) {
+}

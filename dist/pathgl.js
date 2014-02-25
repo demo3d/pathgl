@@ -162,7 +162,16 @@ function update() {
   if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
-function constructOffscreenRenderer() {}
+function constructOffscreenRenderer(num) {
+  var prog = initProgram()
+  this.fbo = gl.createFramebuffer()
+  this.draw = function () {
+    gl.useProgram(prog)
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    //draw
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+  }
+}
 //selector
 //shader
 //video
@@ -278,7 +287,7 @@ function createProgram(vs, fs) {
   return program
 }
 function initProgram (subst) {
-  each(subst, function (v, k, o) {
+  each(subst || {}, function (v, k, o) {
     if (k == 'cx') o['x'] = v
     if (k == 'cy') o['y'] = v
 
@@ -967,6 +976,10 @@ function range(a, b) {
 
 function powerOfTwo(x) {
   return x && ! (x & (x - 1))
+}
+
+
+function pointInPolygon(x, y, shape) {
 }
 ;  return init(canvas)
 } }()
