@@ -1,13 +1,15 @@
-function drawLoop(elapsed) {
+
+var start = Date.now()
+function startDrawLoop() {
   beforeRender()
 
-  pathgl.uniform('clock', elapsed)
+  pathgl.uniform('clock', new Date - start)
 
-  drawPoints(elapsed)
-  drawLines(elapsed)
-  drawPolygons(elapsed)
+  drawPoints()
+  drawLines()
+  drawPolygons()
 
-  return stopRendering && beforeRender()
+  raf(startDrawLoop)
 }
 
 var time1 = Date.now()

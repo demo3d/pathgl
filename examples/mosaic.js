@@ -12,17 +12,13 @@ var col = 20
   , row = Math.round(size.height / s)
 
 //var textures = [].map.call(document.querySelector('img'), pathgl.texture)
-pathgl.texture('.l')
-pathgl.texture('.t')
-pathgl.texture('.l')
 
 r = c.selectAll('rect').data(d3.range(row * col * 2 + 1)).enter().append('rect')
 .attr('x', function (d) { return s/2 + s * (d % col) })
 .attr('y', function (d) { return s/2 + s * ~~(d / col) })
 .attr('width', s / 2)
-.attr('fill', 'blue')
+.attr('fill', pathgl.texture('.l'))
 
-pathgl.uniform('dates', [-1234, 0])
 // d3.timer(function () {
 //   r.filter(function (d) { return Math.random() > .9 })
 //   .attr('fill', function () { return "hsl(" + Math.random() * 360 + ",100%, 50%)" })
@@ -45,9 +41,3 @@ function getVideo () {
   document.body.appendChild(video)
   pathgl.texture('video').repeat()
 }
-
-
-//
-//
-//
-//

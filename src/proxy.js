@@ -21,7 +21,7 @@ var proto = {
               this.posBuffer[this.indices[0] + 3] = v
             }
           , fill: function (v) {
-              colorBuffer[this.indices[0] / 4] = parseColor(v)
+              colorBuffer[this.indices[0] / 4] = v < 0 ? v : parseColor(v)
             }
 
           , stroke: function (v) {
@@ -37,7 +37,7 @@ var proto = {
           }
 , ellipse: { cx: noop, cy: noop, rx: noop, ry: noop } //points
 , rect: { fill: function (v) {
-            colorBuffer[this.indices[0] / 4] = parseColor(v)
+            colorBuffer[this.indices[0] / 4] = v < 0 ? v : parseColor(v)
           }
         , width: function (v) {
             this.posBuffer[this.indices[0] + 2] = v
@@ -120,6 +120,7 @@ var baseProto = extend(Object.create(null), {
   }
 
 , setAttribute: function (name, value) {
+    if (value.ctr == Texture) value = + value
     pointsChanged = true
     linesChanged = true
     this.attr[name] = value

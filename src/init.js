@@ -9,20 +9,15 @@ function init(c) {
   monkeyPatch(canvas)
   bindEvents(canvas)
   flags(canvas)
-  var start = Date.now()
-  raf(function recur( ) {
-    drawLoop(new Date - start)
-    raf(recur)
-  })
+  startDrawLoop()
   return canvas
 }
 
-function flags () {
+function flags() {
   gl.disable(gl.SCISSOR_TEST)
   gl.stencilMask(1, 1, 1, 1)
-  //gl.clearColor(1,1,1,1);
-  gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.colorMask(true, true, true, true);
+  gl.clear(gl.COLOR_BUFFER_BIT)
+  gl.colorMask(true, true, true, true)
   gl.disable(gl.BLEND)
   gl.enable(gl.CULL_FACE)
 }

@@ -32,27 +32,23 @@
 			<h3>Rendering Mode</h3>
 			<label for="svg">SVG<input type="radio" name="mode" id="svg"></label>
 			<label for="webgl">WebGL<input type="radio" name="mode" checked="1" id="webgl"></label>
-			<img class="t" src="/test.png">
-			<img class="l" src="/leaves.jpg">
+			<img class="t" src="data/test.png">
+			<img class="l" src="data/leaves.jpg">
 		</div>
 	</div>
 	<div class="right" id="scroll">
+		<div class="header">
+			<div class="blurb"></div>
+			<a class="source" href="<!--source-->" target="_oo">View Source</a>
+		</div>
 		<svg></svg>
 		<canvas height></canvas>
-		<div class="blurb"></div>
 		<div class="blurb"><h4 id="pathgl-element-">pathgl([element])</h4>
 <blockquote>
 <p>Takes a canvas element, css3 selector, or d3 selection as an argument
 if webgl is not available, returns null
 otherwise the canvas element is returned
 If called without arguments, appends a 960x500 webgl canvas to the sceern.</p>
-</blockquote>
-<h4 id="pathgl-texture-image-">pathgl.texture(image)</h4>
-<blockquote>
-<p>Takes a string, image tag or typed array
-The string needs to be either a url, css3 selector, or fragment shader.
-returns an object which represents the texture&#39;s location in video memory.
-you can pass this object as the fill or stroke attribute of any element</p>
 </blockquote>
 <h4 id="pathgl-uniform-name-value-">pathgl.uniform(name, [value])</h4>
 <blockquote>
@@ -62,16 +58,20 @@ Default uniforms include mouse, resolution, and clock.</p>
 </blockquote>
 <h4 id="d3-selection-shader-name-glsl_expression-">d3.selection.shader(name, GLSL_expression)</h4>
 <blockquote>
-<p>Inline&#39;s an abitrary string into the shader that renders this selection
-The expression language is untyped GLSl.
-Any svg attribute from that mark can be used in the expression.
-For more information, please see the <a href="http://pathgl.com/documentation/shaders">shader documentation</a>.</p>
+<p>Injects&#39;s an abitrary expression into the vertex shader that renders this selection
+<a href="http://pathgl.com/documentation/shaders">Indepth tutorial</a>.</p>
 </blockquote>
 <h4 id="pathgl-registershader-name-glsl_expression-">pathgl.registerShader(&#39;name&#39;, GLSL_expression)</h4>
 <blockquote>
 <p>Adds a function to all shaders to be used in any 
 Use this to create custom effects, or create more complex expressions than can fit
 on a single line</p>
+</blockquote>
+<h4 id="pathgl-texture-image-options-">pathgl.texture(image, options)</h4>
+<blockquote>
+<p>image can be a image or video DOMelement, image or video url, binary data, or a fragment shader
+subclasses d3.selection(if d3 is available) so you can treat it as just another render target 
+this is useful if you want to do post processing or want to render selections at different intervals</p>
 </blockquote>
 <h4 id="pathgl-context-">pathgl.context()</h4>
 <blockquote>
@@ -81,6 +81,9 @@ on a single line</p>
 <blockquote>
 <p>...</p>
 </blockquote>
+<h4 id="texture-update">texture.update</h4>
+<h4 id="texture-repeat">texture.repeat</h4>
+<h4 id="texture-unfold">texture.unfold</h4>
 <p>Currently, the scene graphi API is private and subject to rapid change.
 Instead of manipulating pathgl marks directly, use a library like d3 to build your
 scene.</p>

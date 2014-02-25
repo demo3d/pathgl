@@ -1,15 +1,37 @@
-function Mesh (primitive, bufferlist) {
+//pointmesh
+//linemesh
+//polygonmesh
+function Mesh (primitive, size) {
   var buffers = {}
     , count = 0
+    , bufferList = ['color', 'pos', 'fug']
+    , program = initProgram()
 
-  return {draw: draw
-         , set: set
-         , addAttr: addAttr
-         , removeAttr: removeAttr
-         , boundingBox: boundingBox}
+  init()
+  return {
+    init : init
+  , draw: draw
+  , set: set
+  , addAttr: addAttr
+  , removeAttr: removeAttr
+  , boundingBox: boundingBox
+  }
+
+  function init (){
+    bufferList.forEach(function (name, i) {
+      buffers[name] = {
+        array: new Float32Array(size)
+      , buffer: gl.createBuffer()
+      , size: 0
+      , changed: true
+      , loc: i
+      }
+    })
+  }
 
   function draw (offset) {
-    for (var b in this.buffers) {
+    gl.use(program)
+    for (var b in buffers) {
       buffers[b]
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers[b].buffer)
       gl.vertexAttribPointer(buffers[b].loc, buffers[b].length, gl.FLOAT, false, 0, 0)
@@ -20,4 +42,9 @@ function Mesh (primitive, bufferlist) {
 
     gl.drawArrays(primitive, offset, count)
   }
+
+  function set () {}
+  function addAttr () {}
+  function removeAttr () {}
+  function boundingBox() {}
 }

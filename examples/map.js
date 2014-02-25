@@ -16,13 +16,7 @@ var svg = d3.select(selector)
           .call(pathgl)
 
 var webgl = d3.select('canvas').attr(size).call(pathgl).attr('class', 'no-click')
-var p = d3.select('.right').append('div')
-        .attr('class', 'event_text')
-        .style({
-          position: 'absolute'
-        , left: document.querySelector('canvas').clientLeft + size.width / 2  + 'px'
-        , top: '5px'
-        })
+var p = d3.select('.blurb')
 
 d3.json('data/world-50m.json', draw_world)
 d3.csv('data/hist.csv', draw_history)
@@ -124,7 +118,6 @@ function draw_history(err, hist) {
       })
     }
     adnan([-500, -400])
-    p.text('click on circles you filthy animal. brush the histogram at the bottom to scroll through time')
 
     d3.select('.right').insert('p', '*')
     .attr('class', 'title')
@@ -159,7 +152,7 @@ function draw_history(err, hist) {
           , r: 15
           })
     .shader({
-      'radius': '(pos.w < dates.y && pos.w > dates.x) ? 10. : 10. - (max(distance(pos.w, dates.y), distance(pos.w, dates.x)) / 20.);'
+      'r': '(pos.w < dates.y && pos.w > dates.x) ? 10. : 10. - (max(distance(pos.w, dates.y), distance(pos.w, dates.x)) / 20.);'
     })
     .each(function (d) {
       return d.node = this

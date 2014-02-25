@@ -1,3 +1,5 @@
+HTMLCanvasElement.prototype.appendChild = function () {}
+
 this.pathgl = pathgl
 
 pathgl.stop = function () {}

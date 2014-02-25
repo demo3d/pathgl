@@ -47,3 +47,7 @@ function powerOfTwo(x) {
 
 function pointInPolygon(x, y, shape) {
 }
+
+function isVideoUrl(url) {
+  return (url.split('.').pop() || '').join().match(/mp4|ogg|webm/)
+}

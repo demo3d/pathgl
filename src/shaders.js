@@ -31,7 +31,7 @@ pathgl.vertexShader = [
 , '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
 
 , '    type = fugue.x;'
-, '    gl_PointSize =  replace_radius;'
+, '    gl_PointSize =  replace_r;'
 , '    v_fill = vec4(unpack_color(fill), 1.);'
 , '    v_stroke = replace_stroke;'
 , '}'
@@ -39,17 +39,19 @@ pathgl.vertexShader = [
 
 pathgl.fragmentShader = [
   'precision mediump float;'
-, 'varying float type;'
+
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
+
+, 'varying float type;'
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
 
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (dates.x == -1234.) ? texture2D(texture, gl_PointCoord) : v_stroke;'
+, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture, gl_PointCoord) : v_stroke;'
 , '}'
 ].join('\n')
 
@@ -61,6 +63,8 @@ pathgl.fragmentShader = [
 
 function createProgram(vs, fs) {
   program = gl.createProgram()
+
+  console.log(vs)
 
   vs = compileShader(gl.VERTEX_SHADER, vs)
   fs = compileShader(gl.FRAGMENT_SHADER, fs)
@@ -97,23 +101,29 @@ function createProgram(vs, fs) {
 
   return program
 }
-function initProgram (subst) {
+
+function build_vs(subst) {
+  var vertex = pathgl.vertexShader
   each(subst || {}, function (v, k, o) {
     if (k == 'cx') o['x'] = v
     if (k == 'cy') o['y'] = v
 
   })
   var defaults = extend({
-    stroke: 'vec4(unpack_color(stroke), 1.);'
-  , radius: '2. * pos.z;'
-  , x: 'pos.x;'
-  , y: 'pos.y;'
-  }, subst), vertex = pathgl.vertexShader
+    stroke: '(stroke < 0.) ? vec4(stroke) : vec4(unpack_color(stroke), 1.)'
+  , r: '2. * pos.z'
+  , x: 'pos.x'
+  , y: 'pos.y'
+  }, subst)
 
   for(var attr in defaults)
     vertex = vertex.replace('replace_'+attr, defaults[attr])
 
-  return createProgram(vertex, pathgl.fragmentShader)
+  return vertex
+}
+
+function initProgram (subst) {
+  return createProgram(build_vs(subst), pathgl.fragmentShader)
 }
 
 function compileShader (type, src) {

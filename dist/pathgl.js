@@ -1,4 +1,6 @@
 ! function() {
+HTMLCanvasElement.prototype.appendChild = function () {}
+
 this.pathgl = pathgl
 
 pathgl.stop = function () {}
@@ -135,15 +137,18 @@ var cssColors = {
   , height: image.height
   }
 
-  return extend(Object.create(Texture), options, self).loaded()
+  return extend(Object.create(Texture), options, self).load()
 }
 
 var Texture = {
   update: update
-, loaded: function ( )  {
+, proto: Texture
+, load: function ()  {
     var image = this.image
-    ;(image.complete || image.readyState == 4) ?
-      this.update() : image.addEventListener('load', this.update.bind(this))
+
+    if (image.complete || image.readyState == 4) this.update()
+    else image.addEventListener('load', this.update.bind(this))
+
     return this
   }
 , unfold: function (attrList) {
@@ -154,6 +159,9 @@ var Texture = {
   }
 , appendChild: function () {
 
+  }
+, valueOf: function () {
+    return - 1
   }
 }
 
@@ -174,22 +182,14 @@ function constructOffscreenRenderer(num) {
   this.draw = function () {
     gl.useProgram(prog)
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
-    //draw
     gl.bindFramebuffer(gl.FRAMEBUFFER, null)
   }
 }
-//selector
-//shader
-//video
-//image tag
-//image data
-//image url
-//video url
-//framebuffer
+
 function parseImage (image) {
   var query = document.querySelector(image)
   if (query) return query
-  return extend(new Image(), { src: image })
+  return extend(isVideoUrl ? new Image : document.createElement('video'), { src: image })
 }
 
 function isShader() {
@@ -228,7 +228,7 @@ function isShader() {
 , '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
 
 , '    type = fugue.x;'
-, '    gl_PointSize =  replace_radius;'
+, '    gl_PointSize =  replace_r;'
 , '    v_fill = vec4(unpack_color(fill), 1.);'
 , '    v_stroke = replace_stroke;'
 , '}'
@@ -236,17 +236,19 @@ function isShader() {
 
 pathgl.fragmentShader = [
   'precision mediump float;'
-, 'varying float type;'
+
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
+
+, 'varying float type;'
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
 
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (dates.x == -1234.) ? texture2D(texture, gl_PointCoord) : v_stroke;'
+, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture, gl_PointCoord) : v_stroke;'
 , '}'
 ].join('\n')
 
@@ -258,6 +260,8 @@ pathgl.fragmentShader = [
 
 function createProgram(vs, fs) {
   program = gl.createProgram()
+
+  console.log(vs)
 
   vs = compileShader(gl.VERTEX_SHADER, vs)
   fs = compileShader(gl.FRAGMENT_SHADER, fs)
@@ -294,23 +298,29 @@ function createProgram(vs, fs) {
 
   return program
 }
-function initProgram (subst) {
+
+function build_vs(subst) {
+  var vertex = pathgl.vertexShader
   each(subst || {}, function (v, k, o) {
     if (k == 'cx') o['x'] = v
     if (k == 'cy') o['y'] = v
 
   })
   var defaults = extend({
-    stroke: 'vec4(unpack_color(stroke), 1.);'
-  , radius: '2. * pos.z;'
-  , x: 'pos.x;'
-  , y: 'pos.y;'
-  }, subst), vertex = pathgl.vertexShader
+    stroke: '(stroke < 0.) ? vec4(stroke) : vec4(unpack_color(stroke), 1.)'
+  , r: '2. * pos.z'
+  , x: 'pos.x'
+  , y: 'pos.y'
+  }, subst)
 
   for(var attr in defaults)
     vertex = vertex.replace('replace_'+attr, defaults[attr])
 
-  return createProgram(vertex, pathgl.fragmentShader)
+  return vertex
+}
+
+function initProgram (subst) {
+  return createProgram(build_vs(subst), pathgl.fragmentShader)
 }
 
 function compileShader (type, src) {
@@ -342,20 +352,15 @@ function init(c) {
   monkeyPatch(canvas)
   bindEvents(canvas)
   flags(canvas)
-  var start = Date.now()
-  raf(function recur( ) {
-    drawLoop(new Date - start)
-    raf(recur)
-  })
+  startDrawLoop()
   return canvas
 }
 
-function flags () {
+function flags() {
   gl.disable(gl.SCISSOR_TEST)
   gl.stencilMask(1, 1, 1, 1)
-  //gl.clearColor(1,1,1,1);
-  gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.colorMask(true, true, true, true);
+  gl.clear(gl.COLOR_BUFFER_BIT)
+  gl.colorMask(true, true, true, true)
   gl.disable(gl.BLEND)
   gl.enable(gl.CULL_FACE)
 }
@@ -658,7 +663,7 @@ var proto = {
               this.posBuffer[this.indices[0] + 3] = v
             }
           , fill: function (v) {
-              colorBuffer[this.indices[0] / 4] = parseColor(v)
+              colorBuffer[this.indices[0] / 4] = v < 0 ? v : parseColor(v)
             }
 
           , stroke: function (v) {
@@ -674,7 +679,7 @@ var proto = {
           }
 , ellipse: { cx: noop, cy: noop, rx: noop, ry: noop } //points
 , rect: { fill: function (v) {
-            colorBuffer[this.indices[0] / 4] = parseColor(v)
+            colorBuffer[this.indices[0] / 4] = v < 0 ? v : parseColor(v)
           }
         , width: function (v) {
             this.posBuffer[this.indices[0] + 2] = v
@@ -757,6 +762,7 @@ var baseProto = extend(Object.create(null), {
   }
 
 , setAttribute: function (name, value) {
+    if (value.ctr == Texture) value = + value
     pointsChanged = true
     linesChanged = true
     this.attr[name] = value
@@ -884,16 +890,18 @@ var e = {}
 
 function event (type, listener) {}
 
-var tween = 'float x(i) { return a / b + b * i }';function drawLoop(elapsed) {
+var tween = 'float x(i) { return a / b + b * i }';
+var start = Date.now()
+function startDrawLoop() {
   beforeRender()
 
-  pathgl.uniform('clock', elapsed)
+  pathgl.uniform('clock', new Date - start)
 
-  drawPoints(elapsed)
-  drawLines(elapsed)
-  drawPolygons(elapsed)
+  drawPoints()
+  drawLines()
+  drawPolygons()
 
-  return stopRendering && beforeRender()
+  raf(startDrawLoop)
 }
 
 var time1 = Date.now()
@@ -989,5 +997,8 @@ function powerOfTwo(x) {
 
 function pointInPolygon(x, y, shape) {
 }
-;  return init(canvas)
+
+function isVideoUrl(url) {
+  return (url.split('.').pop() || '').join().match(/mp4|ogg|webm/)
+};  return init(canvas)
 } }()

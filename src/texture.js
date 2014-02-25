@@ -9,15 +9,18 @@ pathgl.texture = function (image, options) {
   , height: image.height
   }
 
-  return extend(Object.create(Texture), options, self).loaded()
+  return extend(Object.create(Texture), options, self).load()
 }
 
 var Texture = {
   update: update
-, loaded: function ( )  {
+, proto: Texture
+, load: function ()  {
     var image = this.image
-    ;(image.complete || image.readyState == 4) ?
-      this.update() : image.addEventListener('load', this.update.bind(this))
+
+    if (image.complete || image.readyState == 4) this.update()
+    else image.addEventListener('load', this.update.bind(this))
+
     return this
   }
 , unfold: function (attrList) {
@@ -28,6 +31,9 @@ var Texture = {
   }
 , appendChild: function () {
 
+  }
+, valueOf: function () {
+    return - 1
   }
 }
 
@@ -48,22 +54,14 @@ function constructOffscreenRenderer(num) {
   this.draw = function () {
     gl.useProgram(prog)
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
-    //draw
     gl.bindFramebuffer(gl.FRAMEBUFFER, null)
   }
 }
-//selector
-//shader
-//video
-//image tag
-//image data
-//image url
-//video url
-//framebuffer
+
 function parseImage (image) {
   var query = document.querySelector(image)
   if (query) return query
-  return extend(new Image(), { src: image })
+  return extend(isVideoUrl ? new Image : document.createElement('video'), { src: image })
 }
 
 function isShader() {

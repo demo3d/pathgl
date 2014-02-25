@@ -32,14 +32,17 @@
 			<h3>Rendering Mode</h3>
 			<label for="svg">SVG<input type="radio" name="mode" id="svg"></label>
 			<label for="webgl">WebGL<input type="radio" name="mode" checked="1" id="webgl"></label>
-			<img class="t" src="/test.png">
-			<img class="l" src="/leaves.jpg">
+			<img class="t" src="data/test.png">
+			<img class="l" src="data/leaves.jpg">
 		</div>
 	</div>
 	<div class="right" id="scroll">
+		<div class="header">
+			<div class="blurb"></div>
+			<a class="source" href="<!--source-->" target="_oo">View Source</a>
+		</div>
 		<svg></svg>
 		<canvas height></canvas>
-		<div class="blurb"></div>
 		<div class="blurb"><p>Download the latest version and include it in your html.
 Or link directly to the latest release, copy this snippet:</p>
 <p>&lt;script src=&quot;http://adnanwahab.com/pathgl/dist/pathgl.min.js&quot;&gt;&lt;/script&gt;
