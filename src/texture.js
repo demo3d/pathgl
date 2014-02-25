@@ -23,6 +23,9 @@ var Texture = {
 , unfold: function (attrList) {
     return pathgl.shader()
   }
+, repeat: function () {
+    setInterval(this.update.bind(this), 15)
+  }
 }
 
 function update() {

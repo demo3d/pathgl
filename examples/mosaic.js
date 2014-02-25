@@ -1,4 +1,4 @@
-setTimeout(getVideo, 1e5)
+setTimeout(getVideo, 5000)
 
 var c = d3.select('canvas')
         .attr(size)
@@ -9,6 +9,8 @@ var col = 20
   , row = Math.round(size.height / s)
 
 //var textures = [].map.call(document.querySelector('img'), pathgl.texture)
+pathgl.texture('.l')
+pathgl.texture('.t')
 pathgl.texture('.l')
 
 r = c.selectAll('rect').data(d3.range(row * col * 2 + 1)).enter().append('rect')
@@ -38,6 +40,7 @@ function getVideo () {
 
   //videoTexture = pathgl.texture(video)
   document.body.appendChild(video)
+  pathgl.texture('video').repeat()
 }
 
 
