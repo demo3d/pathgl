@@ -1,3 +1,5 @@
+setTimeout(getVideo, 1e5)
+
 var c = d3.select('canvas')
         .attr(size)
         .call(pathgl)
@@ -13,8 +15,9 @@ r = c.selectAll('rect').data(d3.range(row * col * 2 + 1)).enter().append('rect')
 .attr('x', function (d) { return s/2 + s * (d % col) })
 .attr('y', function (d) { return s/2 + s * ~~(d / col) })
 .attr('width', s / 2)
-.attr('fill', 'pink')
+.attr('fill', 'blue')
 
+pathgl.uniform('dates', [-1234, 0])
 // d3.timer(function () {
 //   r.filter(function (d) { return Math.random() > .9 })
 //   .attr('fill', function () { return "hsl(" + Math.random() * 360 + ",100%, 50%)" })

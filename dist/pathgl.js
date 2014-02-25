@@ -232,13 +232,14 @@ pathgl.fragmentShader = [
 , 'varying float type;'
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
+, 'uniform vec2 dates;'
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
 
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = texture2D(texture, gl_PointCoord);'
+, '    gl_FragColor = (dates.x == -1234.) ? texture2D(texture, gl_PointCoord) : v_stroke;'
 , '}'
 ].join('\n')
 
