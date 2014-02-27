@@ -173,7 +173,7 @@ function insertBefore(node, next) {
 }
 
 function appendChild(el) {
-  return types[el.tagName.toLowerCase()](el)
+  return types[el.tagName.toLowerCase()](el.tagName)
 }
 
 function removeChild(el) {
@@ -203,7 +203,7 @@ var attrDefaults = {
 }
 
 function constructProxy(type) {
-  return function (el) {
+  return function (tagName) {
     var child = new type()
       , buffer = child.buffer || []
 
@@ -212,7 +212,7 @@ function constructProxy(type) {
     var numArrays = 4
 
     child.attr = Object.create(attrDefaults)
-    child.tag = el.tagName.toLowerCase()
+    child.tag = tagName.toLowerCase()
     child.parentNode = child.parentElement = canvas
 
     var i = child.indices =
@@ -243,9 +243,7 @@ function constructProxy(type) {
     return child
   }
 }
-window.fb = fBuffer
 var e = {}
-
 function event (type, listener) {}
 
 var tween = 'float x(i) { return a / b + b * i }'

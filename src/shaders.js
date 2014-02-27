@@ -45,6 +45,7 @@ pathgl.fragmentShader = [
 , 'uniform vec2 dates;'
 
 , 'varying float type;'
+
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
 
@@ -63,8 +64,6 @@ pathgl.fragmentShader = [
 
 function createProgram(vs, fs) {
   program = gl.createProgram()
-
-  console.log(vs)
 
   vs = compileShader(gl.VERTEX_SHADER, vs)
   fs = compileShader(gl.FRAGMENT_SHADER, fs)

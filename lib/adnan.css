@@ -34,19 +34,17 @@ h3 {
     color: #9ca5b5;
 }
 
-@media (min-width: 1000px) {
-    .nav {
-        position: fixed;
-        left: 0;
-        top: 0;
-        height: 100%;
-        width: 15%;
-    }
+.edit, canvas, svg {
+    padding-left: 1px;
+    position: absolute;
+    height: 89%;
+    width: 100%;
+}
 
-    .right {
-        left: calc(15% + 5px);
-        top: 0px;
-    }
+.right {
+    position: relative;
+    height: 100%;
+    width: 100%;
 }
 
 ul {
@@ -61,12 +59,6 @@ ul {
     overflow: hidden;
 }
 
-.right {
-    position: relative;
-    height: 100%;
-    width: 85%;
-}
-
 .nav label, .nav a {
     width: 100%;
     color: #008cdd;
@@ -79,10 +71,6 @@ a:hover {
     text-decoration: underline;
 }
 
-.edit, canvas, svg {
-    padding-left: 1px;
-    position: absolute;
-}
 .no-click {
     pointer-events: none;
 }
@@ -180,6 +168,7 @@ label {
 
 #svg {
     margin-left: 23px;
+
 }
 
 .running {
@@ -228,4 +217,21 @@ h1 {
 
 html, body {
     height: 100%;
+}
+
+
+@media (min-width: 1000px) {
+    .nav {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 15%;
+    }
+
+    .right {
+        left: calc(15% + 5px);
+        top: 0px;
+        width: 85%;
+    }
 }

@@ -18,8 +18,9 @@ function flags() {
   gl.stencilMask(1, 1, 1, 1)
   gl.clear(gl.COLOR_BUFFER_BIT)
   gl.colorMask(true, true, true, true)
-  gl.disable(gl.BLEND)
+  //gl.disable(gl.BLEND)
   gl.enable(gl.CULL_FACE)
+  window.gl = gl
 }
 
 function bindEvents(canvas) {

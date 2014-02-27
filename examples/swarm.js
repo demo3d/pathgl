@@ -1,7 +1,4 @@
-var size = {width: .85 * innerWidth, height: innerHeight}
-
-d3.select('canvas').attr(size).call(pathgl)
-
+d3.select('canvas').call(pathgl)
 .selectAll("circle")
 .data(d3.range(2e5))
 .enter().append("circle")

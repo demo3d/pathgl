@@ -242,6 +242,7 @@ pathgl.fragmentShader = [
 , 'uniform vec2 dates;'
 
 , 'varying float type;'
+
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
 
@@ -260,8 +261,6 @@ pathgl.fragmentShader = [
 
 function createProgram(vs, fs) {
   program = gl.createProgram()
-
-  console.log(vs)
 
   vs = compileShader(gl.VERTEX_SHADER, vs)
   fs = compileShader(gl.FRAGMENT_SHADER, fs)
@@ -361,8 +360,9 @@ function flags() {
   gl.stencilMask(1, 1, 1, 1)
   gl.clear(gl.COLOR_BUFFER_BIT)
   gl.colorMask(true, true, true, true)
-  gl.disable(gl.BLEND)
+  //gl.disable(gl.BLEND)
   gl.enable(gl.CULL_FACE)
+  window.gl = gl
 }
 
 function bindEvents(canvas) {
@@ -815,7 +815,7 @@ function insertBefore(node, next) {
 }
 
 function appendChild(el) {
-  return types[el.tagName.toLowerCase()](el)
+  return types[el.tagName.toLowerCase()](el.tagName)
 }
 
 function removeChild(el) {
@@ -845,7 +845,7 @@ var attrDefaults = {
 }
 
 function constructProxy(type) {
-  return function (el) {
+  return function (tagName) {
     var child = new type()
       , buffer = child.buffer || []
 
@@ -854,7 +854,7 @@ function constructProxy(type) {
     var numArrays = 4
 
     child.attr = Object.create(attrDefaults)
-    child.tag = el.tagName.toLowerCase()
+    child.tag = tagName.toLowerCase()
     child.parentNode = child.parentElement = canvas
 
     var i = child.indices =
@@ -885,9 +885,7 @@ function constructProxy(type) {
     return child
   }
 }
-window.fb = fBuffer
 var e = {}
-
 function event (type, listener) {}
 
 var tween = 'float x(i) { return a / b + b * i }';

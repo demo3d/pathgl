@@ -1,6 +1,6 @@
 //setTimeout(getVideo, 5000)
 
-var size = { width: .85 * innerWidth, height: innerHeight }
+var size = { width: .8 * innerWidth, height: innerHeight * .9}
 
 var c = d3.select('canvas')
         .attr('height', size.height)
