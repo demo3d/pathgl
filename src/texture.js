@@ -15,6 +15,7 @@ pathgl.texture = function (image, options) {
 var Texture = {
   update: update
 , proto: Texture
+, forEach: function () {}
 , load: function ()  {
     var image = this.image
 

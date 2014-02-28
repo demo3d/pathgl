@@ -18,7 +18,7 @@ function flags() {
   gl.stencilMask(1, 1, 1, 1)
   gl.clear(gl.COLOR_BUFFER_BIT)
   gl.colorMask(true, true, true, true)
-  //gl.disable(gl.BLEND)
+  gl.disable(gl.BLEND)
   gl.enable(gl.CULL_FACE)
   window.gl = gl
 }
@@ -49,10 +49,11 @@ function touchmoved(e) {
 }
 
 function monkeyPatch(canvas) {
-  extend(window.d3.selection.prototype, {
-    pAttr: d3_pAttr
-  , shader: d3_shader
-  })
+  if(window.d3)
+    extend(window.d3.selection.prototype, {
+      pAttr: d3_pAttr
+    , shader: d3_shader
+    })
 
   extend(canvas, {
     appendChild: appendChild

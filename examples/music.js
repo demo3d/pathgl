@@ -1,6 +1,3 @@
-d3.select('.blurb')
-.html('<a class="play" src="http://beatsantique.bandcamp.com/album/a-thousand-faces-act-1">Play Overture by Beats Antique</a>')
-
 d3.select('.play').on('click', play)
 
 var size = {width: .85 * innerWidth, height: innerHeight}

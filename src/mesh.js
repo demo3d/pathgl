@@ -2,9 +2,9 @@
 //linemesh
 //polygonmesh
 function Mesh (primitive, size) {
-  var buffers = {}
+  var attributes = {}
     , count = 0
-    , bufferList = ['color', 'pos', 'fug']
+    , attrList = ['color', 'pos', 'fugue']
     , program = initProgram()
 
   init()
@@ -18,8 +18,8 @@ function Mesh (primitive, size) {
   }
 
   function init (){
-    bufferList.forEach(function (name, i) {
-      buffers[name] = {
+    attrList.forEach(function (name, i) {
+      attributes[name] = {
         array: new Float32Array(size)
       , buffer: gl.createBuffer()
       , size: 0
@@ -31,18 +31,16 @@ function Mesh (primitive, size) {
 
   function draw (offset) {
     gl.use(program)
-    for (var b in buffers) {
-      buffers[b]
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffers[b].buffer)
-      gl.vertexAttribPointer(buffers[b].loc, buffers[b].length, gl.FLOAT, false, 0, 0)
-      gl.enableVertexAttribArray(buffers[b].loc)
-      if (buffers[b].changed)
-        gl.bufferData(gl.array_buffer, buffers[b].array)
+    for (var attr in attributes) {
+      attr = attributes[attributes]
+      gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
+      gl.vertexAttribPointer(attr.loc, attr.length, gl.FLOAT, false, 0, 0)
+      gl.enableVertexAttribArray(attr.loc)
+      if (attr.changed)
+        gl.bufferData(gl.array_buffer, attr.array)
     }
-
     gl.drawArrays(primitive, offset, count)
   }
-
   function set () {}
   function addAttr () {}
   function removeAttr () {}

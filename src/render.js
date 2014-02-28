@@ -9,7 +9,7 @@ function startDrawLoop() {
   drawLines()
   drawPolygons()
 
-  raf(startDrawLoop)
+  pathgl.raf = raf(startDrawLoop)
 }
 
 var time1 = Date.now()

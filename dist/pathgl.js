@@ -143,6 +143,7 @@ var cssColors = {
 var Texture = {
   update: update
 , proto: Texture
+, forEach: function () {}
 , load: function ()  {
     var image = this.image
 
@@ -360,7 +361,7 @@ function flags() {
   gl.stencilMask(1, 1, 1, 1)
   gl.clear(gl.COLOR_BUFFER_BIT)
   gl.colorMask(true, true, true, true)
-  //gl.disable(gl.BLEND)
+  gl.disable(gl.BLEND)
   gl.enable(gl.CULL_FACE)
   window.gl = gl
 }
@@ -391,10 +392,11 @@ function touchmoved(e) {
 }
 
 function monkeyPatch(canvas) {
-  extend(window.d3.selection.prototype, {
-    pAttr: d3_pAttr
-  , shader: d3_shader
-  })
+  if(window.d3)
+    extend(window.d3.selection.prototype, {
+      pAttr: d3_pAttr
+    , shader: d3_shader
+    })
 
   extend(canvas, {
     appendChild: appendChild
@@ -498,13 +500,22 @@ function matchesSelector(selector) {
   if (isFinite(selector.length)) return !!~flatten(selector).indexOf(this)
   for (var selectors = selector.split(','), tokens, dividedTokens; selector = selectors.pop(); tokens = selector.split(tokenizr).slice(0))
     if (interpret.apply(this, q(tokens.pop())) && (!tokens.length || ancestorMatch(this, tokens, selector.match(dividers)))) return true
-};var p1, p2, p3, p4
+};//cpu intersection tests
+//offscreen render color test
+;var p1, p2, p3, p4
 
 function initBuffersp() {
-  p1 = gl.createBuffer()
-  p2 = gl.createBuffer()
-  p3 = gl.createBuffer()
-  p4 = gl.createBuffer()
+  p1 = makeBuffer()
+  p2 = makeBuffer()
+  p3 = makeBuffer()
+  p4 = makeBuffer()
+}
+
+function makeBuffer () {
+  var b = gl.createBuffer()
+  gl.bindBuffer(gl.ARRAY_BUFFER, b)
+  gl.bufferData(gl.ARRAY_BUFFER, 4 * bSize, gl.DYNAMIC_DRAW)
+  return b
 }
 
 function drawPoints(elapsed) {
@@ -899,7 +910,7 @@ function startDrawLoop() {
   drawLines()
   drawPolygons()
 
-  raf(startDrawLoop)
+  pathgl.raf = raf(startDrawLoop)
 }
 
 var time1 = Date.now()
