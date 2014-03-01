@@ -10,6 +10,8 @@ function each(obj, fn) { for (var key in obj) fn(obj[key], key, obj) }
 
 function clamp (x, min, max) { return Math.min(Math.max(x, min), max) }
 
+function Quad () { return [-1.0, -1.0, 1.0, -1.0, -1.0,  1.0, 1.0,  1.0] }
+
 function uniq(ar) { return ar.filter(function (d, i) { return ar.indexOf(d) == i }) }
 
 function flatten(ar) { return ar.reduce(function (a, b) { return a.concat(b.map ? flatten(b) : b) }) }

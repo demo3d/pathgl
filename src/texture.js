@@ -1,34 +1,35 @@
 var textures = { null: [] }
 
-//texture data - img,canv,vid, url, 
+//texture data - img,canv,vid, url,
 //tetxure target - construct render target
 //texture shader - construct render target & add mesh
-
 
 pathgl.texture = function (image, options, target) {
   var self = Object.create(Texture)
   var tex = gl.createTexture()
 
   self.gl = gl
+  self.program = program
+  self.data = tex
 
   if (null == image) image = false
   if (isShader(image)) {
-    var program = createProgram(gl, simulation_vs, image, ['uv', 'pos'])
-    tex.program = program
+    self.program = createProgram(gl, simulation_vs, image, ['pos'])
+    self.mesh = Mesh(gl, 'triangle_strip', Quad())
     image = false
   }
+  if (! image) self.fbo = gl.createFramebuffer()
 
   if ('string' == typeof image) image = parseImage(image)
 
   extend(self, options, {
     image: image
-  , data: tex
   , width: image.width || 512
   , height: image.height || 512
-  , update: image ? self.update : drawTo.bind(null, tex, RenderTarget(self, gl.createFramebuffer(), tex).update)
   })
 
-  initTexture.call(self)
+
+  if (! image) self.update =  RenderTarget(self).update
 
   target = target || null
   ;(textures[target] || (textures[target] = [])).push(self)
@@ -72,6 +73,10 @@ function updateTexture() {
   gl.bindTexture(gl.TEXTURE_2D, null)
 }
 
+
+function updateTexture(image) {
+}
+
 function initTexture() {
   gl.bindTexture(gl.TEXTURE_2D, this.data)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
@@ -79,11 +84,10 @@ function initTexture() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
-
-  if (! this.image) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
-  else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image || null)
-
+  if (! this.image)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+  else
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image)
   //if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
@@ -97,20 +101,6 @@ function isShader(str) {
   return str.length > 100
 }
 
-function drawTo(texture, callback) {
-  var width = 512, height = 512
-  var v = gl.getParameter(gl.VIEWPORT)
-  var framebuffer = gl.createFramebuffer()
-  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer)
-
-  framebuffer.width = width
-  framebuffer.height = height
-
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
-
-  callback()
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-}
 
   function d3_selection_selector(selector) {
     return typeof selector === "function" ? selector : function() {

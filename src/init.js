@@ -7,7 +7,6 @@ function init(c) {
     return !! console.log('webGL context could not be initialized')
   program = initProgram(gl)
   canvas.program = program
-  canvas.fbo = null
   monkeyPatch(canvas)
   bindEvents(canvas)
   var main = RenderTarget(canvas)

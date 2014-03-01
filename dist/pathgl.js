@@ -20,7 +20,7 @@ function pathgl(canvas) {
 
   if (! canvas) return console.log('invalid selector')
   if (! canvas.getContext) return console.log(canvas, 'is not a valid canvas');function parseColor(v) {
-  var a = setStyle(v)
+  var a = setStyle(v);
   return + ( a[0] * 255 ) << 16 ^ ( a[1] * 255 ) << 8 ^ ( a[2] * 255 ) << 0
 }
 
@@ -92,9 +92,8 @@ function setStyle(style) {
     return hexColor(parseInt(color[1] + color[1] + color[2] + color[2] + color[3] + color[3], 16))
   }
 
-  return null
 }
-
+''
 var cssColors = {
   "aliceblue": 0xF0F8FF, "antiquewhite": 0xFAEBD7, "aqua": 0x00FFFF, "aquamarine": 0x7FFFD4, "azure": 0xF0FFFF
 , "beige": 0xF5F5DC, "bisque": 0xFFE4C4, "black": 0x000000, "blanchedalmond": 0xFFEBCD, "blue": 0x0000FF, "blueviolet": 0x8A2BE2
@@ -270,7 +269,6 @@ function init(c) {
     return !! console.log('webGL context could not be initialized')
   program = initProgram(gl)
   canvas.program = program
-  canvas.fbo = null
   monkeyPatch(canvas)
   bindEvents(canvas)
   var main = RenderTarget(canvas)
@@ -425,11 +423,11 @@ function matchesSelector(selector) {
     if (interpret.apply(this, q(tokens.pop())) && (!tokens.length || ancestorMatch(this, tokens, selector.match(dividers)))) return true
 };//cpu intersection tests
 //offscreen render color test
-;function Mesh (gl, primitive) {
+;function Mesh (gl, primitive, attr) {
   var attributes = {}
     , count = 0
     , attrList = ['pos', 'color', 'fugue']
-
+  var prim = primitive
   primitive = gl[primitive.toUpperCase()]
 
   init()
@@ -457,13 +455,14 @@ function matchesSelector(selector) {
       gl.bufferData(gl.ARRAY_BUFFER, 4 * 1e7, gl.STREAM_DRAW)
       var size = name == 'pos' && primitive == gl.LINES  ? 2 : 4
       attributes[name] = {
-        array: new Float32Array(4e5)
+        array: extend(new Float32Array(4e5), attr)
       , buffer: buffer
       , size: size
       , changed: true
       , loc: i
       }
     })
+
   }
 
   function free (index) {
@@ -483,7 +482,6 @@ function matchesSelector(selector) {
   }
 
   function draw (offset) {
-    //gl.use(program)
     if (! count) return
     for (var attr in attributes) {
       attr = attributes[attr]
@@ -493,7 +491,6 @@ function matchesSelector(selector) {
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
-
     gl.drawArrays(primitive, offset || 0, count)
   }
   function set () {}
@@ -504,18 +501,21 @@ function matchesSelector(selector) {
 
 function RenderTarget (screen) {
   screen.types = SVGProxy()
-
   var gl = screen.gl
     , meshes = buildBuffers(gl, screen.types)
     , i = 0
-    , fbo = screen.fbo
+    , fbo = screen.fbo || null
     , prog = screen.program
+
   var bound_textures = false
+  screen.mesh && meshes.push(screen.mesh)
+  if (fbo) initRtt.call(screen)
 
   return { update: update }
 
   function update () {
-    if (! program == prog) gl.use(program = prog)
+    if (program != prog) gl.useProgram(program = prog)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
     bindTextures()
     beforeRender(gl)
     pathgl.uniform('clock', new Date - start)
@@ -541,6 +541,24 @@ function buildBuffers(gl, types) {
   var lineMesh = new Mesh(gl, 'lines')
   lineMesh.bind(types.line)
   return [pointMesh, lineMesh]
+}
+
+function initRtt() {
+  var width = 512, height = 512
+
+  this.update()
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
+
+  this.fbo.width = width
+  this.fbo.height = height
+
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.data, 0)
+
+
+  console.log(gl.checkFramebufferStatus(gl.FRAMEBUFFER))
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 }
 ;//regexes sourced from sizzle
 function querySelectorAll(selector, r) {
@@ -859,6 +877,8 @@ function each(obj, fn) { for (var key in obj) fn(obj[key], key, obj) }
 
 function clamp (x, min, max) { return Math.min(Math.max(x, min), max) }
 
+function Quad () { return [-1.0, -1.0, 1.0, -1.0, -1.0,  1.0, 1.0,  1.0] }
+
 function uniq(ar) { return ar.filter(function (d, i) { return ar.indexOf(d) == i }) }
 
 function flatten(ar) { return ar.reduce(function (a, b) { return a.concat(b.map ? flatten(b) : b) }) }
@@ -881,37 +901,39 @@ function extend (a, b) {
   return a
 }
 
-function pointInPolygon(x, y, shape) {};var textures = { null: [] }
+function pointInPolygon(x, y, shape) {}
+;var textures = { null: [] }
 
-//texture data - img,canv,vid, url, 
+//texture data - img,canv,vid, url,
 //tetxure target - construct render target
 //texture shader - construct render target & add mesh
-
 
 pathgl.texture = function (image, options, target) {
   var self = Object.create(Texture)
   var tex = gl.createTexture()
 
   self.gl = gl
+  self.program = program
+  self.data = tex
 
   if (null == image) image = false
   if (isShader(image)) {
-    var program = createProgram(gl, simulation_vs, image, ['uv', 'pos'])
-    tex.program = program
+    self.program = createProgram(gl, simulation_vs, image, ['pos'])
+    self.mesh = Mesh(gl, 'triangle_strip', Quad())
     image = false
   }
+  if (! image) self.fbo = gl.createFramebuffer()
 
   if ('string' == typeof image) image = parseImage(image)
 
   extend(self, options, {
     image: image
-  , data: tex
   , width: image.width || 512
   , height: image.height || 512
-  , update: image ? self.update : drawTo.bind(null, tex, RenderTarget(self, gl.createFramebuffer(), tex).update)
   })
 
-  initTexture.call(self)
+
+  if (! image) self.update =  RenderTarget(self).update
 
   target = target || null
   ;(textures[target] || (textures[target] = [])).push(self)
@@ -955,6 +977,10 @@ function updateTexture() {
   gl.bindTexture(gl.TEXTURE_2D, null)
 }
 
+
+function updateTexture(image) {
+}
+
 function initTexture() {
   gl.bindTexture(gl.TEXTURE_2D, this.data)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
@@ -962,11 +988,10 @@ function initTexture() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
-
-  if (! this.image) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
-  else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image || null)
-
+  if (! this.image)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+  else
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image)
   //if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
@@ -980,71 +1005,65 @@ function isShader(str) {
   return str.length > 100
 }
 
-function drawTo(texture, callback) {
-  var width = 512, height = 512
-  var v = gl.getParameter(gl.VIEWPORT)
-  var framebuffer = gl.createFramebuffer()
-  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer)
-
-  framebuffer.width = width
-  framebuffer.height = height
-
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
-
-  callback()
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-}
 
   function d3_selection_selector(selector) {
     return typeof selector === "function" ? selector : function() {
       return d3_select(selector, this);
     };
-  };  return init(canvas)
+  }
+;  return init(canvas)
 };var simulation_vs = [
   'precision mediump float;'
-, 'attribute vec2 uv;'
 , 'attribute vec2 pos;'
-
-, '  varying vec2 vUv;'
 , '  void main() {'
-, '  vUv = vec2(uv.x, 1.0 - uv.y);'
 , '  gl_Position = vec4( pos.xy, 1.0 , 1.0);'
-,
 , '  }'
 ].join('\n')
 
-
 var forceShader = [
-  'precision mediump float;'
-, '  uniform float opacity;'
-, ' uniform sampler2D tPositions;'
-, '  uniform sampler2D tOrigins;'
-, '  uniform float clock;'
-, '  varying vec2 vUv;'
-,'  float rand(vec2 co){'
-, '      return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);'
-, '  }'
-, '  void main() {'
-, '  vec4 pos = texture2D( tPositions, vUv );'
-,'  if ( rand( vUv + clock ) > 0.99 || pos.w <= 0.0 ) {'
-,'  pos.xyz = texture2D( tOrigins, vUv ).xyz;'
-,'  pos.w = opacity;'
-, '  } else {'
-, '  if ( pos.w <= 0.0 ) discard;'
-, '  float x = pos.x + clock * 5.0;'
-,'  float y = pos.y;'
-,'  float z = pos.z + clock * 4.0;'
-, '  pos.x += sin( y * 0.033 ) * cos( z * 0.037 ) * 0.4;'
-, '  pos.y += sin( x * 0.035 ) * cos( x * 0.035 ) * 0.4;'
-,'  pos.z += sin( x * 0.037 ) * cos( y * 0.033 ) * 0.4;'
-,'  pos.w -= 0.00001;'
-,'  }'
-, '    gl_FragColor = pos;'
-, '  }'
+, 'precision mediump float;'
+, 'const vec3 TARGET = vec3( 0, 0, 0.01 );'
+, 'uniform sampler2D uParticleData;'
+, 'uniform vec2 uViewport;'
+, 'vec4 texelAtOffet( vec2 offset ) { return texture2D( uParticleData, ( gl_FragCoord.xy + offset ) / uViewport ); }'
+, 'void main() {'
+    , 'gl_FragColor = vec4(0.,0.,1.,1.); return;'
+    , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
+    , 'if ( slot == 0 ) { '
+        , 'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'
+        , 'vec4 dataB = texelAtOffet( vec2( 1, 0 ) );'
+        , 'vec3 pos = dataA.xyz;'
+        , 'vec3 vel = dataB.xyz;'
+        , 'float phase = dataA.w;'
+        , 'if ( phase > 0.0 ) {'
+            , 'pos += vel * 0.005;'
+            , 'if ( length( TARGET - pos ) < 0.035 ) phase = 0.0;'
+        , '    else phase += 0.1;'
+        , '} else {'
+        , '    pos = vec3(-1);'
+        , '}'
+    , '    gl_FragColor = vec4( pos, phase );'
+    , '} else if ( slot == 1 ) { // velocity'
+        , 'vec4 dataA = texelAtOffet( vec2( -1, 0 ) );'
+        , 'vec4 dataB = texelAtOffet( vec2( 0, 0 ) );'
+        , 'vec3 pos = dataA.xyz;'
+        , 'vec3 vel = dataB.xyz;'
+        , 'float phase = dataA.w;'
+        , 'if ( phase > 0.0 ) {'
+            , 'vec3 delta = normalize( TARGET - pos );'
+            , 'vel += delta * 0.05;'
+        , '    vel *= 0.991;'
+        , '} else {'
+        , '    vel = vec3(0);'
+        , '}'
+    , '    gl_FragColor = vec4( vel, 1.0 );'
+, '    }'
+, '}'
 ].join('\n')
 
 pathgl.sim = {}
 
 pathgl.sim.force = function () {
- return pathgl.texture(forceShader)
-} }()
+  return pathgl.texture(forceShader)
+}
+ }()
