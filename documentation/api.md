@@ -3,7 +3,7 @@
 ####pathgl([element])
 > Takes a canvas element, css3 selector, or d3 selection as an argument
 > initialize the webgl context and returns the patched canvas element
-> if webgl is not available, returns null
+> if webgl is not available, returns false
 > If called without arguments, appends a 960x500 canvas to the sceern.
 
 ####pathgl.uniform(name, [value])

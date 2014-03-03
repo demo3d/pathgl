@@ -7,9 +7,7 @@ pathgl.vertexShader = [
 , 'uniform vec2 dates;'
 
 , 'attribute vec4 pos;'
-//attribute vec4 color f, s, fo, so
-, 'attribute float fill;'
-, 'attribute float stroke;'
+, 'attribute vec4 color;'
 , 'attribute vec4 transform;'
 , 'attribute vec4 fugue;'
 
@@ -27,6 +25,8 @@ pathgl.vertexShader = [
 
 , '    float x = replace_x;'
 , '    float y = replace_y;'
+, '    float fill = color.r;'
+, '    float stroke = color.r;'
 
 , '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
 
@@ -35,7 +35,7 @@ pathgl.vertexShader = [
 , '    v_fill = vec4(unpack_color(fill), 1.);'
 , '    v_stroke = replace_stroke;'
 , '}'
-].join('\n')
+].join('\n\n')
 
 pathgl.fragmentShader = [
   'precision mediump float;'
@@ -75,11 +75,9 @@ function createProgram(vs, fs) {
   gl.deleteShader(fs)
 
   gl.bindAttribLocation(program, 0,  "pos")
-  gl.bindAttribLocation(program, 1, "fill")
-  gl.bindAttribLocation(program, 2, "stroke")
+  gl.bindAttribLocation(program, 1, "color")
+  gl.bindAttribLocation(program, 2, "fugue")
   //gl.bindAttribLocation(program, 3, "transform")
-  gl.bindAttribLocation(program, 4, "fugue")
-
 
   gl.linkProgram(program)
   gl.useProgram(program)
@@ -129,7 +127,7 @@ function compileShader (type, src) {
   var shader = gl.createShader(type)
   gl.shaderSource(shader, src)
   gl.compileShader(shader)
-  if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw src + ' ' + gl.getShaderInfoLog(shader)
+  if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return console.error(gl.getShaderInfoLog(shader) + '\n' + src)
   return shader
 }
 
@@ -142,5 +140,3 @@ function bindUniform(val, key) {
       keep = data
   })(val)
 }
-
-pathgl.shader = function () {}

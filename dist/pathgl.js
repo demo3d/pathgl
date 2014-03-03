@@ -205,9 +205,7 @@ function isShader() {
 , 'uniform vec2 dates;'
 
 , 'attribute vec4 pos;'
-//attribute vec4 color f, s, fo, so
-, 'attribute float fill;'
-, 'attribute float stroke;'
+, 'attribute vec4 color;'
 , 'attribute vec4 transform;'
 , 'attribute vec4 fugue;'
 
@@ -225,6 +223,8 @@ function isShader() {
 
 , '    float x = replace_x;'
 , '    float y = replace_y;'
+, '    float fill = color.r;'
+, '    float stroke = color.r;'
 
 , '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
 
@@ -233,7 +233,7 @@ function isShader() {
 , '    v_fill = vec4(unpack_color(fill), 1.);'
 , '    v_stroke = replace_stroke;'
 , '}'
-].join('\n')
+].join('\n\n')
 
 pathgl.fragmentShader = [
   'precision mediump float;'
@@ -273,11 +273,9 @@ function createProgram(vs, fs) {
   gl.deleteShader(fs)
 
   gl.bindAttribLocation(program, 0,  "pos")
-  gl.bindAttribLocation(program, 1, "fill")
-  gl.bindAttribLocation(program, 2, "stroke")
+  gl.bindAttribLocation(program, 1, "color")
+  gl.bindAttribLocation(program, 2, "fugue")
   //gl.bindAttribLocation(program, 3, "transform")
-  gl.bindAttribLocation(program, 4, "fugue")
-
 
   gl.linkProgram(program)
   gl.useProgram(program)
@@ -327,7 +325,7 @@ function compileShader (type, src) {
   var shader = gl.createShader(type)
   gl.shaderSource(shader, src)
   gl.compileShader(shader)
-  if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw src + ' ' + gl.getShaderInfoLog(shader)
+  if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return console.error(gl.getShaderInfoLog(shader) + '\n' + src)
   return shader
 }
 
@@ -340,18 +338,18 @@ function bindUniform(val, key) {
       keep = data
   })(val)
 }
-
-pathgl.shader = function () {};var stopRendering = false
+;var stopRendering = false
 
 pathgl.stop = function () { stopRendering = true }
 
 function init(c) {
   if (! (gl = initContext(canvas = c)))
-    return console.log('webGL context could not be initialized') || null
+    return !! console.log('webGL context could not be initialized')
   program = initProgram()
   monkeyPatch(canvas)
   bindEvents(canvas)
   flags(canvas)
+  buildBuffers()
   startDrawLoop()
   return canvas
 }
@@ -502,6 +500,59 @@ function matchesSelector(selector) {
     if (interpret.apply(this, q(tokens.pop())) && (!tokens.length || ancestorMatch(this, tokens, selector.match(dividers)))) return true
 };//cpu intersection tests
 //offscreen render color test
+;//pointmesh
+//linemesh
+//polygonmesh
+function Mesh (primitive) {
+  var attributes = {}
+    , count = 2e5
+    , attrList = ['pos', 'color', 'fugue']
+    , program = initProgram()
+
+  init()
+  return {
+    init : init
+  , draw: draw
+  , attributes: attributes
+  , set: set
+  , addAttr: addAttr
+  , removeAttr: removeAttr
+  , boundingBox: boundingBox
+  }
+
+  function init (){
+    attrList.forEach(function (name, i) {
+      var buffer = gl.createBuffer()
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+      gl.bufferData(gl.ARRAY_BUFFER, 1e6, gl.STREAM_DRAW)
+      attributes[name] = {
+        array: new Float32Array(1e6)
+      , buffer: buffer
+      , size: 0
+      , changed: true
+      , loc: i
+      }
+    })
+  }
+
+  function draw (offset) {
+    //gl.use(program)
+    for (var attr in attributes) {
+      attr = attributes[attr]
+      gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
+      gl.vertexAttribPointer(attr.loc, 4, gl.FLOAT, false, 0, 0)
+      gl.enableVertexAttribArray(attr.loc)
+      if (attr.changed)
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
+    }
+
+    gl.drawArrays(primitive, offset, count)
+  }
+  function set () {}
+  function addAttr () {}
+  function removeAttr () {}
+  function boundingBox() {}
+}
 ;var p1, p2, p3, p4
 
 function initBuffersp() {
@@ -514,41 +565,12 @@ function initBuffersp() {
 function makeBuffer () {
   var b = gl.createBuffer()
   gl.bindBuffer(gl.ARRAY_BUFFER, b)
-  gl.bufferData(gl.ARRAY_BUFFER, 4 * bSize, gl.DYNAMIC_DRAW)
+  gl.bufferData(gl.ARRAY_BUFFER, 5e6, gl.DYNAMIC_DRAW)
   return b
 }
 
 function drawPoints(elapsed) {
-  if( !p1) initBuffersp()
-
-  var pointBuffer = canvas.pb
-  var pointPosBuffer = canvas.ppb
-
-  if (! pointCount) return
-  if (pointsChanged) {
-    gl.bindBuffer(gl.ARRAY_BUFFER, p1)
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, pointPosBuffer)
-    gl.vertexAttribPointer(program.pos, 4, gl.FLOAT, false, 0, 0)
-    gl.enableVertexAttribArray(program.pos)
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, p2)
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, colorBuffer)
-    gl.vertexAttribPointer(program.fill, 1, gl.FLOAT, false, 0, 0)
-    gl.enableVertexAttribArray(program.fill)
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, p3)
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, colorBuffer)
-    gl.vertexAttribPointer(program.stroke, 1, gl.FLOAT, false, 0, 0)
-    gl.enableVertexAttribArray(program.stroke)
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, p4)
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, fBuffer)
-    gl.vertexAttribPointer(program.fugue, 4, gl.FLOAT, false, 0, 0)
-    gl.enableVertexAttribArray(program.fugue)
-
-    pointsChanged = false
-  }
-  gl.drawArrays(gl.POINTS, 0, pointCount)
+  pointMesh.draw()
 }
 ;var lineBuffer = new Uint16Array(4e4)
 var linePosBuffer = new Float32Array(4e4)
@@ -647,46 +669,50 @@ var combinators = { ' ': function (d) { return d && d !== __scene__ && d.parent(
                   }
 var chunker = //taken from sizle
   /^(\*|\w+)?(?:([\.\#]+[\w\-\.#]+)?)(\[([\w\-]+)(?:([\|\^\$\*\~]?\=)['"]?([ \w\-\/\?\&\=\:\.\(\)\!,@#%<>\{\}\$\*\^]+)["']?)?\])?(:([\w\-]+)(\(['"]?([^()]+)['"]?\))?)?/
-;var bSize = 8e5
-var colorBuffer = new Float32Array(bSize)
-var pointsChanged = true
+;var pointsChanged = true
 var pointCount = 0
 var lineCount = 0
 var linesChanged = true
 
-var fBuffer = new Float32Array(bSize)
+fBuffer = null
+colorBuffer = null
+
+function buildBuffers(){
+  pointMesh = new Mesh(gl.POINTS)
+  proto.circle.posBuffer = ppb = pointMesh.attributes.pos.array
+  proto.circle.fBuffer = pointMesh.attributes.fugue.array
+  proto.circle.colorBuffer = pointMesh.attributes.color.array
+}
+
 var proto = {
-  circle: { r: function (v) {
-              this.posBuffer[this.indices[0] + 2] = v
-            }
-          , cx: function (v) {
+  circle: { cx: function (v) {
               this.posBuffer[this.indices[0] + 0] = v
 
             }
           , cy: function (v) {
               this.posBuffer[this.indices[0] + 1] = v
             }
+          , r: function (v) {
+             this.posBuffer[this.indices[0] + 2] = v
+            }
+
           , cz: function (v) {
               this.posBuffer[this.indices[0] + 3] = v
             }
           , fill: function (v) {
-              colorBuffer[this.indices[0] / 4] = v < 0 ? v : parseColor(v)
+              this.colorBuffer[this.indices[0] / 4] = v < 0 ? v : parseColor(v)
             }
 
           , stroke: function (v) {
-              return;
-              colorBuffer[this.indices[0] / 4] = parseColor(v)
+              this.colorBuffer[this.indices[0] / 4] = parseColor(v)
             },
             opacity: function () {
             }
-
-          , buffer: canvas.pb = canvas.pb || new Uint16Array(bSize)
-          , posBuffer: canvas.ppb = canvas.ppb ||  new Float32Array(bSize)
-          , schema: ['cx', 'cy', 'r', 'cz']
+          , posBuffer: null
           }
 , ellipse: { cx: noop, cy: noop, rx: noop, ry: noop } //points
 , rect: { fill: function (v) {
-            colorBuffer[this.indices[0] / 4] = v < 0 ? v : parseColor(v)
+            this.colorBuffer[this.indices[0] / 4] = v < 0 ? v : parseColor(v)
           }
         , width: function (v) {
             this.posBuffer[this.indices[0] + 2] = v
@@ -701,10 +727,9 @@ var proto = {
             this.posBuffer[this.indices[0] + 1] = v
           }
         , rx: noop,
-          ry:  noop,
-          posBuffer: canvas.ppb
+          ry:  noop
         }
-  //, image: { 'xlink:href': noop, height: noop, width: noop, x: noop, y: noop }
+, image: { 'xlink:href': noop, height: noop, width: noop, x: noop, y: noop }
 
 , line: { x1: function (v) { this.posBuffer[this.indices[0] * 2] = v }
         , y1: function (v) { this.posBuffer[this.indices[0] * 2 + 1] = v }
@@ -714,7 +739,7 @@ var proto = {
         , stroke: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
-              colorBuffer[i] = parseInt(fill.toString().slice(1), 16)
+              this.colorBuffer[i] = parseInt(fill.toString().slice(1), 16)
             })
           }
         }
@@ -728,8 +753,6 @@ var proto = {
             })
           }
         }
-
-
 
 , polygon: { points: noop }
 , polyline: { points: noop }
@@ -753,15 +776,7 @@ var baseProto = extend(Object.create(null), {
 , nextSibling: function () { canvas.scene[canvas.__scene__.indexOf()  + 1] }
 , parent: function () { return __scene__ }
 
-, fill: function (val) {
-    isId(val) && initShader(document.querySelector(val).textContent, val)
-  }
-
 , transform: function (d) {
-  }
-
-, stroke: function (val) {
-    isId(val) && initShader(document.querySelector(val).textContent, val)
   }
 
 , getAttribute: function (name) {
@@ -801,10 +816,9 @@ var types = [
 , function image() {}
 , function text() {}
 , function g() {}
-, function use() {}
 ].reduce(function (a, type) {
               a[type.name] = constructProxy(type)
-              type.prototype = extend(Object.create(baseProto), proto[type.name])
+              type.prototype = extend(Object.create(proto[type.name]), baseProto)
               return a
             }, {})
 
@@ -822,7 +836,7 @@ function insertBefore(node, next) {
 }
 
 function appendChild(el) {
-  return types[el.tagName.toLowerCase()](el.tagName)
+  return (types[el.tagName.toLowerCase()] || noop)(el.tagName)
 }
 
 function removeChild(el) {
@@ -854,9 +868,8 @@ var attrDefaults = {
 function constructProxy(type) {
   return function (tagName) {
     var child = new type()
-      , buffer = child.buffer || []
 
-    var count = canvas.__scene__.push(child) * 2
+    var count = canvas.__scene__.push(child)
 
     var numArrays = 4
 
@@ -870,10 +883,6 @@ function constructProxy(type) {
       type.name == 'rect' ? [count * 4] :
       []
 
-    i.forEach(function (i) {
-      buffer[i] = count + i % 2
-    })
-
     if (type.name !== 'path')
       count += type.name == 'line' ? 2 : 1
 
@@ -882,7 +891,7 @@ function constructProxy(type) {
 
     if (type.name == 'circle') {
       pointCount += 1
-      fBuffer[pointCount * 4] = 1
+      child.fBuffer[pointCount * 4] = 1
     }
 
     if (type.name == 'rect') {
