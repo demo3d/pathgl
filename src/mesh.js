@@ -11,6 +11,7 @@ function Mesh (primitive) {
   return {
     init : init
   , draw: draw
+  , bind: bind
   , attributes: attributes
   , set: set
   , addAttr: addAttr
@@ -31,6 +32,12 @@ function Mesh (primitive) {
       , loc: i
       }
     })
+  }
+
+  function bind (obj) {
+    obj.posBuffer = this.attributes.pos.array
+    obj.fBuffer = this.attributes.fugue.array
+    obj.colorBuffer = this.attributes.color.array
   }
 
   function draw (offset) {

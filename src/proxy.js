@@ -8,9 +8,10 @@ colorBuffer = null
 
 function buildBuffers(){
   pointMesh = new Mesh(gl.POINTS)
-  proto.circle.posBuffer = ppb = pointMesh.attributes.pos.array
-  proto.circle.fBuffer = pointMesh.attributes.fugue.array
-  proto.circle.colorBuffer = pointMesh.attributes.color.array
+  pointMesh.bind(proto.circle)
+
+  lineMesh = new Mesh(gl.LINES)
+  lineMesh.bind(proto.line)
 }
 
 var proto = {
@@ -29,11 +30,11 @@ var proto = {
               this.posBuffer[this.indices[0] + 3] = v
             }
           , fill: function (v) {
-              this.colorBuffer[this.indices[0] / 4] = v < 0 ? v : parseColor(v)
+              this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
             }
 
           , stroke: function (v) {
-              this.colorBuffer[this.indices[0] / 4] = parseColor(v)
+              this.colorBuffer[this.indices[0]] = parseColor(v)
             },
             opacity: function () {
             }
@@ -69,7 +70,7 @@ var proto = {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
               this.colorBuffer[i] = parseInt(fill.toString().slice(1), 16)
-            })
+            }, this)
           }
         }
 , path: { d: buildPath
@@ -78,8 +79,8 @@ var proto = {
         , stroke: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
-              colorBuffer[i / 2] = + parseInt(fill.toString().slice(1), 16)
-            })
+              this.colorBuffer[i / 2] = + parseInt(fill.toString().slice(1), 16)
+            }, this)
           }
         }
 
@@ -171,11 +172,13 @@ function appendChild(el) {
 function removeChild(el) {
   var i = this.__scene__.indexOf(el)
 
-  this.__scene__.splice(i, 1)
-
-  for(var k = 0; k < 4; k++)
-    el.buffer[el.index + k] = 0
-
+  el = this.__scene__.splice(i, 1)
+  el.indices.forEach(function (i) {
+    this.buffer[i] = 0
+    this.buffer[i + 1] = 0
+    this.buffer[i + 2] = 0
+    this.buffer[i + 3] = 0
+  })
   //el.buffer.changed = true
   //el.buffer.count -= 1
 }
@@ -225,7 +228,7 @@ function constructProxy(type) {
 
     if (type.name == 'rect') {
       pointCount += 1
-      fBuffer[pointCount * 4] = 0
+      child.fBuffer[pointCount * 4] = 0
     }
     return child
   }

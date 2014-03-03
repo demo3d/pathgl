@@ -14,12 +14,13 @@ pathgl.vertexShader = [
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
 
-, 'vec3 unpack_color(float col) {'
-, '    if (col == 0.) return vec3(0);'
-, '    return vec3(mod(col / 256. / 256., 256.),'
+, 'vec4 unpack_color(float col) {'
+, '    return vec4(mod(col / 256. / 256., 256.),'
 , '                mod(col / 256. , 256.),'
-, '                mod(col, 256.)) / 256.; }'
-
+, '                mod(col, 256.),'
+, '                256.)'
+, '                / 256.;'
+, '}'
 , 'void main() {'
 
 , '    float x = replace_x;'
@@ -31,7 +32,7 @@ pathgl.vertexShader = [
 
 , '    type = fugue.x;'
 , '    gl_PointSize =  replace_r;'
-, '    v_fill = vec4(unpack_color(fill), 1.);'
+, '    v_fill = unpack_color(fill);'
 , '    v_stroke = replace_stroke;'
 , '}'
 ].join('\n\n')
@@ -106,7 +107,7 @@ function build_vs(subst) {
 
   })
   var defaults = extend({
-    stroke: '(stroke < 0.) ? vec4(stroke) : vec4(unpack_color(stroke), 1.)'
+    stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
   , r: '2. * pos.z'
   , x: 'pos.x'
   , y: 'pos.y'
@@ -126,7 +127,11 @@ function compileShader (type, src) {
   var shader = gl.createShader(type)
   gl.shaderSource(shader, src)
   gl.compileShader(shader)
-  if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) return console.error(gl.getShaderInfoLog(shader) + '\n' + src)
+  if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    var log = (gl.getShaderInfoLog(shader) || '')
+      , line = + log.split(':')[2]
+    return console.error((src || '').split('\n').slice(line-5, line + 5).join('\n'), log)
+  }
   return shader
 }
 
