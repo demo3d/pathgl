@@ -25,8 +25,8 @@ pathgl.vertexShader = [
 
 , '    float x = replace_x;'
 , '    float y = replace_y;'
-, '    float fill = color.r;'
-, '    float stroke = color.r;'
+, '    float fill = color.x;'
+, '    float stroke = color.x;'
 
 , '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
 

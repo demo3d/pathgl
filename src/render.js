@@ -6,7 +6,7 @@ function startDrawLoop() {
   pathgl.uniform('clock', new Date - start)
 
   pointMesh.draw()
-  drawLines()
+  lineMesh.draw()
   drawPolygons()
 
   pathgl.raf = raf(startDrawLoop)

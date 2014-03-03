@@ -65,7 +65,6 @@ var proto = {
         , y1: function (v) { this.posBuffer[this.indices[0] * 2 + 1] = v }
         , x2: function (v) { this.posBuffer[this.indices[1] * 2] = v }
         , y2: function (v) { this.posBuffer[this.indices[1] * 2  + 1] = v }
-        , posBuffer: linePosBuffer
         , stroke: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
@@ -75,7 +74,6 @@ var proto = {
         }
 , path: { d: buildPath
         , pathLength: noop
-        , posBuffer: linePosBuffer
         , stroke: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {

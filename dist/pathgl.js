@@ -223,8 +223,8 @@ function isShader() {
 
 , '    float x = replace_x;'
 , '    float y = replace_y;'
-, '    float fill = color.r;'
-, '    float stroke = color.r;'
+, '    float fill = color.x;'
+, '    float stroke = color.x;'
 
 , '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
 
@@ -530,10 +530,11 @@ function Mesh (primitive) {
       var buffer = gl.createBuffer()
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
       gl.bufferData(gl.ARRAY_BUFFER, 4e6, gl.STREAM_DRAW)
+      var size = primitive == gl.LINES  ? 2 : 4
       attributes[name] = {
         array: new Float32Array(1e6)
       , buffer: buffer
-      , size: 0
+      , size: size
       , changed: true
       , loc: i
       }
@@ -551,7 +552,7 @@ function Mesh (primitive) {
     for (var attr in attributes) {
       attr = attributes[attr]
       gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
-      gl.vertexAttribPointer(attr.loc, 4, gl.FLOAT, false, 0, 0)
+      gl.vertexAttribPointer(attr.loc, attr.size, gl.FLOAT, false, 0, 0)
       gl.enableVertexAttribArray(attr.loc)
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
@@ -728,7 +729,6 @@ var proto = {
         , y1: function (v) { this.posBuffer[this.indices[0] * 2 + 1] = v }
         , x2: function (v) { this.posBuffer[this.indices[1] * 2] = v }
         , y2: function (v) { this.posBuffer[this.indices[1] * 2  + 1] = v }
-        , posBuffer: linePosBuffer
         , stroke: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
@@ -738,7 +738,6 @@ var proto = {
         }
 , path: { d: buildPath
         , pathLength: noop
-        , posBuffer: linePosBuffer
         , stroke: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
@@ -907,7 +906,7 @@ function startDrawLoop() {
   pathgl.uniform('clock', new Date - start)
 
   pointMesh.draw()
-  drawLines()
+  lineMesh.draw()
   drawPolygons()
 
   pathgl.raf = raf(startDrawLoop)

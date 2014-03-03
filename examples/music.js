@@ -1,6 +1,6 @@
 d3.select('.play').on('click', play)
 
-var size = {width: .85 * innerWidth, height: innerHeight}
+var size = { width: .85 * innerWidth, height: innerHeight }
 
 var Audio = window.AudioContext || window.webkitAudioContext
   , numLines = 1024 * 2
@@ -16,9 +16,19 @@ var audio = d3.select('.right').append('audio')
 
 var node = audio.on('loadeddata', function () { promise = true}).node()
 
+d3.select('canvas').call(pathgl)
+.selectAll('line').data(d3.range(numLines)).enter()
+.append('line')
+.attr({
+  x1: 0
+, y1: 0
+, stroke: function () { return "hsl(" + Math.random() * 360 + ",100%, 50%)" }
+, x2: 30
+, y2: 30
+})
+
 function play () {
   var s = d3.select('canvas')
-          .attr(size)
           .call(pathgl)
 
   var scale = Math.PI * 2 / numLines

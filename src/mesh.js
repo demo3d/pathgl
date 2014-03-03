@@ -24,10 +24,11 @@ function Mesh (primitive) {
       var buffer = gl.createBuffer()
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
       gl.bufferData(gl.ARRAY_BUFFER, 4e6, gl.STREAM_DRAW)
+      var size = primitive == gl.LINES  ? 2 : 4
       attributes[name] = {
         array: new Float32Array(1e6)
       , buffer: buffer
-      , size: 0
+      , size: size
       , changed: true
       , loc: i
       }
@@ -45,7 +46,7 @@ function Mesh (primitive) {
     for (var attr in attributes) {
       attr = attributes[attr]
       gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
-      gl.vertexAttribPointer(attr.loc, 4, gl.FLOAT, false, 0, 0)
+      gl.vertexAttribPointer(attr.loc, attr.size, gl.FLOAT, false, 0, 0)
       gl.enableVertexAttribArray(attr.loc)
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
