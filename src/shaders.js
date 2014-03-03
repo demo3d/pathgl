@@ -8,7 +8,6 @@ pathgl.vertexShader = [
 
 , 'attribute vec4 pos;'
 , 'attribute vec4 color;'
-, 'attribute vec4 transform;'
 , 'attribute vec4 fugue;'
 
 , 'varying float type;'

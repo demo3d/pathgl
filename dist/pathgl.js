@@ -206,7 +206,6 @@ function isShader() {
 
 , 'attribute vec4 pos;'
 , 'attribute vec4 color;'
-, 'attribute vec4 transform;'
 , 'attribute vec4 fugue;'
 
 , 'varying float type;'
@@ -524,7 +523,7 @@ function Mesh (primitive) {
     attrList.forEach(function (name, i) {
       var buffer = gl.createBuffer()
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
-      gl.bufferData(gl.ARRAY_BUFFER, 1e6, gl.STREAM_DRAW)
+      gl.bufferData(gl.ARRAY_BUFFER, 4e6, gl.STREAM_DRAW)
       attributes[name] = {
         array: new Float32Array(1e6)
       , buffer: buffer
