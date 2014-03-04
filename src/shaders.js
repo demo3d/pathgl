@@ -14,6 +14,7 @@ pathgl.vertexShader = [
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
 
+
 , 'vec4 unpack_color(float col) {'
 , '    return vec4(mod(col / 256. / 256., 256.),'
 , '                mod(col / 256. , 256.),'
@@ -22,7 +23,7 @@ pathgl.vertexShader = [
 , '                / 256.;'
 , '}'
 , 'void main() {'
-
+, '    float time = clock / 1000.;'
 , '    float x = replace_x;'
 , '    float y = replace_y;'
 , '    float fill = color.x;'

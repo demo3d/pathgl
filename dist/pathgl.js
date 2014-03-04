@@ -212,6 +212,7 @@ function isShader() {
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
 
+
 , 'vec4 unpack_color(float col) {'
 , '    return vec4(mod(col / 256. / 256., 256.),'
 , '                mod(col / 256. , 256.),'
@@ -220,7 +221,7 @@ function isShader() {
 , '                / 256.;'
 , '}'
 , 'void main() {'
-
+, '    float time = clock / 1000.;'
 , '    float x = replace_x;'
 , '    float y = replace_y;'
 , '    float fill = color.x;'
@@ -509,7 +510,7 @@ function matchesSelector(selector) {
 //polygonmesh
 function Mesh (primitive) {
   var attributes = {}
-    , count = 2e5
+    , count = 1e6
     , attrList = ['pos', 'color', 'fugue']
     , program = initProgram()
 
@@ -529,10 +530,10 @@ function Mesh (primitive) {
     attrList.forEach(function (name, i) {
       var buffer = gl.createBuffer()
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
-      gl.bufferData(gl.ARRAY_BUFFER, 4e6, gl.STREAM_DRAW)
+      gl.bufferData(gl.ARRAY_BUFFER, 4 * 1e7, gl.STREAM_DRAW)
       var size = primitive == gl.LINES  ? 2 : 4
       attributes[name] = {
-        array: new Float32Array(1e6)
+        array: new Float32Array(4e5)
       , buffer: buffer
       , size: size
       , changed: true

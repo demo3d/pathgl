@@ -3,7 +3,7 @@
 //polygonmesh
 function Mesh (primitive) {
   var attributes = {}
-    , count = 2e5
+    , count = 1e6
     , attrList = ['pos', 'color', 'fugue']
     , program = initProgram()
 
@@ -23,10 +23,10 @@ function Mesh (primitive) {
     attrList.forEach(function (name, i) {
       var buffer = gl.createBuffer()
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
-      gl.bufferData(gl.ARRAY_BUFFER, 4e6, gl.STREAM_DRAW)
+      gl.bufferData(gl.ARRAY_BUFFER, 4 * 1e7, gl.STREAM_DRAW)
       var size = primitive == gl.LINES  ? 2 : 4
       attributes[name] = {
-        array: new Float32Array(1e6)
+        array: new Float32Array(4e5)
       , buffer: buffer
       , size: size
       , changed: true
