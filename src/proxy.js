@@ -9,6 +9,7 @@ colorBuffer = null
 function buildBuffers(){
   pointMesh = new Mesh(gl.POINTS)
   pointMesh.bind(proto.circle)
+  pointMesh.bind(proto.rect)
 
   lineMesh = new Mesh(gl.LINES)
   lineMesh.bind(proto.line)
@@ -42,19 +43,19 @@ var proto = {
           }
 , ellipse: { cx: noop, cy: noop, rx: noop, ry: noop } //points
 , rect: { fill: function (v) {
-            this.colorBuffer[this.indices[0] / 4] = v < 0 ? v : parseColor(v)
-          }
-        , width: function (v) {
-            this.posBuffer[this.indices[0] + 2] = v
-          }
-        , height: function (v) {
-            this.posBuffer[this.indices[0] + 3] = v
+            this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
           }
         , x: function (v){
             this.posBuffer[this.indices[0] + 0] = v
           }
         , y: function (v) {
             this.posBuffer[this.indices[0] + 1] = v
+          }
+        , width: function (v) {
+            this.posBuffer[this.indices[0] + 2] = v
+          }
+        , height: function (v) {
+            this.posBuffer[this.indices[0] + 3] = v
           }
         , rx: noop,
           ry:  noop
@@ -68,7 +69,7 @@ var proto = {
         , stroke: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
-              this.colorBuffer[i] = parseInt(fill.toString().slice(1), 16)
+              this.colorBuffer[i * 4] = parseInt(fill.toString().slice(1), 16)
             }, this)
           }
         }
@@ -77,7 +78,7 @@ var proto = {
         , stroke: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
-              this.colorBuffer[i / 2] = + parseInt(fill.toString().slice(1), 16)
+              this.colorBuffer[i] = + parseInt(fill.toString().slice(1), 16)
             }, this)
           }
         }
@@ -139,7 +140,6 @@ var types = [
 , function path() {}
 , function polygon() {}
 , function polyline() {}
-, function rect() {}
 
 , function image() {}
 , function text() {}
@@ -170,13 +170,8 @@ function appendChild(el) {
 function removeChild(el) {
   var i = this.__scene__.indexOf(el)
 
-  el = this.__scene__.splice(i, 1)
-  el.indices.forEach(function (i) {
-    this.buffer[i] = 0
-    this.buffer[i + 1] = 0
-    this.buffer[i + 2] = 0
-    this.buffer[i + 3] = 0
-  })
+  el = this.__scene__.splice(i, 1)[0]
+  el && el.mesh.free(i)
   //el.buffer.changed = true
   //el.buffer.count -= 1
 }
@@ -208,7 +203,7 @@ function constructProxy(type) {
     child.parentNode = child.parentElement = canvas
 
     var i = child.indices =
-      type.name == 'line' ? [count, count + 1] :
+      type.name == 'line' ? [count * 2, count * 2 + 1] :
       type.name == 'circle' ? [count * 4] :
       type.name == 'rect' ? [count * 4] :
       []
@@ -217,7 +212,7 @@ function constructProxy(type) {
       count += type.name == 'line' ? 2 : 1
 
     if (type.name == 'line')
-      lineCount += 1
+      lineCount += 2
 
     if (type.name == 'circle') {
       pointCount += 1

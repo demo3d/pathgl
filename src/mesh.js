@@ -1,6 +1,3 @@
-//pointmesh
-//linemesh
-//polygonmesh
 function Mesh (primitive) {
   var attributes = {}
     , count = 1e6
@@ -10,6 +7,7 @@ function Mesh (primitive) {
   init()
   return {
     init : init
+  , free: free
   , draw: draw
   , bind: bind
   , attributes: attributes
@@ -24,7 +22,7 @@ function Mesh (primitive) {
       var buffer = gl.createBuffer()
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
       gl.bufferData(gl.ARRAY_BUFFER, 4 * 1e7, gl.STREAM_DRAW)
-      var size = primitive == gl.LINES  ? 2 : 4
+      var size = name == 'pos' && primitive == gl.LINES  ? 2 : 4
       attributes[name] = {
         array: new Float32Array(4e5)
       , buffer: buffer
@@ -35,10 +33,23 @@ function Mesh (primitive) {
     })
   }
 
+  function free (index) {
+    var i, attr
+    console.log('hi')
+    for(attr in attributes){
+      attr = attributes
+      i = attr.size
+      while(i--) attributes[index * attr.size + i] = 0
+    }
+  }
+
+
+
   function bind (obj) {
-    obj.posBuffer = this.attributes.pos.array
-    obj.fBuffer = this.attributes.fugue.array
-    obj.colorBuffer = this.attributes.color.array
+    obj.posBuffer = attributes.pos.array
+    obj.fBuffer = attributes.fugue.array
+    obj.colorBuffer = attributes.color.array
+    obj.mesh = this
   }
 
   function draw (offset) {

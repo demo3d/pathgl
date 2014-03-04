@@ -7,7 +7,7 @@ function startDrawLoop() {
 
   pointMesh.draw()
   lineMesh.draw()
-  drawPolygons()
+  //drawPolygons()
 
   pathgl.raf = raf(startDrawLoop)
 }

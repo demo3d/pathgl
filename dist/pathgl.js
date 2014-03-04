@@ -505,10 +505,7 @@ function matchesSelector(selector) {
     if (interpret.apply(this, q(tokens.pop())) && (!tokens.length || ancestorMatch(this, tokens, selector.match(dividers)))) return true
 };//cpu intersection tests
 //offscreen render color test
-;//pointmesh
-//linemesh
-//polygonmesh
-function Mesh (primitive) {
+;function Mesh (primitive) {
   var attributes = {}
     , count = 1e6
     , attrList = ['pos', 'color', 'fugue']
@@ -517,6 +514,7 @@ function Mesh (primitive) {
   init()
   return {
     init : init
+  , free: free
   , draw: draw
   , bind: bind
   , attributes: attributes
@@ -531,7 +529,7 @@ function Mesh (primitive) {
       var buffer = gl.createBuffer()
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
       gl.bufferData(gl.ARRAY_BUFFER, 4 * 1e7, gl.STREAM_DRAW)
-      var size = primitive == gl.LINES  ? 2 : 4
+      var size = name == 'pos' && primitive == gl.LINES  ? 2 : 4
       attributes[name] = {
         array: new Float32Array(4e5)
       , buffer: buffer
@@ -542,10 +540,23 @@ function Mesh (primitive) {
     })
   }
 
+  function free (index) {
+    var i, attr
+    console.log('hi')
+    for(attr in attributes){
+      attr = attributes
+      i = attr.size
+      while(i--) attributes[index * attr.size + i] = 0
+    }
+  }
+
+
+
   function bind (obj) {
-    obj.posBuffer = this.attributes.pos.array
-    obj.fBuffer = this.attributes.fugue.array
-    obj.colorBuffer = this.attributes.color.array
+    obj.posBuffer = attributes.pos.array
+    obj.fBuffer = attributes.fugue.array
+    obj.colorBuffer = attributes.color.array
+    obj.mesh = this
   }
 
   function draw (offset) {
@@ -565,43 +576,6 @@ function Mesh (primitive) {
   function addAttr () {}
   function removeAttr () {}
   function boundingBox() {}
-}
-;var lineBuffer = new Uint16Array(4e4)
-var linePosBuffer = new Float32Array(4e4)
-var b1, b2, b3, b4
-function initBuffers () {
-  b1 = gl.createBuffer(), b2 = gl.createBuffer(), b3 = gl.createBuffer(), b4 = gl.createBuffer()
-}
-
-function drawLines(){
-  if (! b1) initBuffers()
-  if (! lineCount) return
-  if (linesChanged){
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, b1)
-    gl.bufferData(gl.ARRAY_BUFFER, linePosBuffer, gl.DYNAMIC_DRAW)
-    gl.vertexAttribPointer(program.pos, 2, gl.FLOAT, false, 0, 0)
-    gl.enableVertexAttribArray(program.pos)
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, b2)
-    gl.bufferData(gl.ARRAY_BUFFER, colorBuffer, gl.DYNAMIC_DRAW)
-    gl.vertexAttribPointer(program.fill, 1, gl.FLOAT, false, 0, 0)
-    gl.enableVertexAttribArray(program.fill)
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, b3)
-    gl.bufferData(gl.ARRAY_BUFFER, colorBuffer, gl.DYNAMIC_DRAW)
-    gl.vertexAttribPointer(program.stroke, 1, gl.FLOAT, false, 0, 0)
-    gl.enableVertexAttribArray(program.stroke)
-
-    pathgl.uniform('type', 0)
-    linesChanged = false
-  }
-
-  gl.drawArrays(gl.LINES, 0, lineCount)
-}
-;function drawPolygons() {
-
-
 };function querySelectorAll(selector, r) {
   return selector.replace(/^\s+|\s*([,\s\+\~>]|$)\s*/g, '$1').split(',')
   .forEach(function (s) { query(s, this).forEach(push.bind(r = [])) }, this) || r
@@ -674,6 +648,7 @@ colorBuffer = null
 function buildBuffers(){
   pointMesh = new Mesh(gl.POINTS)
   pointMesh.bind(proto.circle)
+  pointMesh.bind(proto.rect)
 
   lineMesh = new Mesh(gl.LINES)
   lineMesh.bind(proto.line)
@@ -707,19 +682,19 @@ var proto = {
           }
 , ellipse: { cx: noop, cy: noop, rx: noop, ry: noop } //points
 , rect: { fill: function (v) {
-            this.colorBuffer[this.indices[0] / 4] = v < 0 ? v : parseColor(v)
-          }
-        , width: function (v) {
-            this.posBuffer[this.indices[0] + 2] = v
-          }
-        , height: function (v) {
-            this.posBuffer[this.indices[0] + 3] = v
+            this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
           }
         , x: function (v){
             this.posBuffer[this.indices[0] + 0] = v
           }
         , y: function (v) {
             this.posBuffer[this.indices[0] + 1] = v
+          }
+        , width: function (v) {
+            this.posBuffer[this.indices[0] + 2] = v
+          }
+        , height: function (v) {
+            this.posBuffer[this.indices[0] + 3] = v
           }
         , rx: noop,
           ry:  noop
@@ -733,7 +708,7 @@ var proto = {
         , stroke: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
-              this.colorBuffer[i] = parseInt(fill.toString().slice(1), 16)
+              this.colorBuffer[i * 4] = parseInt(fill.toString().slice(1), 16)
             }, this)
           }
         }
@@ -742,7 +717,7 @@ var proto = {
         , stroke: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
-              this.colorBuffer[i / 2] = + parseInt(fill.toString().slice(1), 16)
+              this.colorBuffer[i] = + parseInt(fill.toString().slice(1), 16)
             }, this)
           }
         }
@@ -804,7 +779,6 @@ var types = [
 , function path() {}
 , function polygon() {}
 , function polyline() {}
-, function rect() {}
 
 , function image() {}
 , function text() {}
@@ -835,13 +809,8 @@ function appendChild(el) {
 function removeChild(el) {
   var i = this.__scene__.indexOf(el)
 
-  el = this.__scene__.splice(i, 1)
-  el.indices.forEach(function (i) {
-    this.buffer[i] = 0
-    this.buffer[i + 1] = 0
-    this.buffer[i + 2] = 0
-    this.buffer[i + 3] = 0
-  })
+  el = this.__scene__.splice(i, 1)[0]
+  el && el.mesh.free(i)
   //el.buffer.changed = true
   //el.buffer.count -= 1
 }
@@ -873,7 +842,7 @@ function constructProxy(type) {
     child.parentNode = child.parentElement = canvas
 
     var i = child.indices =
-      type.name == 'line' ? [count, count + 1] :
+      type.name == 'line' ? [count * 2, count * 2 + 1] :
       type.name == 'circle' ? [count * 4] :
       type.name == 'rect' ? [count * 4] :
       []
@@ -882,7 +851,7 @@ function constructProxy(type) {
       count += type.name == 'line' ? 2 : 1
 
     if (type.name == 'line')
-      lineCount += 1
+      lineCount += 2
 
     if (type.name == 'circle') {
       pointCount += 1
@@ -908,7 +877,7 @@ function startDrawLoop() {
 
   pointMesh.draw()
   lineMesh.draw()
-  drawPolygons()
+  //drawPolygons()
 
   pathgl.raf = raf(startDrawLoop)
 }

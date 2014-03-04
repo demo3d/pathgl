@@ -15,6 +15,6 @@ d3.select('canvas').call(pathgl)
 .shader({ cx: 'resolution.x / 2. + cos(-clock / mouse.x * pos.x * pos.z) * pos.z * 10.;'
         , cy: 'resolution.y / 2. + sin(-clock / mouse.y * pos.x * pos.z) * pos.z * 10.;'
         , stroke: stroke
-        , r: ' ((distance(y, resolution.y / 2.) < 15.) && (distance(x, resolution.x / 2.) < 11.)) ? 0. : pow(distance(mouse, vec2(x, y)) / distance(vec2(0.), resolution) * 8., 2.)'
+        , r: ' ((distance(y, resolution.y / 2.) < 15.) && (distance(x, resolution.x / 2.) < 11.)) ? 0. : pos.z - pow(distance(mouse, vec2(x, y)) / distance(vec2(0.), resolution) * 8., 2.)'
         })
 'pos.y + pos.y * max(distance(x, mouse.x) / resolution.x, distance(y, mouse.y) / resolution.y)'
