@@ -1,8 +1,9 @@
-function Mesh (primitive) {
+function Mesh (gl, primitive) {
   var attributes = {}
     , count = 1e6
     , attrList = ['pos', 'color', 'fugue']
-    , program = initProgram()
+
+  primitive = gl[primitive]
 
   init()
   return {
@@ -92,7 +93,7 @@ function createTarget( width, height ) {
 }
 
 function RenderTarget (gl, fbo) {
-  var meshes = buildBuffers(), i = 0
+  var meshes = buildBuffers(gl), i = 0
   flags(gl)
   //write uniforms
   //setstates
@@ -108,12 +109,12 @@ function RenderTarget (gl, fbo) {
   function beforeRender(gl) { gl.clear(gl.COLOR_BUFFER_BIT) }
 }
 
-function buildBuffers() {
-  var pointMesh = new Mesh(gl.POINTS)
+function buildBuffers(gl) {
+  var pointMesh = new Mesh(gl, 'points')
   pointMesh.bind(proto.circle)
   pointMesh.bind(proto.rect)
 
-  var lineMesh = new Mesh(gl.LINES)
+  var lineMesh = new Mesh(gl, 'lines')
   lineMesh.bind(proto.line)
   return [pointMesh, lineMesh]
   //pull scenegraph definition into here instead of pushing onto it

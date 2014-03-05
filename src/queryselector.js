@@ -1,3 +1,4 @@
+//regexes sourced from sizzle
 function querySelectorAll(selector, r) {
   return selector.replace(/^\s+|\s*([,\s\+\~>]|$)\s*/g, '$1').split(',')
   .forEach(function (s) { query(s, this).forEach(push.bind(r = [])) }, this) || r
@@ -57,5 +58,5 @@ var combinators = { ' ': function (d) { return d && d !== __scene__ && d.parent(
                   , '~': function (d) { return d && d.previousSibling() }
                   , '+': function (d, ct, p1, p2) { return ! d || ((p1 = previous(d)) && (p2 = previous(ct)) && p1 == p2 && p1) }
                   }
-var chunker = //taken from sizle
+var chunker =
   /^(\*|\w+)?(?:([\.\#]+[\w\-\.#]+)?)(\[([\w\-]+)(?:([\|\^\$\*\~]?\=)['"]?([ \w\-\/\?\&\=\:\.\(\)\!,@#%<>\{\}\$\*\^]+)["']?)?\])?(:([\w\-]+)(\(['"]?([^()]+)['"]?\))?)?/

@@ -57,17 +57,11 @@ pathgl.fragmentShader = [
 , '}'
 ].join('\n')
 
-//type
-//1 circle
-//2 rect
-//3 line
-//4 path
-
-function createProgram(vs, fs) {
+function createProgram(gl, vs, fs) {
   program = gl.createProgram()
 
-  vs = compileShader(gl.VERTEX_SHADER, vs)
-  fs = compileShader(gl.FRAGMENT_SHADER, fs)
+  vs = compileShader(gl, gl.VERTEX_SHADER, vs)
+  fs = compileShader(gl, gl.FRAGMENT_SHADER, fs)
 
   gl.attachShader(program, vs)
   gl.attachShader(program, fs)
@@ -120,11 +114,11 @@ function build_vs(subst) {
   return vertex
 }
 
-function initProgram (subst) {
-  return createProgram(build_vs(subst), pathgl.fragmentShader)
+function initProgram (gl, subst) {
+  return createProgram(gl, build_vs(subst), pathgl.fragmentShader)
 }
 
-function compileShader (type, src) {
+function compileShader (gl, type, src) {
   var shader = gl.createShader(type)
   gl.shaderSource(shader, src)
   gl.compileShader(shader)

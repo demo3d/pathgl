@@ -248,17 +248,11 @@ pathgl.fragmentShader = [
 , '}'
 ].join('\n')
 
-//type
-//1 circle
-//2 rect
-//3 line
-//4 path
-
-function createProgram(vs, fs) {
+function createProgram(gl, vs, fs) {
   program = gl.createProgram()
 
-  vs = compileShader(gl.VERTEX_SHADER, vs)
-  fs = compileShader(gl.FRAGMENT_SHADER, fs)
+  vs = compileShader(gl, gl.VERTEX_SHADER, vs)
+  fs = compileShader(gl, gl.FRAGMENT_SHADER, fs)
 
   gl.attachShader(program, vs)
   gl.attachShader(program, fs)
@@ -311,11 +305,11 @@ function build_vs(subst) {
   return vertex
 }
 
-function initProgram (subst) {
-  return createProgram(build_vs(subst), pathgl.fragmentShader)
+function initProgram (gl, subst) {
+  return createProgram(gl, build_vs(subst), pathgl.fragmentShader)
 }
 
-function compileShader (type, src) {
+function compileShader (gl, type, src) {
   var shader = gl.createShader(type)
   gl.shaderSource(shader, src)
   gl.compileShader(shader)
@@ -343,7 +337,7 @@ pathgl.stop = function () { stopRendering = true }
 function init(c) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
-  program = initProgram()
+  program = initProgram(gl)
   monkeyPatch(canvas)
   bindEvents(canvas)
   var main = RenderTarget(gl, null)
@@ -422,13 +416,12 @@ function d3_pAttr(obj) {
   return this
 }
 
-
 function d3_shader(attr, name) {
   if(arguments.length == 2) {
     var args = {}
     args[attr] = name
   }
-  initProgram(args || attr)
+  initProgram(this.gl, args || attr)
   return this
 }
 
@@ -497,11 +490,12 @@ function matchesSelector(selector) {
     if (interpret.apply(this, q(tokens.pop())) && (!tokens.length || ancestorMatch(this, tokens, selector.match(dividers)))) return true
 };//cpu intersection tests
 //offscreen render color test
-;function Mesh (primitive) {
+;function Mesh (gl, primitive) {
   var attributes = {}
     , count = 1e6
     , attrList = ['pos', 'color', 'fugue']
-    , program = initProgram()
+
+  primitive = gl[primitive]
 
   init()
   return {
@@ -591,7 +585,7 @@ function createTarget( width, height ) {
 }
 
 function RenderTarget (gl, fbo) {
-  var meshes = buildBuffers(), i = 0
+  var meshes = buildBuffers(gl), i = 0
   flags(gl)
   //write uniforms
   //setstates
@@ -607,12 +601,12 @@ function RenderTarget (gl, fbo) {
   function beforeRender(gl) { gl.clear(gl.COLOR_BUFFER_BIT) }
 }
 
-function buildBuffers() {
-  var pointMesh = new Mesh(gl.POINTS)
+function buildBuffers(gl) {
+  var pointMesh = new Mesh(gl, 'points')
   pointMesh.bind(proto.circle)
   pointMesh.bind(proto.rect)
 
-  var lineMesh = new Mesh(gl.LINES)
+  var lineMesh = new Mesh(gl, 'lines')
   lineMesh.bind(proto.line)
   return [pointMesh, lineMesh]
   //pull scenegraph definition into here instead of pushing onto it
@@ -620,7 +614,8 @@ function buildBuffers() {
    //pathMesh
   //textmesh
 }
-;function querySelectorAll(selector, r) {
+;//regexes sourced from sizzle
+function querySelectorAll(selector, r) {
   return selector.replace(/^\s+|\s*([,\s\+\~>]|$)\s*/g, '$1').split(',')
   .forEach(function (s) { query(s, this).forEach(push.bind(r = [])) }, this) || r
 }
@@ -679,7 +674,7 @@ var combinators = { ' ': function (d) { return d && d !== __scene__ && d.parent(
                   , '~': function (d) { return d && d.previousSibling() }
                   , '+': function (d, ct, p1, p2) { return ! d || ((p1 = previous(d)) && (p2 = previous(ct)) && p1 == p2 && p1) }
                   }
-var chunker = //taken from sizle
+var chunker =
   /^(\*|\w+)?(?:([\.\#]+[\w\-\.#]+)?)(\[([\w\-]+)(?:([\|\^\$\*\~]?\=)['"]?([ \w\-\/\?\&\=\:\.\(\)\!,@#%<>\{\}\$\*\^]+)["']?)?\])?(:([\w\-]+)(\(['"]?([^()]+)['"]?\))?)?/
 ;var pointsChanged = true
 var pointCount = 0
@@ -777,6 +772,7 @@ var baseProto = extend(Object.create(null), {
 , previousSibling: function () { canvas.scene[canvas.__scene__.indexOf(this) - 1] }
 , nextSibling: function () { canvas.scene[canvas.__scene__.indexOf()  + 1] }
 , parent: function () { return __scene__ }
+, gl: gl
 
 , transform: function (d) {
   }
@@ -921,9 +917,31 @@ function countFrames(elapsed) {
   frames[dt] = (frames[dt] || (frames[dt] = 0)) + 1
   time1 = elapsed
 }
-;var log = console.log.bind(console)
+;function noop () {}
 
-function noop () {}
+function push(d) { return this.push(d) }
+
+function powerOfTwo(x) { return x && ! (x & (x - 1)) }
+
+function each(obj, fn) { for (var key in obj) fn(obj[key], key, obj) }
+
+function clamp (x, min, max) { return Math.min(Math.max(x, min), max) }
+
+function uniq(ar) { return ar.filter(function (d, i) { return ar.indexOf(d) == i }) }
+
+function flatten(ar) { return ar.reduce(function (a, b) { return a.concat(b.map ? flatten(b) : b) }) }
+
+function range(a, b) {
+  return Array(Math.abs(b - a)).join().split(',').map(function (d, i) { return i + a })
+}
+
+function isVideoUrl(url) {
+  return (url.split('.').pop() || '').join().match(/mp4|ogg|webm/)
+}
+
+function hash(str) {
+  return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0)
+}
 
 function extend (a, b) {
   if (arguments.length > 2) [].forEach.call(arguments, function (b) { extend(a, b) })
@@ -931,39 +949,7 @@ function extend (a, b) {
   return a
 }
 
-
-
-function hash(str) {
-  return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0)
-}
-
-function each(obj, fn) { for (var key in obj) fn(obj[key], key, obj) }
-
-function uniq(ar) { return ar.filter(function (d, i) { return ar.indexOf(d) == i }) }
-
-function push(d) { return this.push(d) }
-
-function flatten(ar) { return ar.reduce(function (a, b) { return a.concat(b.map ? flatten(b) : b) }) }
-
-function clamp (x, min, max) {
-  return Math.min(Math.max(x, min), max);
-}
-
-function range(a, b) {
-  return Array(Math.abs(b - a)).join().split(',').map(function (d, i) { return i + a })
-}
-
-function powerOfTwo(x) {
-  return x && ! (x & (x - 1))
-}
-
-
-function pointInPolygon(x, y, shape) {
-}
-
-function isVideoUrl(url) {
-  return (url.split('.').pop() || '').join().match(/mp4|ogg|webm/)
-};  return init(canvas)
+function pointInPolygon(x, y, shape) {};  return init(canvas)
 };var forceShader = [
   'precision mediump float;'
 , 'const vec3 TARGET = vec3( 0, 0, 0.01 )'

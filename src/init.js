@@ -5,7 +5,7 @@ pathgl.stop = function () { stopRendering = true }
 function init(c) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
-  program = initProgram()
+  program = initProgram(gl)
   monkeyPatch(canvas)
   bindEvents(canvas)
   var main = RenderTarget(gl, null)
@@ -84,13 +84,12 @@ function d3_pAttr(obj) {
   return this
 }
 
-
 function d3_shader(attr, name) {
   if(arguments.length == 2) {
     var args = {}
     args[attr] = name
   }
-  initProgram(args || attr)
+  initProgram(this.gl, args || attr)
   return this
 }
 
