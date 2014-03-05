@@ -6,19 +6,9 @@ var linesChanged = true
 fBuffer = null
 colorBuffer = null
 
-function buildBuffers(){
-  pointMesh = new Mesh(gl.POINTS)
-  pointMesh.bind(proto.circle)
-  pointMesh.bind(proto.rect)
-
-  lineMesh = new Mesh(gl.LINES)
-  lineMesh.bind(proto.line)
-}
-
 var proto = {
   circle: { cx: function (v) {
               this.posBuffer[this.indices[0] + 0] = v
-
             }
           , cy: function (v) {
               this.posBuffer[this.indices[0] + 1] = v

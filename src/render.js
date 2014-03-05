@@ -1,14 +1,9 @@
-
 var start = Date.now()
+var tasks = []
 function startDrawLoop() {
-  beforeRender()
-
-  pathgl.uniform('clock', new Date - start)
-
-  pointMesh.draw()
-  lineMesh.draw()
-  //drawPolygons()
-
+  tasks.forEach(function (task) {
+    task()
+  })
   pathgl.raf = raf(startDrawLoop)
 }
 
@@ -21,13 +16,4 @@ function countFrames(elapsed) {
   var dt = elapsed - time1
   frames[dt] = (frames[dt] || (frames[dt] = 0)) + 1
   time1 = elapsed
-}
-
-
-function beforeRender() {
-  // countFrames(elapsed)
-  gl.clear(gl.COLOR_BUFFER_BIT
-           //| gl.DEPTH_BUFFER_BIT
-           //| gl.STENCIL_BUFFER_BIT
-          )
 }

@@ -7,7 +7,7 @@ pathgl.stop = function () {}
 pathgl.context = function () {}
 pathgl.uniform = function () {}
 pathgl.texture = function () {}
-var tasks = []
+
 function pathgl(canvas) {
   var gl, program, programs
 
@@ -346,20 +346,19 @@ function init(c) {
   program = initProgram()
   monkeyPatch(canvas)
   bindEvents(canvas)
-  flags(canvas)
-  buildBuffers()
+  var main = RenderTarget(gl, null)
+  tasks.push(main.draw)
   startDrawLoop()
   return canvas
 }
 
-function flags() {
+function flags(gl) {
   gl.disable(gl.SCISSOR_TEST)
   gl.stencilMask(1, 1, 1, 1)
   gl.clear(gl.COLOR_BUFFER_BIT)
   gl.colorMask(true, true, true, true)
   gl.disable(gl.BLEND)
   gl.enable(gl.CULL_FACE)
-  window.gl = gl
 }
 
 function bindEvents(canvas) {
@@ -591,14 +590,37 @@ function createTarget( width, height ) {
   return target
 }
 
-
-function createTarget () {
-  //bindFBO
+function RenderTarget (gl, fbo) {
+  var meshes = buildBuffers(), i = 0
+  flags(gl)
   //write uniforms
-  //
+  //setstates
   //draw meshs
   //cleanup
-};function querySelectorAll(selector, r) {
+  return { draw: draw }
+  function draw () {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+    beforeRender(gl)
+    pathgl.uniform('clock', new Date - start)
+    for(i = -1; ++i < meshes.length;) meshes[i].draw()
+  }
+  function beforeRender(gl) { gl.clear(gl.COLOR_BUFFER_BIT) }
+}
+
+function buildBuffers() {
+  var pointMesh = new Mesh(gl.POINTS)
+  pointMesh.bind(proto.circle)
+  pointMesh.bind(proto.rect)
+
+  var lineMesh = new Mesh(gl.LINES)
+  lineMesh.bind(proto.line)
+  return [pointMesh, lineMesh]
+  //pull scenegraph definition into here instead of pushing onto it
+
+   //pathMesh
+  //textmesh
+}
+;function querySelectorAll(selector, r) {
   return selector.replace(/^\s+|\s*([,\s\+\~>]|$)\s*/g, '$1').split(',')
   .forEach(function (s) { query(s, this).forEach(push.bind(r = [])) }, this) || r
 }
@@ -667,19 +689,9 @@ var linesChanged = true
 fBuffer = null
 colorBuffer = null
 
-function buildBuffers(){
-  pointMesh = new Mesh(gl.POINTS)
-  pointMesh.bind(proto.circle)
-  pointMesh.bind(proto.rect)
-
-  lineMesh = new Mesh(gl.LINES)
-  lineMesh.bind(proto.line)
-}
-
 var proto = {
   circle: { cx: function (v) {
               this.posBuffer[this.indices[0] + 0] = v
-
             }
           , cy: function (v) {
               this.posBuffer[this.indices[0] + 1] = v
@@ -890,17 +902,12 @@ function constructProxy(type) {
 var e = {}
 function event (type, listener) {}
 
-var tween = 'float x(i) { return a / b + b * i }';
-var start = Date.now()
+var tween = 'float x(i) { return a / b + b * i }';var start = Date.now()
+var tasks = []
 function startDrawLoop() {
-  beforeRender()
-
-  pathgl.uniform('clock', new Date - start)
-
-  pointMesh.draw()
-  lineMesh.draw()
-  //drawPolygons()
-
+  tasks.forEach(function (task) {
+    task()
+  })
   pathgl.raf = raf(startDrawLoop)
 }
 
@@ -914,15 +921,7 @@ function countFrames(elapsed) {
   frames[dt] = (frames[dt] || (frames[dt] = 0)) + 1
   time1 = elapsed
 }
-
-
-function beforeRender() {
-  // countFrames(elapsed)
-  gl.clear(gl.COLOR_BUFFER_BIT
-           //| gl.DEPTH_BUFFER_BIT
-           //| gl.STENCIL_BUFFER_BIT
-          )
-};var log = console.log.bind(console)
+;var log = console.log.bind(console)
 
 function noop () {}
 

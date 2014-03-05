@@ -91,11 +91,33 @@ function createTarget( width, height ) {
   return target
 }
 
-
-function createTarget () {
-  //bindFBO
+function RenderTarget (gl, fbo) {
+  var meshes = buildBuffers(), i = 0
+  flags(gl)
   //write uniforms
-  //
+  //setstates
   //draw meshs
   //cleanup
+  return { draw: draw }
+  function draw () {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+    beforeRender(gl)
+    pathgl.uniform('clock', new Date - start)
+    for(i = -1; ++i < meshes.length;) meshes[i].draw()
+  }
+  function beforeRender(gl) { gl.clear(gl.COLOR_BUFFER_BIT) }
+}
+
+function buildBuffers() {
+  var pointMesh = new Mesh(gl.POINTS)
+  pointMesh.bind(proto.circle)
+  pointMesh.bind(proto.rect)
+
+  var lineMesh = new Mesh(gl.LINES)
+  lineMesh.bind(proto.line)
+  return [pointMesh, lineMesh]
+  //pull scenegraph definition into here instead of pushing onto it
+
+   //pathMesh
+  //textmesh
 }
