@@ -6,7 +6,7 @@ pathgl.stop = function () {}
 pathgl.context = function () {}
 pathgl.uniform = function () {}
 pathgl.texture = function () {}
-
+var tasks = []
 function pathgl(canvas) {
   var gl, program, programs
 

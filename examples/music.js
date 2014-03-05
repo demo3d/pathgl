@@ -16,17 +16,6 @@ var audio = d3.select('.right').append('audio')
 
 var node = audio.on('loadeddata', function () { promise = true}).node()
 
-d3.select('canvas').call(pathgl)
-.selectAll('line').data(d3.range(6)).enter()
-.append('line')
-.attr({
-  x1: function (d, i) { return Math.random() * 960 }
-, y1: function (d, i) { return  Math.random() * 500 }
-, stroke: function () { return 'pink' }
-, x2: function (d, i) { return Math.cos(i * 2) * 300 }
-, y2: function (d, i) { return Math.sin(i * 2) * 300 }
-})
-
 function play () {
   var s = d3.select('canvas')
           .call(pathgl)

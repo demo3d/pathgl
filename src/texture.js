@@ -50,13 +50,6 @@ function update() {
 }
 
 function constructOffscreenRenderer(num) {
-  var prog = initProgram()
-  this.fbo = gl.createFramebuffer()
-  this.draw = function () {
-    gl.useProgram(prog)
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-  }
 }
 
 function parseImage (image) {

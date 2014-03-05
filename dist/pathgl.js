@@ -7,7 +7,7 @@ pathgl.stop = function () {}
 pathgl.context = function () {}
 pathgl.uniform = function () {}
 pathgl.texture = function () {}
-
+var tasks = []
 function pathgl(canvas) {
   var gl, program, programs
 
@@ -178,13 +178,6 @@ function update() {
 }
 
 function constructOffscreenRenderer(num) {
-  var prog = initProgram()
-  this.fbo = gl.createFramebuffer()
-  this.draw = function () {
-    gl.useProgram(prog)
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-  }
 }
 
 function parseImage (image) {
@@ -576,6 +569,35 @@ function matchesSelector(selector) {
   function addAttr () {}
   function removeAttr () {}
   function boundingBox() {}
+}
+
+function createTarget( width, height ) {
+  var target = {}
+  target.framebuffer = gl.createFramebuffer()
+  target.renderbuffer = gl.createRenderbuffer()
+  target.texture = gl.createTexture()
+
+  gl.bindTexture(gl.TEXTURE_2D, target.texture)
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+  gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer)
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.texture, 0)
+
+  gl.bindTexture(gl.TEXTURE_2D, null )
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+  return target
+}
+
+
+function createTarget () {
+  //bindFBO
+  //write uniforms
+  //
+  //draw meshs
+  //cleanup
 };function querySelectorAll(selector, r) {
   return selector.replace(/^\s+|\s*([,\s\+\~>]|$)\s*/g, '$1').split(',')
   .forEach(function (s) { query(s, this).forEach(push.bind(r = [])) }, this) || r
@@ -900,33 +922,7 @@ function beforeRender() {
            //| gl.DEPTH_BUFFER_BIT
            //| gl.STENCIL_BUFFER_BIT
           )
-}
-
-function createTarget( width, height ) {
-  var target = {}
-  target.framebuffer = gl.createFramebuffer()
-  target.renderbuffer = gl.createRenderbuffer()
-  target.texture = gl.createTexture()
-  // set up framebuffer
-  gl.bindTexture(gl.TEXTURE_2D, target.texture)
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-  gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer)
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.texture, 0)
-  // set up renderbuffer
-  gl.bindRenderbuffer(gl.RENDERBUFFER, target.renderbuffer)
-  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height)
-  gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, target.renderbuffer)
-  // clean up
-  gl.bindTexture(gl.TEXTURE_2D, null )
-  gl.bindRenderbuffer(gl.RENDERBUFFER, null )
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-  return target
-}
-;var log = console.log.bind(console)
+};var log = console.log.bind(console)
 
 function noop () {}
 
@@ -979,4 +975,50 @@ function pointInPolygon(x, y, shape) {
 function isVideoUrl(url) {
   return (url.split('.').pop() || '').join().match(/mp4|ogg|webm/)
 };  return init(canvas)
+};var forceShader = [
+  'precision mediump float;'
+, 'const vec3 TARGET = vec3( 0, 0, 0.01 )'
+, 'uniform sampler2D uParticleData;'
+, 'uniform vec2 uViewport;'
+, 'vec4 texelAtOffet( vec2 offset ) {'
+,     'return texture2D( uParticleData, ( gl_FragCoord.xy + offset ) / uViewport );'
+, '}'
+, 'void main() {'
+,    ' int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
+, '    if ( slot == 0 ) { '
+,         'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'
+,         'vec4 dataB = texelAtOffet( vec2( 1, 0 ) );'
+,         'vec3 pos = dataA.xyz;'
+,         'vec3 vel = dataB.xyz;'
+,         'float phase = dataA.w;'
+,         'if ( phase > 0.0 ) {'
+,             'pos += vel * 0.005;'
+,             'if ( length( TARGET - pos ) < 0.035 ) phase = 0.0;'
+,             'else phase += 0.1;'
+,         '} else {'
+,             'pos = vec3(-1);'
+,         '}'
+,         'gl_FragColor = vec4( pos, phase );'
+,     '} else if ( slot == 1 ) {'
+,         'vec4 dataA = texelAtOffet( vec2( -1, 0 ) );'
+,         'vec4 dataB = texelAtOffet( vec2( 0, 0 ) );'
+,         'vec3 pos = dataA.xyz;'
+,         'vec3 vel = dataB.xyz;'
+,         'float phase = dataA.w;'
+,         'if ( phase > 0.0 ) {'
+,             'vec3 delta = normalize( TARGET - pos );'
+,             'vel += delta * 0.05;'
+,             'vel *= 0.991;'
+,         '} else {'
+,             'vel = vec3(0);'
+,         '}'
+,         'gl_FragColor = vec4( vel, 1.0 );'
+,     '}'
+, '}'
+].join('\n')
+
+pathgl.sim = {}
+
+pathgl.sim.force = function () {
+ return pathgl.texture(forceShader)
 } }()
