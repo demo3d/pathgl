@@ -8,7 +8,7 @@ function init(c) {
   program = initProgram(gl)
   monkeyPatch(canvas)
   bindEvents(canvas)
-  var main = RenderTarget(gl, null)
+  var main = RenderTarget(canvas, null)
   tasks.push(main.draw)
   startDrawLoop()
   return canvas

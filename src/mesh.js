@@ -36,15 +36,12 @@ function Mesh (gl, primitive) {
 
   function free (index) {
     var i, attr
-    console.log('hi')
-    for(attr in attributes){
+    for(attr in attributes) {
       attr = attributes
       i = attr.size
       while(i--) attributes[index * attr.size + i] = 0
     }
   }
-
-
 
   function bind (obj) {
     obj.posBuffer = attributes.pos.array
@@ -92,33 +89,33 @@ function createTarget( width, height ) {
   return target
 }
 
-function RenderTarget (gl, fbo) {
-  var meshes = buildBuffers(gl), i = 0
+function RenderTarget (screen, fbo) {
+  screen.types = SVGProxy()
+  var gl = screen.gl
+    , meshes = fbo ? [] : buildBuffers(gl, screen.types)
+    , i = 0
   flags(gl)
-  //write uniforms
-  //setstates
-  //draw meshs
-  //cleanup
   return { draw: draw }
   function draw () {
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+    //setstates
     beforeRender(gl)
     pathgl.uniform('clock', new Date - start)
     for(i = -1; ++i < meshes.length;) meshes[i].draw()
+    //cleanup
   }
   function beforeRender(gl) { gl.clear(gl.COLOR_BUFFER_BIT) }
 }
 
-function buildBuffers(gl) {
+function buildBuffers(gl, types) {
   var pointMesh = new Mesh(gl, 'points')
-  pointMesh.bind(proto.circle)
-  pointMesh.bind(proto.rect)
+  pointMesh.bind(types.circle)
+  pointMesh.bind(types.rect)
 
   var lineMesh = new Mesh(gl, 'lines')
-  lineMesh.bind(proto.line)
+  lineMesh.bind(types.line)
   return [pointMesh, lineMesh]
   //pull scenegraph definition into here instead of pushing onto it
-
-   //pathMesh
+  //pathMesh
   //textmesh
 }

@@ -126,29 +126,35 @@ var cssColors = {
 , "tomato": 0xFF6347, "turquoise": 0x40E0D0, "violet": 0xEE82EE, "wheat": 0xF5DEB3, "white": 0xFFFFFF, "whitesmoke": 0xF5F5F5
 , "yellow": 0xFFFF00, "yellowgreen": 0x9ACD32
 }
-;pathgl.texture = function (image, options) {
-  if (null == image) image = constructOffscreenRenderer(image)
+;var textures = {}
+
+pathgl.texture = function (image, options, target) {
+  var self = Object.create(Texture)
+  self.gl = gl
+  if (null == image) image = RenderTarget(self, gl.createFramebuffer())
   if ('string' == typeof image) image = parseImage(image)
 
-  var self = {
+  extend(self, options, {
     image: image
+  , target: target || null
   , data: gl.createTexture()
   , width: image.width
   , height: image.height
-  }
+  })
 
-  return extend(Object.create(Texture), options, self).load()
+  textures[target] = (textures.target || []).push(self)
+  return self.load()
 }
 
 var Texture = {
   update: update
-, proto: Texture
 , forEach: function () {}
 , load: function ()  {
     var image = this.image
+    if (image.draw) this.update = image.draw
 
     if (image.complete || image.readyState == 4) this.update()
-    else image.addEventListener('load', this.update.bind(this))
+    else image.addEventListener && image.addEventListener('load', this.update.bind(this))
 
     return this
   }
@@ -158,12 +164,14 @@ var Texture = {
 , repeat: function () {
     setInterval(this.update.bind(this), 15)
   }
-, appendChild: function () {
-
+, appendChild: function (el) {
+    return (types[el.toLowerCase()] || noop)(el)
   }
 , valueOf: function () {
     return - 1
   }
+, ownerDocument: { createElementNS: function (_, tag) { return tag}
+                 }
 }
 
 function update() {
@@ -175,9 +183,6 @@ function update() {
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image)
   if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
-}
-
-function constructOffscreenRenderer(num) {
 }
 
 function parseImage (image) {
@@ -340,7 +345,7 @@ function init(c) {
   program = initProgram(gl)
   monkeyPatch(canvas)
   bindEvents(canvas)
-  var main = RenderTarget(gl, null)
+  var main = RenderTarget(canvas, null)
   tasks.push(main.draw)
   startDrawLoop()
   return canvas
@@ -528,15 +533,12 @@ function matchesSelector(selector) {
 
   function free (index) {
     var i, attr
-    console.log('hi')
-    for(attr in attributes){
+    for(attr in attributes) {
       attr = attributes
       i = attr.size
       while(i--) attributes[index * attr.size + i] = 0
     }
   }
-
-
 
   function bind (obj) {
     obj.posBuffer = attributes.pos.array
@@ -584,34 +586,34 @@ function createTarget( width, height ) {
   return target
 }
 
-function RenderTarget (gl, fbo) {
-  var meshes = buildBuffers(gl), i = 0
+function RenderTarget (screen, fbo) {
+  screen.types = SVGProxy()
+  var gl = screen.gl
+    , meshes = fbo ? [] : buildBuffers(gl, screen.types)
+    , i = 0
   flags(gl)
-  //write uniforms
-  //setstates
-  //draw meshs
-  //cleanup
   return { draw: draw }
   function draw () {
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+    //setstates
     beforeRender(gl)
     pathgl.uniform('clock', new Date - start)
     for(i = -1; ++i < meshes.length;) meshes[i].draw()
+    //cleanup
   }
   function beforeRender(gl) { gl.clear(gl.COLOR_BUFFER_BIT) }
 }
 
-function buildBuffers(gl) {
+function buildBuffers(gl, types) {
   var pointMesh = new Mesh(gl, 'points')
-  pointMesh.bind(proto.circle)
-  pointMesh.bind(proto.rect)
+  pointMesh.bind(types.circle)
+  pointMesh.bind(types.rect)
 
   var lineMesh = new Mesh(gl, 'lines')
-  lineMesh.bind(proto.line)
+  lineMesh.bind(types.line)
   return [pointMesh, lineMesh]
   //pull scenegraph definition into here instead of pushing onto it
-
-   //pathMesh
+  //pathMesh
   //textmesh
 }
 ;//regexes sourced from sizzle
@@ -681,8 +683,13 @@ var pointCount = 0
 var lineCount = 0
 var linesChanged = true
 
-fBuffer = null
-colorBuffer = null
+function SVGProxy () {
+  return types.reduce(function (a, type) {
+           a[type.name] = constructProxy(type)
+           type.prototype = extend(Object.create(proto[type.name]), baseProto)
+           return a
+         }, {})
+}
 
 var proto = {
   circle: { cx: function (v) {
@@ -813,11 +820,7 @@ var types = [
 , function image() {}
 , function text() {}
 , function g() {}
-].reduce(function (a, type) {
-              a[type.name] = constructProxy(type)
-              type.prototype = extend(Object.create(proto[type.name]), baseProto)
-              return a
-            }, {})
+]
 
 function buildPath (d) {
   parse.call(this, d, this.stroke(this.attr.stroke))
@@ -833,7 +836,7 @@ function insertBefore(node, next) {
 }
 
 function appendChild(el) {
-  return (types[el.tagName.toLowerCase()] || noop)(el.tagName)
+  return (this.types[el.tagName.toLowerCase()] || noop)(el.tagName)
 }
 
 function removeChild(el) {
@@ -860,9 +863,9 @@ var attrDefaults = {
 }
 
 function constructProxy(type) {
-  return function (tagName) {
+  return function x(tagName) {
     var child = new type()
-
+    extend(child, x)
     var count = canvas.__scene__.push(child)
 
     var numArrays = 4

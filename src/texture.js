@@ -1,26 +1,32 @@
-pathgl.texture = function (image, options) {
-  if (null == image) image = constructOffscreenRenderer(image)
+var textures = {}
+
+pathgl.texture = function (image, options, target) {
+  var self = Object.create(Texture)
+  self.gl = gl
+  if (null == image) image = RenderTarget(self, gl.createFramebuffer())
   if ('string' == typeof image) image = parseImage(image)
 
-  var self = {
+  extend(self, options, {
     image: image
+  , target: target || null
   , data: gl.createTexture()
   , width: image.width
   , height: image.height
-  }
+  })
 
-  return extend(Object.create(Texture), options, self).load()
+  textures[target] = (textures.target || []).push(self)
+  return self.load()
 }
 
 var Texture = {
   update: update
-, proto: Texture
 , forEach: function () {}
 , load: function ()  {
     var image = this.image
+    if (image.draw) this.update = image.draw
 
     if (image.complete || image.readyState == 4) this.update()
-    else image.addEventListener('load', this.update.bind(this))
+    else image.addEventListener && image.addEventListener('load', this.update.bind(this))
 
     return this
   }
@@ -30,12 +36,14 @@ var Texture = {
 , repeat: function () {
     setInterval(this.update.bind(this), 15)
   }
-, appendChild: function () {
-
+, appendChild: function (el) {
+    return (types[el.toLowerCase()] || noop)(el)
   }
 , valueOf: function () {
     return - 1
   }
+, ownerDocument: { createElementNS: function (_, tag) { return tag}
+                 }
 }
 
 function update() {
@@ -47,9 +55,6 @@ function update() {
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image)
   if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
-}
-
-function constructOffscreenRenderer(num) {
 }
 
 function parseImage (image) {

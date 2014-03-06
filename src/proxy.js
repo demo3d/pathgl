@@ -3,8 +3,13 @@ var pointCount = 0
 var lineCount = 0
 var linesChanged = true
 
-fBuffer = null
-colorBuffer = null
+function SVGProxy () {
+  return types.reduce(function (a, type) {
+           a[type.name] = constructProxy(type)
+           type.prototype = extend(Object.create(proto[type.name]), baseProto)
+           return a
+         }, {})
+}
 
 var proto = {
   circle: { cx: function (v) {
@@ -135,11 +140,7 @@ var types = [
 , function image() {}
 , function text() {}
 , function g() {}
-].reduce(function (a, type) {
-              a[type.name] = constructProxy(type)
-              type.prototype = extend(Object.create(proto[type.name]), baseProto)
-              return a
-            }, {})
+]
 
 function buildPath (d) {
   parse.call(this, d, this.stroke(this.attr.stroke))
@@ -155,7 +156,7 @@ function insertBefore(node, next) {
 }
 
 function appendChild(el) {
-  return (types[el.tagName.toLowerCase()] || noop)(el.tagName)
+  return (this.types[el.tagName.toLowerCase()] || noop)(el.tagName)
 }
 
 function removeChild(el) {
@@ -182,9 +183,9 @@ var attrDefaults = {
 }
 
 function constructProxy(type) {
-  return function (tagName) {
+  return function x(tagName) {
     var child = new type()
-
+    extend(child, x)
     var count = canvas.__scene__.push(child)
 
     var numArrays = 4
