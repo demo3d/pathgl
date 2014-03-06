@@ -2,17 +2,18 @@ var textures = {null: []}
 
 pathgl.texture = function (image, options, target) {
   var self = Object.create(Texture)
+  var tex = gl.createTexture()
+
   self.gl = gl
   if (null == image)
-    image = RenderTarget(self, gl.createFramebuffer())
-
+    image = RenderTarget(self, initTexture2(tex))
 
   if ('string' == typeof image) image = parseImage(image)
 
   extend(self, options, {
     image: image
   , target: target || null
-  , data: image.texture || gl.createTexture()
+  , data: tex
   , width: image.width
   , height: image.height
   , update: image.update || self.update
@@ -63,7 +64,8 @@ function initTexture() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image)
-  if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
+
+if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
 function parseImage (image) {

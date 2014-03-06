@@ -77,11 +77,6 @@ function createProgram(gl, vs, fs) {
   gl.linkProgram(program)
   gl.useProgram(program)
 
-  program.pos = 0;
-  program.fill = 1;
-  program.stroke = 2;
-  program.fugue = 4;
-
   if (! gl.getProgramParameter(program, gl.LINK_STATUS)) throw name + ': ' + gl.getProgramInfoLog(program)
 
   each({ type: [0]

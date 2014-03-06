@@ -136,7 +136,6 @@ var types = [
 , function path() {}
 , function polygon() {}
 , function polyline() {}
-
 , function image() {}
 , function text() {}
 , function g() {}
