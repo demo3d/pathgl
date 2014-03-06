@@ -3,7 +3,7 @@ function Mesh (gl, primitive) {
     , count = 0
     , attrList = ['pos', 'color', 'fugue']
 
-  primitive = gl[primitive]
+  primitive = gl[primitive.toUpperCase()]
 
   init()
   return {
@@ -66,7 +66,7 @@ function Mesh (gl, primitive) {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
     if (count)
-      gl.drawArrays(primitive, offset, count)
+      gl.drawArrays(primitive, offset || 0, count)
   }
   function set () {}
   function addAttr () {}
