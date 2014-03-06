@@ -9,7 +9,7 @@ function init(c) {
   monkeyPatch(canvas)
   bindEvents(canvas)
   var main = RenderTarget(canvas, null)
-  tasks.push(main.draw)
+  tasks.push(main.update)
   startDrawLoop()
   return canvas
 }
@@ -89,7 +89,7 @@ function d3_shader(attr, name) {
     var args = {}
     args[attr] = name
   }
-  initProgram(this.gl, args || attr)
+  initProgram(this.node().parentNode.gl, args || attr)
   return this
 }
 

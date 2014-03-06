@@ -126,32 +126,37 @@ var cssColors = {
 , "tomato": 0xFF6347, "turquoise": 0x40E0D0, "violet": 0xEE82EE, "wheat": 0xF5DEB3, "white": 0xFFFFFF, "whitesmoke": 0xF5F5F5
 , "yellow": 0xFFFF00, "yellowgreen": 0x9ACD32
 }
-;var textures = {}
+;var textures = {null: []}
 
 pathgl.texture = function (image, options, target) {
   var self = Object.create(Texture)
   self.gl = gl
-  if (null == image) image = RenderTarget(self, gl.createFramebuffer())
+  if (null == image)
+    image = RenderTarget(self, gl.createFramebuffer())
+
+
   if ('string' == typeof image) image = parseImage(image)
 
   extend(self, options, {
     image: image
   , target: target || null
-  , data: gl.createTexture()
+  , data: image.texture || gl.createTexture()
   , width: image.width
   , height: image.height
+  , update: image.update || self.update
   })
 
-  textures[target] = (textures.target || []).push(self)
+  target = self.target
+  ;(textures[target] || (textures[target] = [])).push(self)
+
   return self.load()
 }
 
 var Texture = {
-  update: update
+  update: initTexture
 , forEach: function () {}
 , load: function ()  {
     var image = this.image
-    if (image.draw) this.update = image.draw
 
     if (image.complete || image.readyState == 4) this.update()
     else image.addEventListener && image.addEventListener('load', this.update.bind(this))
@@ -174,7 +179,11 @@ var Texture = {
                  }
 }
 
-function update() {
+function updateTexture() {
+
+}
+
+function initTexture() {
   gl.bindTexture(gl.TEXTURE_2D, this.data)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
@@ -249,7 +258,7 @@ pathgl.fragmentShader = [
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture, gl_PointCoord) : v_stroke;'
+, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture, gl_PointCoord) + vec4(0., 0.,0.,1.) : v_stroke;'
 , '}'
 ].join('\n')
 
@@ -346,7 +355,7 @@ function init(c) {
   monkeyPatch(canvas)
   bindEvents(canvas)
   var main = RenderTarget(canvas, null)
-  tasks.push(main.draw)
+  tasks.push(main.update)
   startDrawLoop()
   return canvas
 }
@@ -426,7 +435,7 @@ function d3_shader(attr, name) {
     var args = {}
     args[attr] = name
   }
-  initProgram(this.gl, args || attr)
+  initProgram(this.node().parentNode.gl, args || attr)
   return this
 }
 
@@ -497,7 +506,7 @@ function matchesSelector(selector) {
 //offscreen render color test
 ;function Mesh (gl, primitive) {
   var attributes = {}
-    , count = 1e6
+    , count = 0
     , attrList = ['pos', 'color', 'fugue']
 
   primitive = gl[primitive]
@@ -506,6 +515,7 @@ function matchesSelector(selector) {
   return {
     init : init
   , free: free
+  , plus1: plus1
   , draw: draw
   , bind: bind
   , attributes: attributes
@@ -513,6 +523,10 @@ function matchesSelector(selector) {
   , addAttr: addAttr
   , removeAttr: removeAttr
   , boundingBox: boundingBox
+  }
+
+  function plus1() {
+    count += 1
   }
 
   function init (){
@@ -557,8 +571,8 @@ function matchesSelector(selector) {
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
-
-    gl.drawArrays(primitive, offset, count)
+    if (count)
+      gl.drawArrays(primitive, offset, count)
   }
   function set () {}
   function addAttr () {}
@@ -566,40 +580,58 @@ function matchesSelector(selector) {
   function boundingBox() {}
 }
 
-function createTarget( width, height ) {
-  var target = {}
-  target.framebuffer = gl.createFramebuffer()
-  target.renderbuffer = gl.createRenderbuffer()
-  target.texture = gl.createTexture()
+function renderToTexture(fbo, width, height) {
+  width = width || 512
+  height = height || 512
 
-  gl.bindTexture(gl.TEXTURE_2D, target.texture)
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+  fbo.width = width
+  fbo.height = height
+
+  var texture = gl.createTexture()
+  texture.complete = true
+  gl.bindTexture(gl.TEXTURE_2D, texture)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-  gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer)
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.texture, 0)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
 
   gl.bindTexture(gl.TEXTURE_2D, null )
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-  return target
+  return texture
 }
 
 function RenderTarget (screen, fbo) {
   screen.types = SVGProxy()
+  if (fbo) var texture = renderToTexture(fbo)
   var gl = screen.gl
-    , meshes = fbo ? [] : buildBuffers(gl, screen.types)
+    , meshes = buildBuffers(gl, screen.types)
     , i = 0
   flags(gl)
-  return { draw: draw }
-  function draw () {
+
+  return { update: update , texture: texture }
+
+  function update () {
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+    bindTextures()
     //setstates
+    flags(gl)
     beforeRender(gl)
     pathgl.uniform('clock', new Date - start)
     for(i = -1; ++i < meshes.length;) meshes[i].draw()
     //cleanup
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+  }
+
+  function bindTextures (){
+    if (fbo)  return
+    if (textures.null[0])
+      gl.bindTexture(gl.TEXTURE_2D, textures.null[0].data)
   }
   function beforeRender(gl) { gl.clear(gl.COLOR_BUFFER_BIT) }
 }
@@ -870,6 +902,7 @@ function constructProxy(type) {
 
     var numArrays = 4
 
+    child.mesh.plus1()
     child.attr = Object.create(attrDefaults)
     child.tag = tagName.toLowerCase()
     child.parentNode = child.parentElement = canvas

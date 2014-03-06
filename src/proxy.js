@@ -190,6 +190,7 @@ function constructProxy(type) {
 
     var numArrays = 4
 
+    child.mesh.plus1()
     child.attr = Object.create(attrDefaults)
     child.tag = tagName.toLowerCase()
     child.parentNode = child.parentElement = canvas

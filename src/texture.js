@@ -1,29 +1,34 @@
-var textures = {}
+var textures = {null: []}
 
 pathgl.texture = function (image, options, target) {
   var self = Object.create(Texture)
   self.gl = gl
-  if (null == image) image = RenderTarget(self, gl.createFramebuffer())
+  if (null == image)
+    image = RenderTarget(self, gl.createFramebuffer())
+
+
   if ('string' == typeof image) image = parseImage(image)
 
   extend(self, options, {
     image: image
   , target: target || null
-  , data: gl.createTexture()
+  , data: image.texture || gl.createTexture()
   , width: image.width
   , height: image.height
+  , update: image.update || self.update
   })
 
-  textures[target] = (textures.target || []).push(self)
+  target = self.target
+  ;(textures[target] || (textures[target] = [])).push(self)
+
   return self.load()
 }
 
 var Texture = {
-  update: update
+  update: initTexture
 , forEach: function () {}
 , load: function ()  {
     var image = this.image
-    if (image.draw) this.update = image.draw
 
     if (image.complete || image.readyState == 4) this.update()
     else image.addEventListener && image.addEventListener('load', this.update.bind(this))
@@ -46,7 +51,11 @@ var Texture = {
                  }
 }
 
-function update() {
+function updateTexture() {
+
+}
+
+function initTexture() {
   gl.bindTexture(gl.TEXTURE_2D, this.data)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)

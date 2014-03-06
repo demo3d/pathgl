@@ -2,9 +2,11 @@ var canvas = d3.select('canvas').call(pathgl)
 
 var physics = pathgl.texture()
 
-d3.select(physics).append('circle')
+d3.select(physics)
+.append('circle')
 .attr('r', 1000)
 .attr('fill', 'blue')
+
 physics.repeat()
 
 canvas

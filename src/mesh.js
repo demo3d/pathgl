@@ -1,6 +1,6 @@
 function Mesh (gl, primitive) {
   var attributes = {}
-    , count = 1e6
+    , count = 0
     , attrList = ['pos', 'color', 'fugue']
 
   primitive = gl[primitive]
@@ -9,6 +9,7 @@ function Mesh (gl, primitive) {
   return {
     init : init
   , free: free
+  , plus1: plus1
   , draw: draw
   , bind: bind
   , attributes: attributes
@@ -16,6 +17,10 @@ function Mesh (gl, primitive) {
   , addAttr: addAttr
   , removeAttr: removeAttr
   , boundingBox: boundingBox
+  }
+
+  function plus1() {
+    count += 1
   }
 
   function init (){
@@ -60,8 +65,8 @@ function Mesh (gl, primitive) {
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
-
-    gl.drawArrays(primitive, offset, count)
+    if (count)
+      gl.drawArrays(primitive, offset, count)
   }
   function set () {}
   function addAttr () {}
@@ -69,40 +74,58 @@ function Mesh (gl, primitive) {
   function boundingBox() {}
 }
 
-function createTarget( width, height ) {
-  var target = {}
-  target.framebuffer = gl.createFramebuffer()
-  target.renderbuffer = gl.createRenderbuffer()
-  target.texture = gl.createTexture()
+function renderToTexture(fbo, width, height) {
+  width = width || 512
+  height = height || 512
 
-  gl.bindTexture(gl.TEXTURE_2D, target.texture)
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+  fbo.width = width
+  fbo.height = height
+
+  var texture = gl.createTexture()
+  texture.complete = true
+  gl.bindTexture(gl.TEXTURE_2D, texture)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-  gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer)
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.texture, 0)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
 
   gl.bindTexture(gl.TEXTURE_2D, null )
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-  return target
+  return texture
 }
 
 function RenderTarget (screen, fbo) {
   screen.types = SVGProxy()
+  if (fbo) var texture = renderToTexture(fbo)
   var gl = screen.gl
-    , meshes = fbo ? [] : buildBuffers(gl, screen.types)
+    , meshes = buildBuffers(gl, screen.types)
     , i = 0
   flags(gl)
-  return { draw: draw }
-  function draw () {
+
+  return { update: update , texture: texture }
+
+  function update () {
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+    bindTextures()
     //setstates
+    flags(gl)
     beforeRender(gl)
     pathgl.uniform('clock', new Date - start)
     for(i = -1; ++i < meshes.length;) meshes[i].draw()
     //cleanup
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+  }
+
+  function bindTextures (){
+    if (fbo)  return
+    if (textures.null[0])
+      gl.bindTexture(gl.TEXTURE_2D, textures.null[0].data)
   }
   function beforeRender(gl) { gl.clear(gl.COLOR_BUFFER_BIT) }
 }
