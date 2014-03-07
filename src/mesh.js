@@ -74,75 +74,35 @@ function Mesh (gl, primitive) {
   function boundingBox() {}
 }
 
-function renderToTexture(fbo, width, height) {
-  width = width || 512
-  height = height || 512
-
-  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
-  fbo.width = width
-  fbo.height = height
-
-  var texture = gl.createTexture()
-  texture.complete = true
-  gl.bindTexture(gl.TEXTURE_2D, texture)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-  //gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
-  //gl.generateMipmap(gl.TEXTURE_2D)
-
-  //gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, null)
-   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
-
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
-
-  var status  = gl.checkFramebufferStatus(gl.FRAMEBUFFER)
-  console.log(status)
-
-  gl.bindTexture(gl.TEXTURE_2D, null )
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-
-
-
-  return texture
-}
-
-function RenderTarget (screen, texture) {
+function RenderTarget (screen, fbo) {
   screen.types = SVGProxy()
 
   var gl = screen.gl
     , meshes = buildBuffers(gl, screen.types)
     , i = 0
-  flags(gl)
 
-  return { update: update , texture: texture }
+  return { update: update }
 
-  function update () {
+  function update (flag) {
+    if (flag) {
+      gl.clearColor(1, 0, 0, 1)
+      gl.clear(gl.COLOR_BUFFER_BIT)
+      gl.clearColor(0, 0, 0, 0)
+      return
+    }
     bindTextures()
-    if (texture )drawTo(texture, wow)
-    else wow()
+    beforeRender(gl)
+    pathgl.uniform('clock', new Date - start)
+    for(i = -1; ++i < meshes.length;) meshes[i].draw()
   }
-
-
-function wow (flag) {
-  if (flag) {
-    gl.clearColor(1, 0, 0, 1)
-    gl.clear(gl.COLOR_BUFFER_BIT)
-    gl.clearColor(0, 0, 0, 0)
-    return
-  }
-      //setstates
-      flags(gl)
-      beforeRender(gl)
-      pathgl.uniform('clock', new Date - start)
-      for(i = -1; ++i < meshes.length;) meshes[i].draw()
-      //cleanup
-}
   function bindTextures (){
-    if (texture)  return
     if (textures.null[0])
       gl.bindTexture(gl.TEXTURE_2D, textures.null[0].data)
   }
-  function beforeRender(gl) { gl.clear(gl.COLOR_BUFFER_BIT) }
+  function beforeRender(gl) {
+    gl.clear(gl.COLOR_BUFFER_BIT)
+    gl.viewport(0, 0, screen.width, screen.height)
+  }
 }
 
 function buildBuffers(gl, types) {
@@ -153,37 +113,4 @@ function buildBuffers(gl, types) {
   var lineMesh = new Mesh(gl, 'lines')
   lineMesh.bind(types.line)
   return [pointMesh, lineMesh]
-  //pull scenegraph definition into here instead of pushing onto it
-  //pathMesh
-  //textmesh
 }
-
-
-function initTexture2(texture) {
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S,  gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
-  return texture
-}
-
-function drawTo(texture, callback) {
-  var width = 512, height = 512
-  var v = gl.getParameter(gl.VIEWPORT)
-  var framebuffer = gl.createFramebuffer()
-  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer)
-
-  framebuffer.width  = width
-  framebuffer.height  = height
-
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
-  gl.viewport(0, 0, width, height)
-
-  callback(123)
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-
-  gl.viewport(v[0], v[1], v[2], v[3])
-  }
