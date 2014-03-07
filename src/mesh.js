@@ -172,21 +172,18 @@ function initTexture2(texture) {
 
 function drawTo(texture, callback) {
   var width = 512, height = 512
-  var v = gl.getParameter(gl.VIEWPORT);
+  var v = gl.getParameter(gl.VIEWPORT)
   var framebuffer = gl.createFramebuffer()
-  var renderbuffer = gl.createRenderbuffer()
   gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer)
-  //gl.bindRenderbuffer(gl.RENDERBUFFER, renderbuffer)
 
-  framebuffer.width  = renderbuffer.width = width;
-  framebuffer.height  = renderbuffer.height = height;
-  //gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-  //gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderbuffer)
+  framebuffer.width  = width
+  framebuffer.height  = height
+
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
   gl.viewport(0, 0, width, height)
 
   callback(123)
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-  gl.bindRenderbuffer(gl.RENDERBUFFER, null)
+
   gl.viewport(v[0], v[1], v[2], v[3])
   }
