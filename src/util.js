@@ -1,5 +1,7 @@
 function noop () {}
 
+function identity(x) { return x }
+
 function push(d) { return this.push(d) }
 
 function powerOfTwo(x) { return x && ! (x & (x - 1)) }

@@ -84,14 +84,15 @@ var proto = {
 , text: { x: noop, y: noop, dx: noop, dy: noop }
 }
 
-var baseProto = extend(Object.create(null), {
+var baseProto = {
   querySelectorAll: querySelectorAll
+
 , children: Object.freeze([])
 , ctr: constructProxy
 , querySelector: function (s) { return this.querySelectorAll(s)[0] }
-, createElementNS: noop
+, createElementNS: identity
 , insertBefore: noop
-, ownerDocument: { createElementNS: noop }
+, ownerDocument: { createElementNS: function (_, x) { return x} }
 , render: function render(node) {
   this.buffer && drawFill(this)
   drawStroke(this)
@@ -125,7 +126,7 @@ var baseProto = extend(Object.create(null), {
 , textContent: noop
 , removeEventListener: noop
 , addEventListener: event
-})
+}
 
 var types = [
   function circle () {}

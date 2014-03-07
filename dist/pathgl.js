@@ -126,101 +126,6 @@ var cssColors = {
 , "tomato": 0xFF6347, "turquoise": 0x40E0D0, "violet": 0xEE82EE, "wheat": 0xF5DEB3, "white": 0xFFFFFF, "whitesmoke": 0xF5F5F5
 , "yellow": 0xFFFF00, "yellowgreen": 0x9ACD32
 }
-;var textures = { null: [] }
-
-pathgl.texture = function (image, options, target) {
-  var self = Object.create(Texture)
-  var tex = gl.createTexture()
-
-  self.gl = gl
-  if (null == image) image = false
-
-  if ('string' == typeof image) image = parseImage(image)
-  extend(self, options, {
-    image: image
-  , data: tex
-  , width: image.width
-  , height: image.height
-  , update: image ? self.update : drawTo.bind(null, tex, RenderTarget(self, gl.createFramebuffer(), tex).update)
-  })
-
-  initTexture.call(self)
-  target = target || null
-  ;(textures[target] || (textures[target] = [])).push(self)
-
-  return self.load()
-}
-
-var Texture = {
-  update: initTexture
-, forEach: function () {}
-, load: function ()  {
-    var image = this.image
-
-    if (image.complete || image.readyState == 4) this.update()
-    else image.addEventListener && image.addEventListener('load', this.update.bind(this))
-
-    return this
-  }
-, unfold: function (attrList) {
-    return pathgl.shader()
-  }
-, repeat: function () {
-    setInterval(this.update.bind(this), 15)
-  }
-, appendChild: function (el) {
-    return (types[el.toLowerCase()] || noop)(el)
-  }
-, valueOf: function () {
-    return - 1
-  }
-, ownerDocument: { createElementNS: function (_, tag) { return tag}
-                 }
-}
-
-function updateTexture() {}
-
-function initTexture() {
-  gl.bindTexture(gl.TEXTURE_2D, this.data)
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
-  if (! this.image) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
-  else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image || null)
-
-  if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
-}
-
-function parseImage (image) {
-  var query = document.querySelector(image)
-  if (query) return query
-  return extend(isVideoUrl ? new Image : document.createElement('video'), { src: image })
-}
-
-function isShader() {
-  return false
-}
-
-
-function drawTo(texture, callback) {
-  var width = 512, height = 512
-  var v = gl.getParameter(gl.VIEWPORT)
-  var framebuffer = gl.createFramebuffer()
-  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer)
-
-  framebuffer.width  = width
-  framebuffer.height  = height
-
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
-  gl.viewport(0, 0, width, height)
-
-  callback(123)
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-
-}
 ;pathgl.vertexShader = [
   'precision mediump float;'
 
@@ -275,8 +180,8 @@ pathgl.fragmentShader = [
 
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
-, '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture, gl_PointCoord) + vec4(0., 0.,0.,1.) : v_stroke;'
+, '    if (type == 1. && dist > 0.5) gl_FragColor = vec4(0.,0.,1., 1.);' //type == 1. &&
+, '    else gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture, vec2(100., 200.) / gl_FragCoord.xy ) : v_stroke;'
 , '}'
 ].join('\n')
 
@@ -309,7 +214,7 @@ function createProgram(gl, vs, fs) {
        , clock: [0]
        }, bindUniform)
 
-  return program
+    return program
 }
 
 function build_vs(subst) {
@@ -319,12 +224,12 @@ function build_vs(subst) {
     if (k == 'cy') o['y'] = v
 
   })
-  var defaults = extend({
-    stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-  , r: '2. * pos.z'
-  , x: 'pos.x'
-  , y: 'pos.y'
-  }, subst)
+    var defaults = extend({
+      stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
+    , r: '2. * pos.z'
+    , x: 'pos.x'
+    , y: 'pos.y'
+    }, subst)
 
   for(var attr in defaults)
     vertex = vertex.replace('replace_'+attr, defaults[attr])
@@ -355,7 +260,7 @@ function bindUniform(val, key) {
       if (data == null) return keep
       gl['uniform' + val.length + 'fv'](loc, Array.isArray(data) ? data : [data])
       keep = data
-  })(val)
+    })(val)
 }
 ;var stopRendering = false
 
@@ -369,6 +274,9 @@ function init(c) {
   bindEvents(canvas)
   var main = RenderTarget(canvas, null)
   tasks.push(main.update)
+  gl.clearColor( 0.0, 0.0, 0.0, 0.0 )
+
+
   startDrawLoop()
   return canvas
 }
@@ -414,20 +322,20 @@ function monkeyPatch(canvas) {
     , shader: d3_shader
     })
 
-  extend(canvas, {
+  extend(canvas, appendable).gl = gl
+}
+
+var appendable = {
     appendChild: appendChild
   , querySelectorAll: querySelectorAll
   , querySelector: function (s) { return this.querySelectorAll(s)[0] }
   , removeChild: removeChild
   , insertBefore: insertBefore
 
-  , gl: gl
   , __scene__: []
   , __pos__: []
   , __program__: void 0
-  })
-}
-
+  }
 function initContext(canvas) {
   var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
   return gl && extend(gl, { viewportWidth: canvas.width, viewportHeight: canvas.height })
@@ -576,6 +484,7 @@ function matchesSelector(selector) {
 
   function draw (offset) {
     //gl.use(program)
+    if (! count) return
     for (var attr in attributes) {
       attr = attributes[attr]
       gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
@@ -584,8 +493,8 @@ function matchesSelector(selector) {
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
-    if (count)
-      gl.drawArrays(primitive, offset || 0, count)
+
+    gl.drawArrays(primitive, offset || 0, count)
   }
   function set () {}
   function addAttr () {}
@@ -599,27 +508,24 @@ function RenderTarget (screen, fbo) {
   var gl = screen.gl
     , meshes = buildBuffers(gl, screen.types)
     , i = 0
+  var bound_textures = false
 
   return { update: update }
 
-  function update (flag) {
-    if (flag) {
-      gl.clearColor(1, 0, 0, 1)
-      gl.clear(gl.COLOR_BUFFER_BIT)
-      gl.clearColor(0, 0, 0, 0)
-      return
-    }
+  function update () {
     bindTextures()
     beforeRender(gl)
     pathgl.uniform('clock', new Date - start)
     for(i = -1; ++i < meshes.length;) meshes[i].draw()
   }
+
   function bindTextures (){
-    if (textures.null[0])
-      gl.bindTexture(gl.TEXTURE_2D, textures.null[0].data)
+    if ((textures[fbo] || []).length && bound_textures)
+      gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].data),
+      bound_textures = true
   }
   function beforeRender(gl) {
-    gl.clear(gl.COLOR_BUFFER_BIT)
+    if (!fbo) gl.clear( gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
 }
@@ -781,14 +687,15 @@ var proto = {
 , text: { x: noop, y: noop, dx: noop, dy: noop }
 }
 
-var baseProto = extend(Object.create(null), {
+var baseProto = {
   querySelectorAll: querySelectorAll
+
 , children: Object.freeze([])
 , ctr: constructProxy
 , querySelector: function (s) { return this.querySelectorAll(s)[0] }
-, createElementNS: noop
+, createElementNS: identity
 , insertBefore: noop
-, ownerDocument: { createElementNS: noop }
+, ownerDocument: { createElementNS: function (_, x) { return x} }
 , render: function render(node) {
   this.buffer && drawFill(this)
   drawStroke(this)
@@ -822,7 +729,7 @@ var baseProto = extend(Object.create(null), {
 , textContent: noop
 , removeEventListener: noop
 , addEventListener: event
-})
+}
 
 var types = [
   function circle () {}
@@ -939,6 +846,8 @@ function countFrames(elapsed) {
 }
 ;function noop () {}
 
+function identity(x) { return x }
+
 function push(d) { return this.push(d) }
 
 function powerOfTwo(x) { return x && ! (x & (x - 1)) }
@@ -969,7 +878,114 @@ function extend (a, b) {
   return a
 }
 
-function pointInPolygon(x, y, shape) {};  return init(canvas)
+function pointInPolygon(x, y, shape) {};var textures = { null: [] }
+
+pathgl.texture = function (image, options, target) {
+  var self = Object.create(Texture)
+  var tex = gl.createTexture()
+
+  self.gl = gl
+  if (null == image) image = false
+
+  if ('string' == typeof image) image = parseImage(image)
+
+  extend(self, options, {
+    image: image
+  , data: tex
+  , width: image.width || 512
+  , height: image.height || 512
+  , update: image ? self.update : drawTo.bind(null, tex, RenderTarget(self, gl.createFramebuffer(), tex).update)
+  })
+
+  initTexture.call(self)
+
+  target = target || null
+  ;(textures[target] || (textures[target] = [])).push(self)
+
+  return self.load()
+}
+
+var Texture = {
+  update: initTexture
+, forEach: function () {}
+, load: function ()  {
+    var image = this.image
+
+    if (image.complete || image.readyState == 4) this.update()
+    else image.addEventListener && image.addEventListener('load', this.update.bind(this))
+
+    return this
+  }
+, unfold: function (attrList) {
+    return pathgl.shader()
+  }
+, repeat: function () {
+    setInterval(this.update.bind(this), 15)
+  }
+, appendChild: function (el) {
+    return (this.types[el.toLowerCase()] || noop)(el)
+  }
+, valueOf: function () {
+    return - 1
+  }
+, querySelectorAll: querySelectorAll
+, __scene__: []
+, ownerDocument: { createElementNS: function (_, x) { return x } }
+}
+
+Texture = extend(Object.create(appendable), Texture)
+
+function updateTexture() {
+  gl.bindTexture(gl.TEXTURE_2D, this.data)
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image || null)
+  gl.bindTexture(gl.TEXTURE_2D, null)
+}
+
+function initTexture() {
+  gl.bindTexture(gl.TEXTURE_2D, this.data)
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
+
+  if (! this.image) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+  else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image || null)
+
+  //if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
+}
+
+function parseImage (image) {
+  var query = document.querySelector(image)
+  if (query) return query
+  return extend(isVideoUrl ? new Image : document.createElement('video'), { src: image })
+}
+
+function isShader() {
+  return false
+}
+
+function drawTo(texture, callback) {
+  var width = 512, height = 512
+  var v = gl.getParameter(gl.VIEWPORT)
+  var framebuffer = gl.createFramebuffer()
+  gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer)
+
+  framebuffer.width = width
+  framebuffer.height = height
+
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
+
+  callback()
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+}
+
+  function d3_selection_selector(selector) {
+    return typeof selector === "function" ? selector : function() {
+      return d3_select(selector, this);
+    };
+  };  return init(canvas)
 };var forceShader = [
   'precision mediump float;'
 , 'const vec3 TARGET = vec3( 0, 0, 0.01 )'

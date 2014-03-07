@@ -57,6 +57,7 @@ function Mesh (gl, primitive) {
 
   function draw (offset) {
     //gl.use(program)
+    if (! count) return
     for (var attr in attributes) {
       attr = attributes[attr]
       gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
@@ -65,8 +66,8 @@ function Mesh (gl, primitive) {
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
-    if (count)
-      gl.drawArrays(primitive, offset || 0, count)
+
+    gl.drawArrays(primitive, offset || 0, count)
   }
   function set () {}
   function addAttr () {}
@@ -80,27 +81,24 @@ function RenderTarget (screen, fbo) {
   var gl = screen.gl
     , meshes = buildBuffers(gl, screen.types)
     , i = 0
+  var bound_textures = false
 
   return { update: update }
 
-  function update (flag) {
-    if (flag) {
-      gl.clearColor(1, 0, 0, 1)
-      gl.clear(gl.COLOR_BUFFER_BIT)
-      gl.clearColor(0, 0, 0, 0)
-      return
-    }
+  function update () {
     bindTextures()
     beforeRender(gl)
     pathgl.uniform('clock', new Date - start)
     for(i = -1; ++i < meshes.length;) meshes[i].draw()
   }
+
   function bindTextures (){
-    if (textures.null[0])
-      gl.bindTexture(gl.TEXTURE_2D, textures.null[0].data)
+    if ((textures[fbo] || []).length && bound_textures)
+      gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].data),
+      bound_textures = true
   }
   function beforeRender(gl) {
-    gl.clear(gl.COLOR_BUFFER_BIT)
+    if (!fbo) gl.clear( gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
 }

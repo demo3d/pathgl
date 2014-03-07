@@ -11,14 +11,14 @@ var col = 20
   , s = size.width / col
   , row = Math.round(size.height / s)
 
-var textures = [].map.call(document.querySelectorAll('img'), pathgl.texture)
+var textures = pathgl.texture('.t')
 
 r = c.selectAll('rect').data(d3.range(row * col * 2 + 1)).enter().append('rect')
 .attr('x', function (d) { return s/2 + s * (d % col) })
 .attr('y', function (d) { return s/2 + s * ~~(d / col) })
 .attr('width', s / 2)
 .attr('fill', function (d, i) {
-      return textures[1]
+      return textures
     })
 
 // d3.timer(function () {

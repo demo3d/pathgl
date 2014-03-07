@@ -52,8 +52,8 @@ pathgl.fragmentShader = [
 
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
-, '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture, gl_PointCoord) + vec4(0., 0.,0.,1.) : v_stroke;'
+, '    if (type == 1. && dist > 0.5) gl_FragColor = vec4(0.,0.,1., 1.);' //type == 1. &&
+, '    else gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture, vec2(100., 200.) / gl_FragCoord.xy ) : v_stroke;'
 , '}'
 ].join('\n')
 
@@ -86,7 +86,7 @@ function createProgram(gl, vs, fs) {
        , clock: [0]
        }, bindUniform)
 
-  return program
+    return program
 }
 
 function build_vs(subst) {
@@ -96,12 +96,12 @@ function build_vs(subst) {
     if (k == 'cy') o['y'] = v
 
   })
-  var defaults = extend({
-    stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-  , r: '2. * pos.z'
-  , x: 'pos.x'
-  , y: 'pos.y'
-  }, subst)
+    var defaults = extend({
+      stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
+    , r: '2. * pos.z'
+    , x: 'pos.x'
+    , y: 'pos.y'
+    }, subst)
 
   for(var attr in defaults)
     vertex = vertex.replace('replace_'+attr, defaults[attr])
@@ -132,5 +132,5 @@ function bindUniform(val, key) {
       if (data == null) return keep
       gl['uniform' + val.length + 'fv'](loc, Array.isArray(data) ? data : [data])
       keep = data
-  })(val)
+    })(val)
 }

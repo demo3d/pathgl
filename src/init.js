@@ -10,6 +10,9 @@ function init(c) {
   bindEvents(canvas)
   var main = RenderTarget(canvas, null)
   tasks.push(main.update)
+  gl.clearColor( 0.0, 0.0, 0.0, 0.0 )
+
+
   startDrawLoop()
   return canvas
 }
@@ -55,20 +58,20 @@ function monkeyPatch(canvas) {
     , shader: d3_shader
     })
 
-  extend(canvas, {
+  extend(canvas, appendable).gl = gl
+}
+
+var appendable = {
     appendChild: appendChild
   , querySelectorAll: querySelectorAll
   , querySelector: function (s) { return this.querySelectorAll(s)[0] }
   , removeChild: removeChild
   , insertBefore: insertBefore
 
-  , gl: gl
   , __scene__: []
   , __pos__: []
   , __program__: void 0
-  })
-}
-
+  }
 function initContext(canvas) {
   var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
   return gl && extend(gl, { viewportWidth: canvas.width, viewportHeight: canvas.height })
