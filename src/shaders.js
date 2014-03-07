@@ -57,7 +57,7 @@ pathgl.fragmentShader = [
 , '}'
 ].join('\n')
 
-function createProgram(gl, vs, fs) {
+function createProgram(gl, vs, fs, attributes) {
   program = gl.createProgram()
 
   vs = compileShader(gl, gl.VERTEX_SHADER, vs)
@@ -69,10 +69,9 @@ function createProgram(gl, vs, fs) {
   gl.deleteShader(vs)
   gl.deleteShader(fs)
 
-  gl.bindAttribLocation(program, 0,  "pos")
-  gl.bindAttribLocation(program, 1, "color")
-  gl.bindAttribLocation(program, 2, "fugue")
-  //gl.bindAttribLocation(program, 3, "transform")
+  ;(attributes || 'pos color fugue'.split(' ')).forEach(function (d, i){
+    gl.bindAttribLocation(program, i, d)
+  })
 
   gl.linkProgram(program)
   gl.useProgram(program)
@@ -84,7 +83,7 @@ function createProgram(gl, vs, fs) {
        , dates: [0, 0]
        , resolution: [0, 0]
        , clock: [0]
-       }, bindUniform)
+       }, bindUniform.bind(program))
 
     return program
 }

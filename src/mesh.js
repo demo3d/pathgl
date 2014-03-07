@@ -75,12 +75,14 @@ function Mesh (gl, primitive) {
   function boundingBox() {}
 }
 
-function RenderTarget (screen, fbo) {
+function RenderTarget (screen) {
   screen.types = SVGProxy()
 
   var gl = screen.gl
     , meshes = buildBuffers(gl, screen.types)
     , i = 0
+    , fbo = screen.fbo
+    , prog = screen.program
   var bound_textures = false
 
   return { update: update }
@@ -92,7 +94,7 @@ function RenderTarget (screen, fbo) {
     for(i = -1; ++i < meshes.length;) meshes[i].draw()
   }
 
-  function bindTextures (){
+  function bindTextures () {
     if ((textures[fbo] || []).length && bound_textures)
       gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].data),
       bound_textures = true

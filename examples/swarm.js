@@ -1,24 +1,13 @@
-var canvas = d3.select('canvas').call(pathgl)
-
-var physics = pathgl.texture()
-
-d3.select(physics)
-.selectAll('circle')
-.data(d3.range(800))
-.enter()
-.append('circle')
-.attr('r', 100)
-.attr('cx', function (d) { return 30 * (d % 35)})
-.attr('cy', function (d) { return 30 * ~~(d / 35)})
-.attr('fill', function () { return "hsl(" + Math.random() * 360 + ",100%, 50%)" })
-
-physics.repeat()
-
-canvas
-.selectAll(".nil")
-.data(d3.range(1000))
+d3.select('canvas').call(pathgl)
+.selectAll("circle")
+.data(d3.range(2e5))
 .enter().append("circle")
-.attr('fill', physics)
-.attr('cx', function (d, i) { return Math.random() * 900 })
-.attr('cy', function (d, i) { return Math.random() * 600 })
-.attr('r', function (d, i) { return 50 })
+.attr('fill', function () { return "hsl(" + Math.random() * 360 + ",100%, 50%)" })
+.attr('cx', function (d, i) { return d / 1e8 })
+.attr('cy', function (d, i) { return (2e5  -  d) / 20000 })
+.attr('r', function (d, i) { return d  % 1000 })
+.shader({ cx: 'resolution.x / 2. + cos(pos.z + clock * pos.x) * pos.z * 10.;'
+        , cy: 'resolution.y / 2. + sin(pos.z + clock * pos.x) * pos.z * 10.;'
+        , stroke: 'vec4(unpack_color(stroke).xyz * .5 + vec3(mouse.x / resolution.x, mouse.y / resolution.y, 1.), 1.);'
+        , r: 'pos.y + pos.y * max(distance(x, mouse.x) / resolution.x, distance(y, mouse.y) / resolution.y)'
+        })

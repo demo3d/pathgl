@@ -6,12 +6,13 @@ function init(c) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
   program = initProgram(gl)
+  canvas.program = program
+  canvas.fbo = null
   monkeyPatch(canvas)
   bindEvents(canvas)
-  var main = RenderTarget(canvas, null)
+  var main = RenderTarget(canvas)
   tasks.push(main.update)
   gl.clearColor( 0.0, 0.0, 0.0, 0.0 )
-
 
   startDrawLoop()
   return canvas

@@ -185,7 +185,7 @@ pathgl.fragmentShader = [
 , '}'
 ].join('\n')
 
-function createProgram(gl, vs, fs) {
+function createProgram(gl, vs, fs, attributes) {
   program = gl.createProgram()
 
   vs = compileShader(gl, gl.VERTEX_SHADER, vs)
@@ -197,10 +197,9 @@ function createProgram(gl, vs, fs) {
   gl.deleteShader(vs)
   gl.deleteShader(fs)
 
-  gl.bindAttribLocation(program, 0,  "pos")
-  gl.bindAttribLocation(program, 1, "color")
-  gl.bindAttribLocation(program, 2, "fugue")
-  //gl.bindAttribLocation(program, 3, "transform")
+  ;(attributes || 'pos color fugue'.split(' ')).forEach(function (d, i){
+    gl.bindAttribLocation(program, i, d)
+  })
 
   gl.linkProgram(program)
   gl.useProgram(program)
@@ -212,7 +211,7 @@ function createProgram(gl, vs, fs) {
        , dates: [0, 0]
        , resolution: [0, 0]
        , clock: [0]
-       }, bindUniform)
+       }, bindUniform.bind(program))
 
     return program
 }
@@ -270,12 +269,13 @@ function init(c) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
   program = initProgram(gl)
+  canvas.program = program
+  canvas.fbo = null
   monkeyPatch(canvas)
   bindEvents(canvas)
-  var main = RenderTarget(canvas, null)
+  var main = RenderTarget(canvas)
   tasks.push(main.update)
   gl.clearColor( 0.0, 0.0, 0.0, 0.0 )
-
 
   startDrawLoop()
   return canvas
@@ -502,12 +502,14 @@ function matchesSelector(selector) {
   function boundingBox() {}
 }
 
-function RenderTarget (screen, fbo) {
+function RenderTarget (screen) {
   screen.types = SVGProxy()
 
   var gl = screen.gl
     , meshes = buildBuffers(gl, screen.types)
     , i = 0
+    , fbo = screen.fbo
+    , prog = screen.program
   var bound_textures = false
 
   return { update: update }
@@ -519,7 +521,7 @@ function RenderTarget (screen, fbo) {
     for(i = -1; ++i < meshes.length;) meshes[i].draw()
   }
 
-  function bindTextures (){
+  function bindTextures () {
     if ((textures[fbo] || []).length && bound_textures)
       gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].data),
       bound_textures = true
@@ -885,7 +887,12 @@ pathgl.texture = function (image, options, target) {
   var tex = gl.createTexture()
 
   self.gl = gl
+
   if (null == image) image = false
+  if (isShader(image)) {
+    var program = createProgram(gl, simulation_vs, image, ['uv', 'pos'])
+        image = null
+  }
 
   if ('string' == typeof image) image = parseImage(image)
 
@@ -962,8 +969,8 @@ function parseImage (image) {
   return extend(isVideoUrl ? new Image : document.createElement('video'), { src: image })
 }
 
-function isShader() {
-  return false
+function isShader(str) {
+  return str.length > 100
 }
 
 function drawTo(texture, callback) {
@@ -986,46 +993,47 @@ function drawTo(texture, callback) {
       return d3_select(selector, this);
     };
   };  return init(canvas)
-};var forceShader = [
+};var simulation_vs = [
   'precision mediump float;'
-, 'const vec3 TARGET = vec3( 0, 0, 0.01 )'
-, 'uniform sampler2D uParticleData;'
-, 'uniform vec2 uViewport;'
-, 'vec4 texelAtOffet( vec2 offset ) {'
-,     'return texture2D( uParticleData, ( gl_FragCoord.xy + offset ) / uViewport );'
-, '}'
-, 'void main() {'
-,    ' int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
-, '    if ( slot == 0 ) { '
-,         'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'
-,         'vec4 dataB = texelAtOffet( vec2( 1, 0 ) );'
-,         'vec3 pos = dataA.xyz;'
-,         'vec3 vel = dataB.xyz;'
-,         'float phase = dataA.w;'
-,         'if ( phase > 0.0 ) {'
-,             'pos += vel * 0.005;'
-,             'if ( length( TARGET - pos ) < 0.035 ) phase = 0.0;'
-,             'else phase += 0.1;'
-,         '} else {'
-,             'pos = vec3(-1);'
-,         '}'
-,         'gl_FragColor = vec4( pos, phase );'
-,     '} else if ( slot == 1 ) {'
-,         'vec4 dataA = texelAtOffet( vec2( -1, 0 ) );'
-,         'vec4 dataB = texelAtOffet( vec2( 0, 0 ) );'
-,         'vec3 pos = dataA.xyz;'
-,         'vec3 vel = dataB.xyz;'
-,         'float phase = dataA.w;'
-,         'if ( phase > 0.0 ) {'
-,             'vec3 delta = normalize( TARGET - pos );'
-,             'vel += delta * 0.05;'
-,             'vel *= 0.991;'
-,         '} else {'
-,             'vel = vec3(0);'
-,         '}'
-,         'gl_FragColor = vec4( vel, 1.0 );'
-,     '}'
-, '}'
+, 'attribute vec2 uv;'
+, 'attribute vec2 pos;'
+
+, '  varying vec2 vUv;'
+,'  void main() {'
+,'  vec2 vUv = vec2(uv.x, 1.0 - uv.y);'
+,'  gl_Position = vec4( pos.xy, 1.0 , 1.0);'
+,
+, '  }'
+].join('\n')
+
+
+var forceShader = [
+  'precision mediump float;'
+, '  uniform float opacity;'
+, ' uniform sampler2D tPositions;'
+, '  uniform sampler2D tOrigins;'
+, '  uniform float clock;'
+, '  varying vec2 vUv;'
+,'  float rand(vec2 co){'
+, '      return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);'
+, '  }'
+, '  void main() {'
+, '  vec4 pos = texture2D( tPositions, vUv );'
+,'  if ( rand( vUv + clock ) > 0.99 || pos.w <= 0.0 ) {'
+,'  pos.xyz = texture2D( tOrigins, vUv ).xyz;'
+,'  pos.w = opacity;'
+, '  } else {'
+, '  if ( pos.w <= 0.0 ) discard;'
+, '  float x = pos.x + clock * 5.0;'
+,'  float y = pos.y;'
+,'  float z = pos.z + clock * 4.0;'
+, '  pos.x += sin( y * 0.033 ) * cos( z * 0.037 ) * 0.4;'
+, '  pos.y += sin( x * 0.035 ) * cos( x * 0.035 ) * 0.4;'
+,'  pos.z += sin( x * 0.037 ) * cos( y * 0.033 ) * 0.4;'
+,'  pos.w -= 0.00001;'
+,'  }'
+, '    gl_FragColor = pos;'
+, '  }'
 ].join('\n')
 
 pathgl.sim = {}

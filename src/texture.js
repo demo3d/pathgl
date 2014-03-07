@@ -5,7 +5,12 @@ pathgl.texture = function (image, options, target) {
   var tex = gl.createTexture()
 
   self.gl = gl
+
   if (null == image) image = false
+  if (isShader(image)) {
+    var program = createProgram(gl, simulation_vs, image, ['uv', 'pos'])
+        image = null
+  }
 
   if ('string' == typeof image) image = parseImage(image)
 
@@ -82,8 +87,8 @@ function parseImage (image) {
   return extend(isVideoUrl ? new Image : document.createElement('video'), { src: image })
 }
 
-function isShader() {
-  return false
+function isShader(str) {
+  return str.length > 100
 }
 
 function drawTo(texture, callback) {
