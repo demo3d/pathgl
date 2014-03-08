@@ -88,11 +88,8 @@ function d3_pAttr(obj) {
 }
 
 function d3_shader(attr, name) {
-  if(arguments.length == 2) {
-    var args = {}
-    args[attr] = name
-  }
-  initProgram(this.node().parentNode.gl, args || attr)
+  this.node().mesh.mergeProgram(attr)
+
   return this
 }
 
@@ -100,3 +97,22 @@ var raf = window.requestAnimationFrame
        || window.webkitRequestAnimationFrame
        || window.mozRequestAnimationFrame
        || function(callback) { window.setTimeout(callback, 1000 / 60) }
+
+
+var start = Date.now()
+var tasks = []
+function startDrawLoop() {
+  tasks.forEach(function (task) { task() })
+  pathgl.raf = raf(startDrawLoop)
+}
+
+var time1 = Date.now()
+  , frames = {}
+
+pathgl.frameCounter = frames
+
+function countFrames(elapsed) {
+  var dt = elapsed - time1
+  frames[dt] = (frames[dt] || (frames[dt] = 0)) + 1
+  time1 = elapsed
+}

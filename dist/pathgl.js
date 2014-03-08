@@ -350,11 +350,8 @@ function d3_pAttr(obj) {
 }
 
 function d3_shader(attr, name) {
-  if(arguments.length == 2) {
-    var args = {}
-    args[attr] = name
-  }
-  initProgram(this.node().parentNode.gl, args || attr)
+  this.node().mesh.mergeProgram(attr)
+
   return this
 }
 
@@ -362,6 +359,25 @@ var raf = window.requestAnimationFrame
        || window.webkitRequestAnimationFrame
        || window.mozRequestAnimationFrame
        || function(callback) { window.setTimeout(callback, 1000 / 60) }
+
+
+var start = Date.now()
+var tasks = []
+function startDrawLoop() {
+  tasks.forEach(function (task) { task() })
+  pathgl.raf = raf(startDrawLoop)
+}
+
+var time1 = Date.now()
+  , frames = {}
+
+pathgl.frameCounter = frames
+
+function countFrames(elapsed) {
+  var dt = elapsed - time1
+  frames[dt] = (frames[dt] || (frames[dt] = 0)) + 1
+  time1 = elapsed
+}
 ;function parse (str, stroke) {
   var buffer = [], lb = this.buffer, pb = this.posBuffer, indices = this.indices, count = 0
     , pos = [0, 0], l = indices.length, i = 0
@@ -509,9 +525,18 @@ function RenderTarget (screen) {
 
   var bound_textures = false
   screen.mesh && meshes.push(screen.mesh)
+
+  meshes.forEach(function (d) {
+    d.mergeProgram = mergeProgram
+  })
+
   if (fbo) initRtt.call(screen)
 
   return { update: update }
+
+  function mergeProgram(d) {
+    prog = initProgram(gl, d)
+  }
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
@@ -554,9 +579,6 @@ function initRtt() {
   this.fbo.height = height
 
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.data, 0)
-
-
-  console.log(gl.checkFramebufferStatus(gl.FRAMEBUFFER))
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 }
@@ -846,26 +868,7 @@ function constructProxy(type) {
 var e = {}
 function event (type, listener) {}
 
-var tween = 'float x(i) { return a / b + b * i }';var start = Date.now()
-var tasks = []
-function startDrawLoop() {
-  tasks.forEach(function (task) {
-    task()
-  })
-  pathgl.raf = raf(startDrawLoop)
-}
-
-var time1 = Date.now()
-  , frames = {}
-
-pathgl.frameCounter = frames
-
-function countFrames(elapsed) {
-  var dt = elapsed - time1
-  frames[dt] = (frames[dt] || (frames[dt] = 0)) + 1
-  time1 = elapsed
-}
-;function noop () {}
+var tween = 'float x(i) { return a / b + b * i }';;function noop () {}
 
 function identity(x) { return x }
 
@@ -922,6 +925,7 @@ pathgl.texture = function (image, options, target) {
     self.mesh = Mesh(gl, 'triangle_strip', Quad())
     image = false
   }
+
   if (! image) self.fbo = gl.createFramebuffer()
 
   if ('string' == typeof image) image = parseImage(image)
@@ -932,8 +936,7 @@ pathgl.texture = function (image, options, target) {
   , height: image.height || 512
   })
 
-
-  if (! image) self.update =  RenderTarget(self).update
+  if (! image) self.update = RenderTarget(self).update
 
   target = target || null
   ;(textures[target] || (textures[target] = [])).push(self)
@@ -988,11 +991,12 @@ function initTexture() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-  if (! this.image)
+
+  this.image ?
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image) :
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
-  else
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image)
-  //if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
+
+  if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
 function parseImage (image) {

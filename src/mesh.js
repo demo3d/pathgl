@@ -84,9 +84,18 @@ function RenderTarget (screen) {
 
   var bound_textures = false
   screen.mesh && meshes.push(screen.mesh)
+
+  meshes.forEach(function (d) {
+    d.mergeProgram = mergeProgram
+  })
+
   if (fbo) initRtt.call(screen)
 
   return { update: update }
+
+  function mergeProgram(d) {
+    prog = initProgram(gl, d)
+  }
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
@@ -129,9 +138,6 @@ function initRtt() {
   this.fbo.height = height
 
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.data, 0)
-
-
-  console.log(gl.checkFramebufferStatus(gl.FRAMEBUFFER))
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 }
