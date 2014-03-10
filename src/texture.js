@@ -15,7 +15,7 @@ pathgl.texture = function (image, options, target) {
   if (null == image) image = false
   if (isShader(image)) {
     self.program = createProgram(gl, simulation_vs, image, ['pos'])
-    self.mesh = Mesh(gl, {primitive: 'triangle_strip', attrList: 'pos', pos: {size: 2}}, Quad())
+    self.mesh = Mesh(gl, {primitive: 'triangle_strip', attrList: ['pos'], pos: {size: 2}}, Quad())
     image = false
   }
 

@@ -1,9 +1,8 @@
 function Mesh (gl, options, attr) {
   var attributes = {}
     , count = attr && attr.length || 0
-    , attrList = opptions.attrList || ['pos', 'color', 'fugue']
-  var prim = options.primitive || 'triangle_fan'
-  primitive = gl[primitive.toUpperCase()]
+    , attrList = options.attrList || ['pos', 'color', 'fugue']
+    , primitive = gl[(options.primitive || 'triangle_fan') .toUpperCase()]
 
   init()
   return {
@@ -98,7 +97,7 @@ function RenderTarget(screen) {
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
     bindTextures()
     beforeRender(gl)
 
