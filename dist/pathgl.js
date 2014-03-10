@@ -235,9 +235,6 @@ function build_vs(subst) {
   return vertex
 }
 
-function initProgram (gl, subst) {
-  return createProgram(gl, build_vs(subst), pathgl.fragmentShader)
-}
 
 function compileShader (gl, type, src) {
   var shader = gl.createShader(type)
@@ -267,14 +264,13 @@ pathgl.stop = function () { stopRendering = true }
 function init(c) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
-  program = initProgram(gl)
+  program = createProgram(gl, build_vs(), pathgl.fragmentShader)
   canvas.program = program
   monkeyPatch(canvas)
   bindEvents(canvas)
   var main = RenderTarget(canvas)
   tasks.push(main.update)
-  gl.clearColor( 0.0, 0.0, 0.0, 0.0 )
-
+  gl.clearColor(0,0,0,0)
   startDrawLoop()
   return canvas
 }
@@ -289,18 +285,20 @@ function flags(gl) {
 }
 
 function bindEvents(canvas) {
-  setInterval(function () {
-    pathgl.uniform('resolution', [canvas.width, canvas.height])
-  }, 50)
+  setInterval(resizeCanvas, 100)
+
+
+  function resizeCanvas(v) {
+    pathgl.uniform('resolution', [canvas.width || 960, canvas.height || 500])
+  }
+
   canvas.addEventListener('click', clicked)
   canvas.addEventListener('mousemove', mousemoved)
   canvas.addEventListener('touchmove', touchmoved)
   canvas.addEventListener('touchstart', touchmoved)
 }
 
-function clicked () {
-
-}
+function clicked () {}
 
 function mousemoved(e) {
   var rect = canvas.getBoundingClientRect()
@@ -439,11 +437,11 @@ function matchesSelector(selector) {
     if (interpret.apply(this, q(tokens.pop())) && (!tokens.length || ancestorMatch(this, tokens, selector.match(dividers)))) return true
 };//cpu intersection tests
 //offscreen render color test
-;function Mesh (gl, primitive, attr) {
+;function Mesh (gl, options, attr) {
   var attributes = {}
-    , count = 0
-    , attrList = ['pos', 'color', 'fugue']
-  var prim = primitive
+    , count = attr && attr.length || 0
+    , attrList = opptions.attrList || ['pos', 'color', 'fugue']
+  var prim = options.primitive || 'triangle_fan'
   primitive = gl[primitive.toUpperCase()]
 
   init()
@@ -464,21 +462,20 @@ function matchesSelector(selector) {
     count += 1
   }
 
-  function init (){
+  function init() {
     attrList.forEach(function (name, i) {
       var buffer = gl.createBuffer()
+      var option = options[name]  || {}
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
       gl.bufferData(gl.ARRAY_BUFFER, 4 * 1e7, gl.STREAM_DRAW)
-      var size = name == 'pos' && primitive == gl.LINES  ? 2 : 4
       attributes[name] = {
         array: extend(new Float32Array(4e5), attr)
       , buffer: buffer
-      , size: size
+      , size: option.size  || 4
       , changed: true
       , loc: i
       }
     })
-
   }
 
   function free (index) {
@@ -507,6 +504,7 @@ function matchesSelector(selector) {
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
+
     gl.drawArrays(primitive, offset || 0, count)
   }
   function set () {}
@@ -515,7 +513,7 @@ function matchesSelector(selector) {
   function boundingBox() {}
 }
 
-function RenderTarget (screen) {
+function RenderTarget(screen) {
   screen.types = SVGProxy()
   var gl = screen.gl
     , meshes = buildBuffers(gl, screen.types)
@@ -524,34 +522,36 @@ function RenderTarget (screen) {
     , prog = screen.program
 
   var bound_textures = false
+
   screen.mesh && meshes.push(screen.mesh)
 
-  meshes.forEach(function (d) {
-    d.mergeProgram = mergeProgram
-  })
+  meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 
   if (fbo) initRtt.call(screen)
 
   return { update: update }
 
   function mergeProgram(d) {
-    prog = initProgram(gl, d)
+    prog = createProgram(gl, build_vs(d), pathgl.fragmentShader)
   }
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
     bindTextures()
     beforeRender(gl)
+
     pathgl.uniform('clock', new Date - start)
+
     for(i = -1; ++i < meshes.length;) meshes[i].draw()
   }
 
   function bindTextures () {
     if ((textures[fbo] || []).length && bound_textures)
       gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].data),
-      bound_textures = true
+    bound_textures = true
   }
+
   function beforeRender(gl) {
     if (!fbo) gl.clear( gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
@@ -559,11 +559,11 @@ function RenderTarget (screen) {
 }
 
 function buildBuffers(gl, types) {
-  var pointMesh = new Mesh(gl, 'points')
+  var pointMesh = new Mesh(gl, {primitive: 'points'})
   pointMesh.bind(types.circle)
   pointMesh.bind(types.rect)
 
-  var lineMesh = new Mesh(gl, 'lines')
+  var lineMesh = new Mesh(gl, {primitive: 'points', pos: { size: 2 }})
   lineMesh.bind(types.line)
   return [pointMesh, lineMesh]
 }
@@ -922,7 +922,7 @@ pathgl.texture = function (image, options, target) {
   if (null == image) image = false
   if (isShader(image)) {
     self.program = createProgram(gl, simulation_vs, image, ['pos'])
-    self.mesh = Mesh(gl, 'triangle_strip', Quad())
+    self.mesh = Mesh(gl, {primitive: 'triangle_strip', attrList: 'pos', pos: {size: 2}}, Quad())
     image = false
   }
 
@@ -996,7 +996,7 @@ function initTexture() {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image) :
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
 
-  if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
+  //if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
 function parseImage (image) {
@@ -1006,7 +1006,7 @@ function parseImage (image) {
 }
 
 function isShader(str) {
-  return str.length > 100
+  return str.length > 50
 }
 
 
@@ -1026,42 +1026,42 @@ function isShader(str) {
 
 var forceShader = [
 , 'precision mediump float;'
-, 'const vec3 TARGET = vec3( 0, 0, 0.01 );'
-, 'uniform sampler2D uParticleData;'
-, 'uniform vec2 uViewport;'
-, 'vec4 texelAtOffet( vec2 offset ) { return texture2D( uParticleData, ( gl_FragCoord.xy + offset ) / uViewport ); }'
+//, 'const vec3 TARGET = vec3( 0, 0, 0.01 );'
+//, 'uniform sampler2D uParticleData;'
+//, 'uniform vec2 uViewport;'
+//, 'vec4 texelAtOffet( vec2 offset ) { return texture2D( uParticleData, ( gl_FragCoord.xy + offset ) / uViewport ); }'
 , 'void main() {'
-    , 'gl_FragColor = vec4(0.,0.,1.,1.); return;'
-    , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
-    , 'if ( slot == 0 ) { '
-        , 'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'
-        , 'vec4 dataB = texelAtOffet( vec2( 1, 0 ) );'
-        , 'vec3 pos = dataA.xyz;'
-        , 'vec3 vel = dataB.xyz;'
-        , 'float phase = dataA.w;'
-        , 'if ( phase > 0.0 ) {'
-            , 'pos += vel * 0.005;'
-            , 'if ( length( TARGET - pos ) < 0.035 ) phase = 0.0;'
-        , '    else phase += 0.1;'
-        , '} else {'
-        , '    pos = vec3(-1);'
-        , '}'
-    , '    gl_FragColor = vec4( pos, phase );'
-    , '} else if ( slot == 1 ) { // velocity'
-        , 'vec4 dataA = texelAtOffet( vec2( -1, 0 ) );'
-        , 'vec4 dataB = texelAtOffet( vec2( 0, 0 ) );'
-        , 'vec3 pos = dataA.xyz;'
-        , 'vec3 vel = dataB.xyz;'
-        , 'float phase = dataA.w;'
-        , 'if ( phase > 0.0 ) {'
-            , 'vec3 delta = normalize( TARGET - pos );'
-            , 'vel += delta * 0.05;'
-        , '    vel *= 0.991;'
-        , '} else {'
-        , '    vel = vec3(0);'
-        , '}'
-    , '    gl_FragColor = vec4( vel, 1.0 );'
-, '    }'
+    , 'gl_FragColor = vec4(0.,0.,1.,1.); '
+//     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
+//     , 'if ( slot == 0 ) { '
+//         , 'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'
+//         , 'vec4 dataB = texelAtOffet( vec2( 1, 0 ) );'
+//         , 'vec3 pos = dataA.xyz;'
+//         , 'vec3 vel = dataB.xyz;'
+//         , 'float phase = dataA.w;'
+//         , 'if ( phase > 0.0 ) {'
+//             , 'pos += vel * 0.005;'
+//             , 'if ( length( TARGET - pos ) < 0.035 ) phase = 0.0;'
+//         , '    else phase += 0.1;'
+//         , '} else {'
+//         , '    pos = vec3(-1);'
+//         , '}'
+//     , '    gl_FragColor = vec4( pos, phase );'
+//     , '} else if ( slot == 1 ) { // velocity'
+//         , 'vec4 dataA = texelAtOffet( vec2( -1, 0 ) );'
+//         , 'vec4 dataB = texelAtOffet( vec2( 0, 0 ) );'
+//         , 'vec3 pos = dataA.xyz;'
+//         , 'vec3 vel = dataB.xyz;'
+//         , 'float phase = dataA.w;'
+//         , 'if ( phase > 0.0 ) {'
+//             , 'vec3 delta = normalize( TARGET - pos );'
+//             , 'vel += delta * 0.05;'
+//         , '    vel *= 0.991;'
+//         , '} else {'
+//         , '    vel = vec3(0);'
+//         , '}'
+//     , '    gl_FragColor = vec4( vel, 1.0 );'
+// , '    }'
 , '}'
 ].join('\n')
 

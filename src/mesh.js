@@ -1,8 +1,8 @@
-function Mesh (gl, primitive, attr) {
+function Mesh (gl, options, attr) {
   var attributes = {}
-    , count = 0
-    , attrList = ['pos', 'color', 'fugue']
-  var prim = primitive
+    , count = attr && attr.length || 0
+    , attrList = opptions.attrList || ['pos', 'color', 'fugue']
+  var prim = options.primitive || 'triangle_fan'
   primitive = gl[primitive.toUpperCase()]
 
   init()
@@ -23,21 +23,20 @@ function Mesh (gl, primitive, attr) {
     count += 1
   }
 
-  function init (){
+  function init() {
     attrList.forEach(function (name, i) {
       var buffer = gl.createBuffer()
+      var option = options[name]  || {}
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
       gl.bufferData(gl.ARRAY_BUFFER, 4 * 1e7, gl.STREAM_DRAW)
-      var size = name == 'pos' && primitive == gl.LINES  ? 2 : 4
       attributes[name] = {
         array: extend(new Float32Array(4e5), attr)
       , buffer: buffer
-      , size: size
+      , size: option.size  || 4
       , changed: true
       , loc: i
       }
     })
-
   }
 
   function free (index) {
@@ -66,6 +65,7 @@ function Mesh (gl, primitive, attr) {
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
+
     gl.drawArrays(primitive, offset || 0, count)
   }
   function set () {}
@@ -74,7 +74,7 @@ function Mesh (gl, primitive, attr) {
   function boundingBox() {}
 }
 
-function RenderTarget (screen) {
+function RenderTarget(screen) {
   screen.types = SVGProxy()
   var gl = screen.gl
     , meshes = buildBuffers(gl, screen.types)
@@ -83,34 +83,36 @@ function RenderTarget (screen) {
     , prog = screen.program
 
   var bound_textures = false
+
   screen.mesh && meshes.push(screen.mesh)
 
-  meshes.forEach(function (d) {
-    d.mergeProgram = mergeProgram
-  })
+  meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 
   if (fbo) initRtt.call(screen)
 
   return { update: update }
 
   function mergeProgram(d) {
-    prog = initProgram(gl, d)
+    prog = createProgram(gl, build_vs(d), pathgl.fragmentShader)
   }
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
     bindTextures()
     beforeRender(gl)
+
     pathgl.uniform('clock', new Date - start)
+
     for(i = -1; ++i < meshes.length;) meshes[i].draw()
   }
 
   function bindTextures () {
     if ((textures[fbo] || []).length && bound_textures)
       gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].data),
-      bound_textures = true
+    bound_textures = true
   }
+
   function beforeRender(gl) {
     if (!fbo) gl.clear( gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
@@ -118,11 +120,11 @@ function RenderTarget (screen) {
 }
 
 function buildBuffers(gl, types) {
-  var pointMesh = new Mesh(gl, 'points')
+  var pointMesh = new Mesh(gl, {primitive: 'points'})
   pointMesh.bind(types.circle)
   pointMesh.bind(types.rect)
 
-  var lineMesh = new Mesh(gl, 'lines')
+  var lineMesh = new Mesh(gl, {primitive: 'points', pos: { size: 2 }})
   lineMesh.bind(types.line)
   return [pointMesh, lineMesh]
 }

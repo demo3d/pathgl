@@ -108,9 +108,6 @@ function build_vs(subst) {
   return vertex
 }
 
-function initProgram (gl, subst) {
-  return createProgram(gl, build_vs(subst), pathgl.fragmentShader)
-}
 
 function compileShader (gl, type, src) {
   var shader = gl.createShader(type)

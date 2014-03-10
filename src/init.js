@@ -5,14 +5,13 @@ pathgl.stop = function () { stopRendering = true }
 function init(c) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
-  program = initProgram(gl)
+  program = createProgram(gl, build_vs(), pathgl.fragmentShader)
   canvas.program = program
   monkeyPatch(canvas)
   bindEvents(canvas)
   var main = RenderTarget(canvas)
   tasks.push(main.update)
-  gl.clearColor( 0.0, 0.0, 0.0, 0.0 )
-
+  gl.clearColor(0,0,0,0)
   startDrawLoop()
   return canvas
 }
@@ -27,18 +26,20 @@ function flags(gl) {
 }
 
 function bindEvents(canvas) {
-  setInterval(function () {
-    pathgl.uniform('resolution', [canvas.width, canvas.height])
-  }, 50)
+  setInterval(resizeCanvas, 100)
+
+
+  function resizeCanvas(v) {
+    pathgl.uniform('resolution', [canvas.width || 960, canvas.height || 500])
+  }
+
   canvas.addEventListener('click', clicked)
   canvas.addEventListener('mousemove', mousemoved)
   canvas.addEventListener('touchmove', touchmoved)
   canvas.addEventListener('touchstart', touchmoved)
 }
 
-function clicked () {
-
-}
+function clicked () {}
 
 function mousemoved(e) {
   var rect = canvas.getBoundingClientRect()

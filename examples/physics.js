@@ -1,17 +1,17 @@
 var canvas = d3.select('canvas').call(pathgl)
-debug()
+
 var physics = pathgl.sim.force()
 
 physics.repeat()
 
-canvas
-.selectAll(".nil")
-.data(d3.range(1000))
-.enter().append("circle")
-.attr('fill', physics)
-.attr('cx', function (d, i) { return Math.random() * 900 })
-.attr('cy', function (d, i) { return Math.random() * 600 })
-.attr('r', 10)
+// canvas
+// .selectAll(".nil")
+// .data(d3.range(1000))
+// .enter().append("circle")
+// .attr('r', 10)
+// .attr('fill', physics)
+// .attr('cx', function (d, i) { return Math.random() * 900 })
+// .attr('cy', function (d, i) { return Math.random() * 600 })
 
 function readback(physics) {
   gl = physics.gl
@@ -26,8 +26,7 @@ function readback(physics) {
   return pixels
 }
 
-
-function debug ( ){
+function debug () {
   var canvas = d3.select('canvas').call(pathgl)
 
   var physics = pathgl.texture()
@@ -51,6 +50,5 @@ function debug ( ){
   .attr('fill', physics)
   .attr('cx', function (d, i) { return Math.random() * 900 })
   .attr('cy', function (d, i) { return Math.random() * 600 })
-                                                             .attr('r', 10)
-
+  .attr('r', 10)
 }

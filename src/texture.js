@@ -15,7 +15,7 @@ pathgl.texture = function (image, options, target) {
   if (null == image) image = false
   if (isShader(image)) {
     self.program = createProgram(gl, simulation_vs, image, ['pos'])
-    self.mesh = Mesh(gl, 'triangle_strip', Quad())
+    self.mesh = Mesh(gl, {primitive: 'triangle_strip', attrList: 'pos', pos: {size: 2}}, Quad())
     image = false
   }
 
@@ -89,7 +89,7 @@ function initTexture() {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image) :
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
 
-  if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
+  //if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
 function parseImage (image) {
@@ -99,7 +99,7 @@ function parseImage (image) {
 }
 
 function isShader(str) {
-  return str.length > 100
+  return str.length > 50
 }
 
 
