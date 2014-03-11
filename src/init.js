@@ -1,6 +1,8 @@
 var stopRendering = false
+var tasks = []
 
 pathgl.stop = function () { stopRendering = true }
+
 
 function init(c) {
   if (! (gl = initContext(canvas = c)))
@@ -101,7 +103,6 @@ var raf = window.requestAnimationFrame
 
 
 var start = Date.now()
-var tasks = []
 function startDrawLoop() {
   tasks.forEach(function (task) { task() })
   pathgl.raf = raf(startDrawLoop)

@@ -140,7 +140,7 @@ var cssColors = {
 , 'varying float type;'
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
-
+, 'uniform sampler2D texture;'
 
 , 'vec4 unpack_color(float col) {'
 , '    return vec4(mod(col / 256. / 256., 256.),'
@@ -151,8 +151,11 @@ var cssColors = {
 , '}'
 , 'void main() {'
 , '    float time = clock / 1000.;'
+
 , '    float x = replace_x;'
 , '    float y = replace_y;'
+// , '    float x = texture2D(texture, pos.xy).x;'
+// , '    float y = texture2D(texture, pos.xy).y;'
 , '    float fill = color.x;'
 , '    float stroke = color.x;'
 
@@ -258,8 +261,10 @@ function bindUniform(val, key) {
     })(val)
 }
 ;var stopRendering = false
+var tasks = []
 
 pathgl.stop = function () { stopRendering = true }
+
 
 function init(c) {
   if (! (gl = initContext(canvas = c)))
@@ -360,7 +365,6 @@ var raf = window.requestAnimationFrame
 
 
 var start = Date.now()
-var tasks = []
 function startDrawLoop() {
   tasks.forEach(function (task) { task() })
   pathgl.raf = raf(startDrawLoop)
@@ -535,7 +539,7 @@ function RenderTarget(screen) {
   }
 
   function update () {
-    if (program != prog) gl.useProgram(program = prog)
+      if (program != prog) gl.useProgram(program = prog)
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
     bindTextures()
     beforeRender(gl)
@@ -867,7 +871,7 @@ function constructProxy(type) {
 var e = {}
 function event (type, listener) {}
 
-var tween = 'float x(i) { return a / b + b * i }';;function noop () {}
+var tween = 'float x(i) { return a / b + b * i }';function noop () {}
 
 function identity(x) { return x }
 
@@ -935,7 +939,11 @@ pathgl.texture = function (image, options, target) {
   , height: image.height || 512
   })
 
-  if (! image) self.update = RenderTarget(self).update
+  var render = RenderTarget(self)
+  if (! image) self.update = function ( ) {
+                 options.step && options.step(gl, tex, 0, 100, { x: 500, y: 500, z: 500 })
+                 render.update()
+               }
 
   target = target || null
   ;(textures[target] || (textures[target] = [])).push(self)
@@ -950,7 +958,7 @@ var Texture = {
     var image = this.image
 
     if (image.complete || image.readyState == 4) this.update()
-    else image.addEventListener && image.addEventListener('load', this.update.bind(this))
+    else image.addEventListener && image.addEventListener('load', this.update)
 
     return this
   }
@@ -1008,12 +1016,10 @@ function isShader(str) {
   return str.length > 50
 }
 
-
-  function d3_selection_selector(selector) {
-    return typeof selector === "function" ? selector : function() {
-      return d3_select(selector, this);
-    };
-  }
+function d3_selection_selector(selector) {
+  return typeof selector === "function" ? selector :
+    function() { return d3_select(selector, this) }
+}
 ;  return init(canvas)
 };var simulation_vs = [
   'precision mediump float;'
@@ -1026,9 +1032,9 @@ function isShader(str) {
 var forceShader = [
 , 'precision mediump float;'
 , 'const vec3 TARGET = vec3( 0, 0, 0.01 );'
-, 'uniform sampler2D uParticleData;'
-, 'uniform vec2 uViewport;'
-, 'vec4 texelAtOffet( vec2 offset ) { return texture2D( uParticleData, ( gl_FragCoord.xy + offset ) / uViewport ); }'
+, 'uniform sampler2D texture;'
+, 'uniform vec2 resolution;'
+, 'vec4 texelAtOffet( vec2 offset ) { return texture2D( texture, ( gl_FragCoord.xy + offset ) / resolution ); }'
 , 'void main() {'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
     , 'if ( slot == 0 ) { '
@@ -1045,7 +1051,7 @@ var forceShader = [
         , '    pos = vec3(-1);'
         , '}'
     , '    gl_FragColor = vec4( pos, phase );'
-    , '} else if ( slot == 1 ) { // velocity'
+    , '} else if ( slot == 1 ) { '
         , 'vec4 dataA = texelAtOffet( vec2( -1, 0 ) );'
         , 'vec4 dataB = texelAtOffet( vec2( 0, 0 ) );'
         , 'vec3 pos = dataA.xyz;'
@@ -1065,7 +1071,72 @@ var forceShader = [
 
 pathgl.sim = {}
 
-pathgl.sim.force = function () {
-  return pathgl.texture(forceShader)
+pathgl.sim.force = function (size) {
+  var particleData = new Float32Array( 4 * size * 2)
+
+  var width = size * 2
+  var height = size
+  var rate = 1000
+
+  return pathgl.texture(forceShader, {step: step })
+
+  function step(gl, tex, unit, count, origin, velocities) {
+    velocities = velocities || { x:0, y:0, z:0 }
+    //gl.activeTexture( gl.TEXTURE0 + tex.unit)
+    gl.bindTexture( gl.TEXTURE_2D, tex)
+    var x = ~~( ( gl.particleIndex * 2 ) % width)
+    var y = ~~( gl.particleIndex / height)
+    var chunks = [{
+      x: x,
+      y: y,
+      size: count * 2
+    }]
+
+    function split( chunk ) {
+      var boundary = chunk.x + chunk.size;
+      if ( boundary > width) {
+        var delta = boundary - width
+        chunk.size -= delta;
+        chunk = {
+          x: 0,
+          y: ( chunk.y + 1 ) % height,
+          size: delta
+        }
+        chunks.push(chunk)
+        split(chunk)
+      }
+    }
+
+    split( chunks[0] )
+    var i, j, n, m, chunk, data, force = 1.0;
+    for ( i = 0, n = chunks.length; i < n; i++ ) {
+      chunk = chunks[i]
+      data = []
+      for ( j = 0, m = chunk.size; j < m; j++ ) {
+        data.push(
+          origin.x,
+          origin.y,
+          origin.z,
+          Math.random() * 10,
+          velocities.x + force * random( -1.0, 1.0 ),
+          velocities.y + force * random( -1.0, 1.0 ),
+          velocities.z + force * random( -1.0, 1.0 ),
+          0
+        )
+      }
+
+      gl.texSubImage2D(
+        gl.TEXTURE_2D, 0, chunk.x, chunk.y, chunk.size, 1,
+        gl.RGBA, gl.FLOAT, new Float32Array(data)
+      )
+    }
+
+    gl.particleIndex += count
+    gl.particleIndex %= size
+  }
 }
- }()
+
+
+function random (min, max) {
+  return Math.random() * ( max - min );
+} }()

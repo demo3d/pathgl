@@ -29,7 +29,11 @@ pathgl.texture = function (image, options, target) {
   , height: image.height || 512
   })
 
-  if (! image) self.update = RenderTarget(self).update
+  var render = RenderTarget(self)
+  if (! image) self.update = function ( ) {
+                 options.step && options.step(gl, tex, 0, 100, { x: 500, y: 500, z: 500 })
+                 render.update()
+               }
 
   target = target || null
   ;(textures[target] || (textures[target] = [])).push(self)
@@ -44,7 +48,7 @@ var Texture = {
     var image = this.image
 
     if (image.complete || image.readyState == 4) this.update()
-    else image.addEventListener && image.addEventListener('load', this.update.bind(this))
+    else image.addEventListener && image.addEventListener('load', this.update)
 
     return this
   }
@@ -102,9 +106,7 @@ function isShader(str) {
   return str.length > 50
 }
 
-
-  function d3_selection_selector(selector) {
-    return typeof selector === "function" ? selector : function() {
-      return d3_select(selector, this);
-    };
-  }
+function d3_selection_selector(selector) {
+  return typeof selector === "function" ? selector :
+    function() { return d3_select(selector, this) }
+}
