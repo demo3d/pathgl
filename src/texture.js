@@ -4,42 +4,47 @@ var textures = { null: [] }
 //tetxure target - construct render target
 //texture shader - construct render target & add mesh
 
+//shaderTexture
+//imageTexture
+//renderTexture
+
 pathgl.texture = function (image, options, target) {
-  var self = Object.create(Texture)
-  var tex = gl.createTexture()
+  return (image == null ? initRenderTexture :
+          isShader(image) ? initShaderTexture :
+          initDataTexture)(image, options || {}, target)
+}
 
-  self.gl = gl
-  self.program = program
-  self.data = tex
-
-  if (null == image) image = false
-  if (isShader(image)) {
-    self.program = createProgram(gl, simulation_vs, image, ['pos'])
-    self.mesh = Mesh(gl, {primitive: 'triangle_strip', attrList: ['pos'], pos: {size: 2}}, Quad())
-    image = false
+function initRenderTexture(prog, options) {
+  var self = {}
+  self.program = prog || program
+  self.fbo = gl.createFramebuffer()
+  var render = RenderTarget(self)
+  self.update = function ( ) {
+    options.step && options.step(gl, tex, 0, 100, { x: 500, y: 500, z: 500 })
+    render.update()
   }
+}
 
-  if (! image) self.fbo = gl.createFramebuffer()
+function initShaderTexture (shader, options) {
+  return renderTexture()
+}
 
+function initDataTexture (image, options, target) {
   if ('string' == typeof image) image = parseImage(image)
 
-  extend(self, options, {
+  extend(Object.create(Texture), options, {
     image: image
   , width: image.width || 512
+  , data: gl.createTexture()
   , height: image.height || 512
+  , gl: gl
   })
 
-  var render = RenderTarget(self)
-  if (! image) self.update = function ( ) {
-                 options.step && options.step(gl, tex, 0, 100, { x: 500, y: 500, z: 500 })
-                 render.update()
-               }
-
-  target = target || null
   ;(textures[target] || (textures[target] = [])).push(self)
 
   return self.load()
 }
+
 
 var Texture = {
   update: initTexture
@@ -47,8 +52,9 @@ var Texture = {
 , load: function ()  {
     var image = this.image
 
-    if (image.complete || image.readyState == 4) this.update()
-    else image.addEventListener && image.addEventListener('load', this.update)
+    if (image.complete || image.readyState == 4)
+      image.addEventListener && image.addEventListener('load', this.update)
+    else this.update()
 
     return this
   }
@@ -81,7 +87,7 @@ function updateTexture() {
 function updateTexture(image) {
 }
 
-function initTexture() {
+function initTexture(image) {
   gl.bindTexture(gl.TEXTURE_2D, this.data)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
@@ -91,7 +97,7 @@ function initTexture() {
 
   this.image ?
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image) :
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.FLOAT, this.data)
 
   //if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
 }

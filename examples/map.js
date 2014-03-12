@@ -64,17 +64,29 @@ function draw_history(err, hist) {
           .domain([0, d3.max(d3.values(num))])
           .range([size.height, 0])
 
+  var gram = d3.range(-500, 2030, 5).map(function (i) { return {num: i} })
+
+  function sample (n) {
+    var i = 3, sum = 0
+    while(i-- > -3) sum += (num[i+n] || 0)
+
+    return sum
+  }
+
+  svg.append('g').selectAll('rect')
+  .data(gram).enter()
+  .append('rect')
+  .attr('fill', 'indianred')
+  .attr('width', 1)
+  .attr('height', function (d) { return d.h = sample(d.num) })
+  .attr('x', function (d, i) { return x(d.num) })
+  .attr('y', function (d) { return size.height - d.h - 10 })
 
   var area = d3.svg.area()
              .x(function (d) { return x(+d.year) })
              .y0(size.height)
              .y1(function (d) { return y(num[+d.year]) })
 
-  svg
-  .append('path').datum(hist)
-  .attr('class', 'slider')
-  .attr('fill', 'indianred')
-  .attr('d', area)
 
   svg
   .on('click', function () { from = ~~ x.invert(+d3.mouse(this)[0]) })

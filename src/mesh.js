@@ -1,6 +1,6 @@
 function Mesh (gl, options, attr) {
   var attributes = {}
-    , count = attr && attr.length || 0
+    , count = attr ? attr.length : 0
     , attrList = options.attrList || ['pos', 'color', 'fugue']
     , primitive = gl[(options.primitive || 'triangle_fan') .toUpperCase()]
 
@@ -119,11 +119,11 @@ function RenderTarget(screen) {
 }
 
 function buildBuffers(gl, types) {
-  var pointMesh = new Mesh(gl, {primitive: 'points'})
+  var pointMesh = new Mesh(gl, { primitive: 'points' })
   pointMesh.bind(types.circle)
   pointMesh.bind(types.rect)
 
-  var lineMesh = new Mesh(gl, {primitive: 'points', pos: { size: 2 }})
+  var lineMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 2 }})
   lineMesh.bind(types.line)
   return [pointMesh, lineMesh]
 }

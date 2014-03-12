@@ -205,7 +205,7 @@ function createProgram(gl, vs, fs, attributes) {
 
   gl.linkProgram(program)
   gl.useProgram(program)
-
+  
   if (! gl.getProgramParameter(program, gl.LINK_STATUS)) throw name + ': ' + gl.getProgramInfoLog(program)
 
   each({ type: [0]
@@ -443,7 +443,7 @@ function matchesSelector(selector) {
 //offscreen render color test
 ;function Mesh (gl, options, attr) {
   var attributes = {}
-    , count = attr && attr.length || 0
+    , count = attr ? attr.length : 0
     , attrList = options.attrList || ['pos', 'color', 'fugue']
     , primitive = gl[(options.primitive || 'triangle_fan') .toUpperCase()]
 
@@ -562,11 +562,11 @@ function RenderTarget(screen) {
 }
 
 function buildBuffers(gl, types) {
-  var pointMesh = new Mesh(gl, {primitive: 'points'})
+  var pointMesh = new Mesh(gl, { primitive: 'points' })
   pointMesh.bind(types.circle)
   pointMesh.bind(types.rect)
 
-  var lineMesh = new Mesh(gl, {primitive: 'points', pos: { size: 2 }})
+  var lineMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 2 }})
   lineMesh.bind(types.line)
   return [pointMesh, lineMesh]
 }
@@ -914,42 +914,47 @@ function pointInPolygon(x, y, shape) {}
 //tetxure target - construct render target
 //texture shader - construct render target & add mesh
 
+//shaderTexture
+//imageTexture
+//renderTexture
+
 pathgl.texture = function (image, options, target) {
-  var self = Object.create(Texture)
-  var tex = gl.createTexture()
+  return (image == null ? initRenderTexture :
+          isShader(image) ? initShaderTexture :
+          initDataTexture)(image, options || {}, target)
+}
 
-  self.gl = gl
-  self.program = program
-  self.data = tex
-
-  if (null == image) image = false
-  if (isShader(image)) {
-    self.program = createProgram(gl, simulation_vs, image, ['pos'])
-    self.mesh = Mesh(gl, {primitive: 'triangle_strip', attrList: ['pos'], pos: {size: 2}}, Quad())
-    image = false
+function initRenderTexture(prog, options) {
+  var self = {}
+  self.program = prog || program
+  self.fbo = gl.createFramebuffer()
+  var render = RenderTarget(self)
+  self.update = function ( ) {
+    options.step && options.step(gl, tex, 0, 100, { x: 500, y: 500, z: 500 })
+    render.update()
   }
+}
 
-  if (! image) self.fbo = gl.createFramebuffer()
+function initShaderTexture (shader, options) {
+  return renderTexture()
+}
 
+function initDataTexture (image, options, target) {
   if ('string' == typeof image) image = parseImage(image)
 
-  extend(self, options, {
+  extend(Object.create(Texture), options, {
     image: image
   , width: image.width || 512
+  , data: gl.createTexture()
   , height: image.height || 512
+  , gl: gl
   })
 
-  var render = RenderTarget(self)
-  if (! image) self.update = function ( ) {
-                 options.step && options.step(gl, tex, 0, 100, { x: 500, y: 500, z: 500 })
-                 render.update()
-               }
-
-  target = target || null
   ;(textures[target] || (textures[target] = [])).push(self)
 
   return self.load()
 }
+
 
 var Texture = {
   update: initTexture
@@ -957,8 +962,9 @@ var Texture = {
 , load: function ()  {
     var image = this.image
 
-    if (image.complete || image.readyState == 4) this.update()
-    else image.addEventListener && image.addEventListener('load', this.update)
+    if (image.complete || image.readyState == 4)
+      image.addEventListener && image.addEventListener('load', this.update)
+    else this.update()
 
     return this
   }
@@ -991,7 +997,7 @@ function updateTexture() {
 function updateTexture(image) {
 }
 
-function initTexture() {
+function initTexture(image) {
   gl.bindTexture(gl.TEXTURE_2D, this.data)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
@@ -1001,7 +1007,7 @@ function initTexture() {
 
   this.image ?
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image) :
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.FLOAT, this.data)
 
   //if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
 }
@@ -1078,14 +1084,16 @@ pathgl.sim.force = function (size) {
   var height = size
   var rate = 1000
 
-  return pathgl.texture(forceShader, {step: step })
+  return pathgl.texture(forceShader, { step: step , data: particleData })
 
   function step(gl, tex, unit, count, origin, velocities) {
     velocities = velocities || { x:0, y:0, z:0 }
-    //gl.activeTexture( gl.TEXTURE0 + tex.unit)
-    gl.bindTexture( gl.TEXTURE_2D, tex)
-    var x = ~~( ( gl.particleIndex * 2 ) % width)
-    var y = ~~( gl.particleIndex / height)
+    //gl.activeTexture( gl.TEXTURE0 + 0)
+
+    gl.bindTexture(gl.TEXTURE_2D, tex)
+
+    var x = ~~(( gl.particleIndex * 2) % width)
+    var y = ~~(gl.particleIndex / height)
     var chunks = [{
       x: x,
       y: y,
@@ -1094,7 +1102,7 @@ pathgl.sim.force = function (size) {
 
     function split( chunk ) {
       var boundary = chunk.x + chunk.size;
-      if ( boundary > width) {
+      if (boundary > width) {
         var delta = boundary - width
         chunk.size -= delta;
         chunk = {
@@ -1109,26 +1117,24 @@ pathgl.sim.force = function (size) {
 
     split( chunks[0] )
     var i, j, n, m, chunk, data, force = 1.0;
-    for ( i = 0, n = chunks.length; i < n; i++ ) {
+    for (i = 0, n = chunks.length; i < n; i++) {
       chunk = chunks[i]
       data = []
-      for ( j = 0, m = chunk.size; j < m; j++ ) {
+      for (j = 0, m = chunk.size; j < m; j++) {
         data.push(
           origin.x,
           origin.y,
           origin.z,
           Math.random() * 10,
-          velocities.x + force * random( -1.0, 1.0 ),
-          velocities.y + force * random( -1.0, 1.0 ),
-          velocities.z + force * random( -1.0, 1.0 ),
+          velocities.x + force * random(-1.0, 1.0),
+          velocities.y + force * random(-1.0, 1.0),
+          velocities.z + force * random(-1.0, 1.0),
           0
         )
       }
 
-      gl.texSubImage2D(
-        gl.TEXTURE_2D, 0, chunk.x, chunk.y, chunk.size, 1,
-        gl.RGBA, gl.FLOAT, new Float32Array(data)
-      )
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, chunk.x, chunk.y, chunk.size, 1,
+                       gl.RGBA, gl.FLOAT, new Float32Array(data))
     }
 
     gl.particleIndex += count

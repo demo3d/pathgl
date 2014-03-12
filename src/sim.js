@@ -55,14 +55,16 @@ pathgl.sim.force = function (size) {
   var height = size
   var rate = 1000
 
-  return pathgl.texture(forceShader, {step: step })
+  return pathgl.texture(forceShader, { step: step , data: particleData })
 
   function step(gl, tex, unit, count, origin, velocities) {
     velocities = velocities || { x:0, y:0, z:0 }
-    //gl.activeTexture( gl.TEXTURE0 + tex.unit)
-    gl.bindTexture( gl.TEXTURE_2D, tex)
-    var x = ~~( ( gl.particleIndex * 2 ) % width)
-    var y = ~~( gl.particleIndex / height)
+    //gl.activeTexture( gl.TEXTURE0 + 0)
+
+    gl.bindTexture(gl.TEXTURE_2D, tex)
+
+    var x = ~~(( gl.particleIndex * 2) % width)
+    var y = ~~(gl.particleIndex / height)
     var chunks = [{
       x: x,
       y: y,
@@ -71,7 +73,7 @@ pathgl.sim.force = function (size) {
 
     function split( chunk ) {
       var boundary = chunk.x + chunk.size;
-      if ( boundary > width) {
+      if (boundary > width) {
         var delta = boundary - width
         chunk.size -= delta;
         chunk = {
@@ -86,26 +88,24 @@ pathgl.sim.force = function (size) {
 
     split( chunks[0] )
     var i, j, n, m, chunk, data, force = 1.0;
-    for ( i = 0, n = chunks.length; i < n; i++ ) {
+    for (i = 0, n = chunks.length; i < n; i++) {
       chunk = chunks[i]
       data = []
-      for ( j = 0, m = chunk.size; j < m; j++ ) {
+      for (j = 0, m = chunk.size; j < m; j++) {
         data.push(
           origin.x,
           origin.y,
           origin.z,
           Math.random() * 10,
-          velocities.x + force * random( -1.0, 1.0 ),
-          velocities.y + force * random( -1.0, 1.0 ),
-          velocities.z + force * random( -1.0, 1.0 ),
+          velocities.x + force * random(-1.0, 1.0),
+          velocities.y + force * random(-1.0, 1.0),
+          velocities.z + force * random(-1.0, 1.0),
           0
         )
       }
 
-      gl.texSubImage2D(
-        gl.TEXTURE_2D, 0, chunk.x, chunk.y, chunk.size, 1,
-        gl.RGBA, gl.FLOAT, new Float32Array(data)
-      )
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, chunk.x, chunk.y, chunk.size, 1,
+                       gl.RGBA, gl.FLOAT, new Float32Array(data))
     }
 
     gl.particleIndex += count
