@@ -7,7 +7,7 @@ var width = size.width,
     time = Date.now();
 
 var simplify = d3.geo.transform({ point: function(x, y, z) { this.stream.point(x, y); } })
-var proj = d3.geo.equirectangular().scale(158).translate([size.width / 2, size.height / 2]).precision(1)
+var proj = d3.geo.wagner4().scale(225).translate([size.width / 2 - 75, size.height / 2]).precision(.1)
   , path = d3.geo.path().projection(proj)
 
 var svg = d3.select(selector)
@@ -26,19 +26,21 @@ function mouseover(d) {
 }
 
 function draw_world(err, world) {
-  svg.append('path')
+  if (err) svg.append('path')
   .attr('class', 'graticule noclick')
   .datum(d3.geo.graticule())
   .attr('d', path)
-  .attr('dashed-array', '10 5 7 3')
+  .attr('stroke-dasharray', '3 3')
+  .attr('fill', 'none')
   .attr('stroke', '#999')
 
   svg.append("path")
-  .datum(topojson.mesh(world, world.objects.land))
+  .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a == b && a.id !== 10 }))
   .attr({ class: 'world'
         , d: path
-        , fill: '#333'
-        , 'stroke': '#333'
+        , fill: 'none'
+        , 'stroke': 'grey'
+        , 'stroke-width': 1
         })
 }
 
@@ -50,43 +52,40 @@ function draw_history(err, hist) {
   .append('div')
   .attr('class', 'current_year')
 
-  var num = {}
-
-  hist.forEach(function (d) {
-    num[d.year] = (num[d.year] || 0) + 1
-  })
+  var gram = d3.layout.histogram()
+             .bins(size.width / 2)
+             .range([-500, 2030])
+             .value(function (d) { return + d.year })(hist)
 
   var x = d3.scale.linear()
           .domain([-500, 2030])
           .range([0, size.width])
 
   var y = d3.scale.linear()
-          .domain([0, d3.max(d3.values(num))])
-          .range([size.height, 0])
+          .domain([0, d3.max(gram, function (d) { return d.y })])
+          .range([0, size.height])
 
-  var gram = d3.range(-500, 2030, 5).map(function (i) { return {num: i} })
+  var xAxis = d3.svg.axis()
+              .scale(x)
+              .orient("bottom")
 
-  function sample (n) {
-    var i = 3, sum = 0
-    while(i-- > -3) sum += (num[i+n] || 0)
-
-    return sum
-  }
-
-  svg.append('g').selectAll('rect')
+  svg.selectAll('rect')
   .data(gram).enter()
   .append('rect')
   .attr('fill', 'indianred')
   .attr('width', 1)
-  .attr('height', function (d) { return d.h = sample(d.num) })
-  .attr('x', function (d, i) { return x(d.num) })
-  .attr('y', function (d) { return size.height - d.h - 10 })
+  .attr('height', function (d) { return y(d.y)  })
+  .attr('x', function (d, i) { return x(d.x)  })
+  .attr('y', function (d) { return size.height - y(d.y) - 30 })
 
-  var area = d3.svg.area()
-             .x(function (d) { return x(+d.year) })
-             .y0(size.height)
-             .y1(function (d) { return y(num[+d.year]) })
+  var axis = d3.svg.axis()
+             .scale(x)
+             .orient("bottom")
 
+  svg.append("g")
+  .attr("class", "x axis")
+  .attr("transform", "translate(0," + (size.height - 30) + ")")
+  .call(xAxis)
 
   svg
   .on('click', function () { from = ~~ x.invert(+d3.mouse(this)[0]) })
