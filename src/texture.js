@@ -32,7 +32,7 @@ var Texture = {
     setInterval(this.update.bind(this), 15)
   }
 , appendChild: function (el) {
-    return (this.types[el.toLowerCase()] || noop)(el)
+    return this.render.append(el)
   }
 , valueOf: function () {
     return - 1
@@ -42,35 +42,40 @@ var Texture = {
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 }
 
-extend(ShaderTexture.prototype, Texture, {})
-extend(RenderTexture.prototype, ShaderTexture, appendable, {})
+extend(ShaderTexture.prototype, Texture, {
+  update: function () { options.step && options.step(gl, tex, 0, 100, { x: 500, y: 500, z: 500 })
+                        this.render.update()
+  }
+})
+extend(RenderTexture.prototype, appendable, Texture, {})
 extend(DataTexture.prototype, Texture, {})
 
 function RenderTexture(prog, options) {
-  var self = {}
-  self.program = prog || program
-  self.fbo = gl.createFramebuffer()
-  var render = RenderTarget(self)
-  self.update = function ( ) {
-    options.step && options.step(gl, tex, 0, 100, { x: 500, y: 500, z: 500 })
-    render.update()
-  }
+  extend(this, options, {
+    fbo: gl.createFramebuffer()
+  , program: prog || program
+  , gl: gl
+  , data: gl.createTexture()
+  , update: initTexture
+  , image: null
+  })
+
+  this.update = (this.render = RenderTarget(this)).update
 }
 
 function ShaderTexture (shader, options) {
-  return renderTexture()
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.FLOAT, this.data)
+  return RenderTexture()
 }
 
 function DataTexture (image, options, target) {
   if ('string' == typeof image) image = parseImage(image)
 
-  return extend(Object.create(Texture), options, {
-    image: image
-  , width: image.width || 512
+  extend(this, options, {
+    gl: gl
+  , image: image
   , data: gl.createTexture()
+  , width: image.width || 512
   , height: image.height || 512
-  , gl: gl
   }).load()
 }
 
@@ -82,21 +87,24 @@ function updateTexture() {
 }
 
 
-function updateTexture(image) {
-}
+function updateTexture(image) {}
 
-function initTexture(image) {
+
+function initTexture() {
   gl.bindTexture(gl.TEXTURE_2D, this.data)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image)
-  //if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
+  fillTexture(this.image)
 }
 
+function fillTexture(image) {
+  image ?
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image) :
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.FLOAT, image)
+}
 function parseImage (image) {
   var query = document.querySelector(image)
   if (query) return query

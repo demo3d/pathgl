@@ -74,12 +74,14 @@ function Mesh (gl, options, attr) {
 }
 
 function RenderTarget(screen) {
-  screen.types = SVGProxy()
+
   var gl = screen.gl
-    , meshes = buildBuffers(gl, screen.types)
     , i = 0
     , fbo = screen.fbo || null
     , prog = screen.program
+    , types = screen.types = SVGProxy()
+    , meshes = buildBuffers(gl, screen.types)
+
 
   var bound_textures = false
 
@@ -89,8 +91,11 @@ function RenderTarget(screen) {
 
   if (fbo) initRtt.call(screen)
 
-  return { update: update }
+  return { update: update, append: append }
 
+  function append(el) {
+    return (types[el.toLowerCase()] || noop)(el)
+  }
   function mergeProgram(d) {
     prog = createProgram(gl, build_vs(d), pathgl.fragmentShader)
   }
