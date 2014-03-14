@@ -53,17 +53,17 @@ function draw_history(err, hist) {
   .attr('class', 'current_year')
 
   var gram = d3.layout.histogram()
-             .bins(size.width / 2)
+             .bins(size.width / 5)
              .range([-500, 2030])
              .value(function (d) { return + d.year })(hist)
 
   var x = d3.scale.linear()
-          .domain([-500, 2030])
+          .domain([-500, 2010])
           .range([0, size.width])
 
-  var y = d3.scale.linear()
+  var y = d3.scale.pow().exponent(.8)
           .domain([0, d3.max(gram, function (d) { return d.y })])
-          .range([0, size.height])
+          .range([0, size.height * .3])
 
   var xAxis = d3.svg.axis()
               .scale(x)
@@ -73,7 +73,7 @@ function draw_history(err, hist) {
   .data(gram).enter()
   .append('rect')
   .attr('fill', 'indianred')
-  .attr('width', 1)
+  .attr('width', 4)
   .attr('height', function (d) { return y(d.y)  })
   .attr('x', function (d, i) { return x(d.x)  })
   .attr('y', function (d) { return size.height - y(d.y) - 30 })
@@ -99,7 +99,7 @@ function draw_history(err, hist) {
   var b = svg.append("g")
           .attr("class", "brush")
           .call(brush)
-          .attr('transform', 'translate(' + [0, height * .9] +  ')')
+          .attr('transform', 'translate(' + [0, height * .85] +  ')')
           .selectAll("rect")
           .attr('fill', 'blue')
           .attr('opacity', '.7')
@@ -108,7 +108,6 @@ function draw_history(err, hist) {
   function brushmove() {
     adnan(d3.event.target.extent());
   }
-
 
   function adnan (s) {
     pathgl.uniform('dates', s)
@@ -146,7 +145,7 @@ function draw_history(err, hist) {
     //hist.forEach(function (d) { d.location[0] += 20 * Math.random(); d.location[1] += 20 *Math.random() })
     hist.forEach(function(d) {
       d.location = proj(d.location.split(' ').map(parseFloat).reverse()) || d
-            })
+    })
 
     pathgl.uniform('dates', [0, 1])
 
@@ -156,14 +155,15 @@ function draw_history(err, hist) {
     .enter()
     .append('circle')
     .attr({ class:'point'
-          , fill: function(d){ return d3.hsl(Math.random()*120 + 120, .9, 0.5) }
+          , stroke: function(d){ return d3.hsl(Math.random()*120 + 120, .9, 0.5) }
           , cx: function(d){ return d.location[0] }
           , cy: function(d){ return d.location[1] }
           , cz: function(d){ return + d.year }
-          , r: 15
+          , r: 5
           })
     .shader({
-      'r': '(pos.w < dates.y && pos.w > dates.x) ? 10. : 10. - (max(distance(pos.w, dates.y), distance(pos.w, dates.x)) / 20.);'
+      'r': '(pos.w < dates.y && pos.w > dates.x) ? 5. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
+      //'stroke': 'vec4(1., .5, 1., (pos.w > dates.x && pos.w < dates.y ) ? 1. : 0.)'
     })
     .each(function (d) {
       return d.node = this

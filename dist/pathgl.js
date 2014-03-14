@@ -20,7 +20,7 @@ function pathgl(canvas) {
 
   if (! canvas) return console.log('invalid selector')
   if (! canvas.getContext) return console.log(canvas, 'is not a valid canvas');function parseColor(v) {
-  var a = setStyle(v);
+  var a = setStyle(v)
   return + ( a[0] * 255 ) << 16 ^ ( a[1] * 255 ) << 8 ^ ( a[2] * 255 ) << 0
 }
 
@@ -91,7 +91,8 @@ function setStyle(style) {
     var color = /^\#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(style)
     return hexColor(parseInt(color[1] + color[1] + color[2] + color[2] + color[3] + color[3], 16))
   }
-
+  
+  return []
 }
 ''
 var cssColors = {
@@ -205,7 +206,7 @@ function createProgram(gl, vs, fs, attributes) {
 
   gl.linkProgram(program)
   gl.useProgram(program)
-  
+
   if (! gl.getProgramParameter(program, gl.LINK_STATUS)) throw name + ': ' + gl.getProgramInfoLog(program)
 
   each({ type: [0]
@@ -234,7 +235,7 @@ function build_vs(subst) {
 
   for(var attr in defaults)
     vertex = vertex.replace('replace_'+attr, defaults[attr])
-
+  console.log(vertex)
   return vertex
 }
 
@@ -275,7 +276,7 @@ function init(c) {
   bindEvents(canvas)
   var main = RenderTarget(canvas)
   tasks.push(main.update)
-  gl.clearColor(0,0,0,0)
+  gl.clearColor(0, 0, 0, 0)
   startDrawLoop()
   return canvas
 }

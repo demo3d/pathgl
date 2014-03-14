@@ -235,3 +235,10 @@ html, body {
         width: 85%;
     }
 }
+
+
+
+.x.axis .domain, .x.axis line {
+    fill: none;
+    stroke: #333;
+}

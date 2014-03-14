@@ -78,7 +78,7 @@ function createProgram(gl, vs, fs, attributes) {
 
   gl.linkProgram(program)
   gl.useProgram(program)
-  
+
   if (! gl.getProgramParameter(program, gl.LINK_STATUS)) throw name + ': ' + gl.getProgramInfoLog(program)
 
   each({ type: [0]
@@ -107,7 +107,7 @@ function build_vs(subst) {
 
   for(var attr in defaults)
     vertex = vertex.replace('replace_'+attr, defaults[attr])
-
+  console.log(vertex)
   return vertex
 }
 

@@ -13,7 +13,7 @@ function init(c) {
   bindEvents(canvas)
   var main = RenderTarget(canvas)
   tasks.push(main.update)
-  gl.clearColor(0,0,0,0)
+  gl.clearColor(0, 0, 0, 0)
   startDrawLoop()
   return canvas
 }

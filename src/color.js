@@ -1,5 +1,5 @@
 function parseColor(v) {
-  var a = setStyle(v);
+  var a = setStyle(v)
   return + ( a[0] * 255 ) << 16 ^ ( a[1] * 255 ) << 8 ^ ( a[2] * 255 ) << 0
 }
 
@@ -70,7 +70,8 @@ function setStyle(style) {
     var color = /^\#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(style)
     return hexColor(parseInt(color[1] + color[1] + color[2] + color[2] + color[3] + color[3], 16))
   }
-
+  
+  return []
 }
 ''
 var cssColors = {
