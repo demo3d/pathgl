@@ -9,39 +9,10 @@ var textures = { null: [] }
 //renderTexture
 
 pathgl.texture = function (image, options, target) {
-  return (image == null ? initRenderTexture :
-          isShader(image) ? initShaderTexture :
-          initDataTexture)(image, options || {}, target)
+  return new (image == null ? RenderTexture :
+          isShader(image) ? ShaderTexture :
+          DataTexture)(image, options || {}, target)
 }
-
-function initRenderTexture(prog, options) {
-  var self = {}
-  self.program = prog || program
-  self.fbo = gl.createFramebuffer()
-  var render = RenderTarget(self)
-  self.update = function ( ) {
-    options.step && options.step(gl, tex, 0, 100, { x: 500, y: 500, z: 500 })
-    render.update()
-  }
-}
-
-function initShaderTexture (shader, options) {
-  return renderTexture()
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.FLOAT, this.data)
-}
-
-function initDataTexture (image, options, target) {
-  if ('string' == typeof image) image = parseImage(image)
-
-  return extend(Object.create(Texture), options, {
-    image: image
-  , width: image.width || 512
-  , data: gl.createTexture()
-  , height: image.height || 512
-  , gl: gl
-  }).load()
-}
-
 
 var Texture = {
   update: initTexture
@@ -71,7 +42,38 @@ var Texture = {
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 }
 
-Texture = extend(Object.create(appendable), Texture)
+extend(ShaderTexture.prototype, Texture, {})
+extend(RenderTexture.prototype, ShaderTexture, appendable, {})
+extend(DataTexture.prototype, Texture, {})
+
+function RenderTexture(prog, options) {
+  var self = {}
+  self.program = prog || program
+  self.fbo = gl.createFramebuffer()
+  var render = RenderTarget(self)
+  self.update = function ( ) {
+    options.step && options.step(gl, tex, 0, 100, { x: 500, y: 500, z: 500 })
+    render.update()
+  }
+}
+
+function ShaderTexture (shader, options) {
+  return renderTexture()
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.FLOAT, this.data)
+}
+
+function DataTexture (image, options, target) {
+  if ('string' == typeof image) image = parseImage(image)
+
+  return extend(Object.create(Texture), options, {
+    image: image
+  , width: image.width || 512
+  , data: gl.createTexture()
+  , height: image.height || 512
+  , gl: gl
+  }).load()
+}
+
 
 function updateTexture() {
   gl.bindTexture(gl.TEXTURE_2D, this.data)
@@ -103,9 +105,4 @@ function parseImage (image) {
 
 function isShader(str) {
   return str.length > 50
-}
-
-function d3_selection_selector(selector) {
-  return typeof selector === "function" ? selector :
-    function() { return d3_select(selector, this) }
 }
