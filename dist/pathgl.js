@@ -235,7 +235,6 @@ function build_vs(subst) {
 
   for(var attr in defaults)
     vertex = vertex.replace('replace_'+attr, defaults[attr])
-  console.log(vertex)
   return vertex
 }
 
@@ -938,22 +937,19 @@ function initRenderTexture(prog, options) {
 
 function initShaderTexture (shader, options) {
   return renderTexture()
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.FLOAT, this.data)
 }
 
 function initDataTexture (image, options, target) {
   if ('string' == typeof image) image = parseImage(image)
 
-  extend(Object.create(Texture), options, {
+  return extend(Object.create(Texture), options, {
     image: image
   , width: image.width || 512
   , data: gl.createTexture()
   , height: image.height || 512
   , gl: gl
-  })
-
-  ;(textures[target] || (textures[target] = [])).push(self)
-
-  return self.load()
+  }).load()
 }
 
 
@@ -963,9 +959,8 @@ var Texture = {
 , load: function ()  {
     var image = this.image
 
-    if (image.complete || image.readyState == 4)
-      image.addEventListener && image.addEventListener('load', this.update)
-    else this.update()
+    if (image.complete || image.readyState == 4) this.update()
+    else image.addEventListener && image.addEventListener('load', this.update)
 
     return this
   }
@@ -1006,10 +1001,7 @@ function initTexture(image) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 
-  this.image ?
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image) :
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.FLOAT, this.data)
-
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image)
   //if (powerOfTwo(this.width) && powerOfTwo(this.height)) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
