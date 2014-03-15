@@ -235,9 +235,9 @@ function build_vs(subst) {
 
   for(var attr in defaults)
     vertex = vertex.replace('replace_'+attr, defaults[attr])
+  
   return vertex
 }
-
 
 function compileShader (gl, type, src) {
   var shader = gl.createShader(type)
@@ -517,14 +517,12 @@ function matchesSelector(selector) {
 }
 
 function RenderTarget(screen) {
-
   var gl = screen.gl
     , i = 0
     , fbo = screen.fbo || null
     , prog = screen.program
     , types = screen.types = SVGProxy()
     , meshes = buildBuffers(gl, screen.types)
-
 
   var bound_textures = false
 
@@ -539,12 +537,13 @@ function RenderTarget(screen) {
   function append(el) {
     return (types[el.toLowerCase()] || noop)(el)
   }
+
   function mergeProgram(d) {
     prog = createProgram(gl, build_vs(d), pathgl.fragmentShader)
   }
 
   function update () {
-      if (program != prog) gl.useProgram(program = prog)
+    if (program != prog) gl.useProgram(program = prog)
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
     bindTextures()
     beforeRender(gl)
@@ -561,7 +560,7 @@ function RenderTarget(screen) {
   }
 
   function beforeRender(gl) {
-    if (!fbo) gl.clear( gl.COLOR_BUFFER_BIT)
+    if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
 }
@@ -576,19 +575,11 @@ function buildBuffers(gl, types) {
   return [pointMesh, lineMesh]
 }
 
-function initRtt() {
-  var width = 512, height = 512
-
-  this.update()
-
+function initRtt(width, height) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
-
-  this.fbo.width = width
-  this.fbo.height = height
-
+  this.fbo.width = screen.width
+  this.fbo.height = screen.height
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.data, 0)
-
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 }
 ;//regexes sourced from sizzle
 function querySelectorAll(selector, r) {
@@ -930,13 +921,14 @@ pathgl.texture = function (image, options, target) {
 }
 
 var Texture = {
-  update: initTexture
+  init: initTexture
+, update: updateTexture
 , forEach: function () {}
 , load: function ()  {
     var image = this.image
 
-    if (image.complete || image.readyState == 4) this.update()
-    else image.addEventListener && image.addEventListener('load', this.update)
+    if (image.complete || image.readyState == 4) this.init()
+    else image.addEventListener && image.addEventListener('load', this.init)
 
     return this
   }
@@ -958,7 +950,7 @@ var Texture = {
 }
 
 extend(ShaderTexture.prototype, Texture, {
-  update: function () { options.step && options.step(gl, tex, 0, 100, { x: 500, y: 500, z: 500 })
+  update: function () { this.step && this.step(this.gl, this.data, 0, 100, { x: 500, y: 500, z: 500 })
                         this.render.update()
   }
 })
@@ -971,10 +963,10 @@ function RenderTexture(prog, options) {
   , program: prog || program
   , gl: gl
   , data: gl.createTexture()
-  , update: initTexture
   , image: null
   })
 
+  this.init()
   this.update = (this.render = RenderTarget(this)).update
 }
 
@@ -994,33 +986,32 @@ function DataTexture (image, options, target) {
   }).load()
 }
 
-
 function updateTexture() {
-  gl.bindTexture(gl.TEXTURE_2D, this.data)
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image || null)
-  gl.bindTexture(gl.TEXTURE_2D, null)
+  this.image ?
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image) :
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 }
 
-
-function updateTexture(image) {}
-
-
 function initTexture() {
+  console.log(this.data)
   gl.bindTexture(gl.TEXTURE_2D, this.data)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-  fillTexture(this.image)
+  this.update()
 }
 
-function fillTexture(image) {
-  image ?
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image) :
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.FLOAT, image)
-}
 function parseImage (image) {
+  // string
+  //   url
+  //   selector
+  // object
+  //   video / image
+  //   imageData
+  //   typedarray
+  //   array / nodelist
   var query = document.querySelector(image)
   if (query) return query
   return extend(isVideoUrl ? new Image : document.createElement('video'), { src: image })

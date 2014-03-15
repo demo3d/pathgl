@@ -15,13 +15,14 @@ pathgl.texture = function (image, options, target) {
 }
 
 var Texture = {
-  update: initTexture
+  init: initTexture
+, update: updateTexture
 , forEach: function () {}
 , load: function ()  {
     var image = this.image
 
-    if (image.complete || image.readyState == 4) this.update()
-    else image.addEventListener && image.addEventListener('load', this.update)
+    if (image.complete || image.readyState == 4) this.init()
+    else image.addEventListener && image.addEventListener('load', this.init)
 
     return this
   }
@@ -43,7 +44,7 @@ var Texture = {
 }
 
 extend(ShaderTexture.prototype, Texture, {
-  update: function () { options.step && options.step(gl, tex, 0, 100, { x: 500, y: 500, z: 500 })
+  update: function () { this.step && this.step(this.gl, this.data, 0, 100, { x: 500, y: 500, z: 500 })
                         this.render.update()
   }
 })
@@ -56,10 +57,10 @@ function RenderTexture(prog, options) {
   , program: prog || program
   , gl: gl
   , data: gl.createTexture()
-  , update: initTexture
   , image: null
   })
 
+  this.init()
   this.update = (this.render = RenderTarget(this)).update
 }
 
@@ -79,33 +80,32 @@ function DataTexture (image, options, target) {
   }).load()
 }
 
-
 function updateTexture() {
-  gl.bindTexture(gl.TEXTURE_2D, this.data)
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image || null)
-  gl.bindTexture(gl.TEXTURE_2D, null)
+  this.image ?
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image) :
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 }
 
-
-function updateTexture(image) {}
-
-
 function initTexture() {
+  console.log(this.data)
   gl.bindTexture(gl.TEXTURE_2D, this.data)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-  fillTexture(this.image)
+  this.update()
 }
 
-function fillTexture(image) {
-  image ?
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image) :
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.FLOAT, image)
-}
 function parseImage (image) {
+  // string
+  //   url
+  //   selector
+  // object
+  //   video / image
+  //   imageData
+  //   typedarray
+  //   array / nodelist
   var query = document.querySelector(image)
   if (query) return query
   return extend(isVideoUrl ? new Image : document.createElement('video'), { src: image })

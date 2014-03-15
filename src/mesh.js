@@ -74,14 +74,12 @@ function Mesh (gl, options, attr) {
 }
 
 function RenderTarget(screen) {
-
   var gl = screen.gl
     , i = 0
     , fbo = screen.fbo || null
     , prog = screen.program
     , types = screen.types = SVGProxy()
     , meshes = buildBuffers(gl, screen.types)
-
 
   var bound_textures = false
 
@@ -96,12 +94,13 @@ function RenderTarget(screen) {
   function append(el) {
     return (types[el.toLowerCase()] || noop)(el)
   }
+
   function mergeProgram(d) {
     prog = createProgram(gl, build_vs(d), pathgl.fragmentShader)
   }
 
   function update () {
-      if (program != prog) gl.useProgram(program = prog)
+    if (program != prog) gl.useProgram(program = prog)
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
     bindTextures()
     beforeRender(gl)
@@ -118,7 +117,7 @@ function RenderTarget(screen) {
   }
 
   function beforeRender(gl) {
-    if (!fbo) gl.clear( gl.COLOR_BUFFER_BIT)
+    if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
 }
@@ -133,17 +132,9 @@ function buildBuffers(gl, types) {
   return [pointMesh, lineMesh]
 }
 
-function initRtt() {
-  var width = 512, height = 512
-
-  this.update()
-
+function initRtt(width, height) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
-
-  this.fbo.width = width
-  this.fbo.height = height
-
+  this.fbo.width = screen.width
+  this.fbo.height = screen.height
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.data, 0)
-
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 }

@@ -107,9 +107,9 @@ function build_vs(subst) {
 
   for(var attr in defaults)
     vertex = vertex.replace('replace_'+attr, defaults[attr])
+  
   return vertex
 }
-
 
 function compileShader (gl, type, src) {
   var shader = gl.createShader(type)
