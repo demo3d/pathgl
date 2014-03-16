@@ -2,9 +2,9 @@ function SVGProxy () {
   return types.reduce(function (a, type) {
            a[type.name] = function x() {
              var self = Object.create(type.prototype)
+             extend(self, x)
              self.init(x.mesh.alloc() - 1)
              self.attr = {}
-             extend(self, x)
              return self
            }
            extend(type.prototype, baseProto, proto[type.name])
