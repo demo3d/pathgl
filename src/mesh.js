@@ -8,7 +8,7 @@ function Mesh (gl, options, attr) {
   return {
     init : init
   , free: free
-  , plus1: plus1
+  , alloc: alloc
   , draw: draw
   , bind: bind
   , attributes: attributes
@@ -18,8 +18,10 @@ function Mesh (gl, options, attr) {
   , boundingBox: boundingBox
   }
 
-  function plus1() {
-    count += 1
+  function alloc() {
+    return count += options.primitive == 'points' ? 1
+                  : options.primitive == 'lines' ? 2
+                  : 3
   }
 
   function init() {
@@ -87,7 +89,7 @@ function RenderTarget(screen) {
 
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 
-  if (fbo) initRtt.call(screen)
+  initFbo.call(screen)
 
   return { update: update, append: append }
 
@@ -132,7 +134,8 @@ function buildBuffers(gl, types) {
   return [pointMesh, lineMesh]
 }
 
-function initRtt(width, height) {
+function initFbo(width, height) {
+  if (! this.fbo) return
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
   this.fbo.width = screen.width
   this.fbo.height = screen.height

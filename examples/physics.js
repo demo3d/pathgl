@@ -28,33 +28,26 @@ function readback(physics) {
 function debug () {
   var canvas = d3.select('canvas').call(pathgl)
 
-  canvas.append('circle')
-  .attr('r', 100)
+  var physics = pathgl.texture()
+
+  d3.select(physics)
+  .selectAll('circle')
+  .data(d3.range(100), function (d) { return d })
+  .enter()
+  .append('circle')
+  .attr('r', 50)
+  .attr('cx', function (d) { return 100 * (d % 10) })
+  .attr('cy', function (d) { return 100 * ~~(d / 10) })
+  .attr('fill', function () { return 'hsl(' + Math.random() * 360 + ',100%, 50%)' })
+
+  physics.update()
+
+  canvas
+  .selectAll("circle")
+  .data(d3.range(100), function (d) { return d })
+  .enter().append("circle")
+  .attr('r', 50)
+  .attr('cx', function (d) { return 100 * (d % 10) })
+  .attr('cy', function (d) { return 100 * ~~(d / 10) })
   .attr('fill', 'pink')
-  .attr('x', 500)
-  .attr('y', 500)
-
-
-  // var physics = pathgl.texture()
-
-  // d3.select(physics)
-  // .selectAll('circle')
-  // .data(d3.range(100))
-  // .enter()
-  // .append('circle')
-  // .attr('r', 500)
-  // .attr('cx', function (d) { return 100 * (d % 10) })
-  // .attr('cy', function (d) { return 100 * ~~(d / 10) })
-  // .attr('fill', function () { return 'hsl(' + Math.random() * 360 + ',100%, 50%)' })
-
-  // physics.repeat()
-
-  // canvas
-  // .selectAll(".nil")
-  // .data(d3.range(100))
-  // .enter().append("circle")
-  // .attr('fill', 'pink')
-  // .attr('r', 50)
-  // .attr('cx', function (d) { return 100 * (d % 10) })
-  // .attr('cy', function (d) { return 100 * ~~(d / 10) })
 }

@@ -87,7 +87,6 @@ function updateTexture() {
 }
 
 function initTexture() {
-  console.log(this.data)
   gl.bindTexture(gl.TEXTURE_2D, this.data)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)

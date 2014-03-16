@@ -451,7 +451,7 @@ function matchesSelector(selector) {
   return {
     init : init
   , free: free
-  , plus1: plus1
+  , alloc: alloc
   , draw: draw
   , bind: bind
   , attributes: attributes
@@ -461,8 +461,10 @@ function matchesSelector(selector) {
   , boundingBox: boundingBox
   }
 
-  function plus1() {
-    count += 1
+  function alloc() {
+    return count += options.primitive == 'points' ? 1
+                  : options.primitive == 'lines' ? 2
+                  : 3
   }
 
   function init() {
@@ -530,7 +532,7 @@ function RenderTarget(screen) {
 
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 
-  if (fbo) initRtt.call(screen)
+  initFbo.call(screen)
 
   return { update: update, append: append }
 
@@ -575,7 +577,8 @@ function buildBuffers(gl, types) {
   return [pointMesh, lineMesh]
 }
 
-function initRtt(width, height) {
+function initFbo(width, height) {
+  if (! this.fbo) return
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
   this.fbo.width = screen.width
   this.fbo.height = screen.height
@@ -643,15 +646,10 @@ var combinators = { ' ': function (d) { return d && d !== __scene__ && d.parent(
                   }
 var chunker =
   /^(\*|\w+)?(?:([\.\#]+[\w\-\.#]+)?)(\[([\w\-]+)(?:([\|\^\$\*\~]?\=)['"]?([ \w\-\/\?\&\=\:\.\(\)\!,@#%<>\{\}\$\*\^]+)["']?)?\])?(:([\w\-]+)(\(['"]?([^()]+)['"]?\))?)?/
-;var pointsChanged = true
-var pointCount = 0
-var lineCount = 0
-var linesChanged = true
-
-function SVGProxy () {
+;function SVGProxy () {
   return types.reduce(function (a, type) {
            a[type.name] = constructProxy(type)
-           type.prototype = extend(Object.create(proto[type.name]), baseProto)
+           type.prototype = extend(proto[type.name], baseProto)
            return a
          }, {})
 }
@@ -681,7 +679,7 @@ var proto = {
             }
           , posBuffer: null
           }
-, ellipse: { cx: noop, cy: noop, rx: noop, ry: noop } //points
+, ellipse: { cx: noop, cy: noop, rx: noop, ry: noop }
 , rect: { fill: function (v) {
             this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
           }
@@ -774,17 +772,17 @@ var baseProto = {
 }
 
 var types = [
-  function circle () {}
-, function rect() {}
-, function path() {}
-, function ellipse() {}
-, function line() {}
-, function path() {}
-, function polygon() {}
-, function polyline() {}
-, function image() {}
-, function text() {}
-, function g() {}
+  function circle (i) {}
+, function rect(i) {}
+, function path(i) {}
+, function ellipse(i) {}
+, function line(i) {}
+, function path(i) {}
+, function polygon(i) {}
+, function polyline(i) {}
+, function image(i) {}
+, function text(i) {}
+, function g(i) {}
 ]
 
 function buildPath (d) {
@@ -831,43 +829,28 @@ function constructProxy(type) {
   return function x(tagName) {
     var child = new type()
     extend(child, x)
-    var count = canvas.__scene__.push(child)
 
-    var numArrays = 4
-
-    child.mesh.plus1()
+    var count = x.mesh.alloc() - 1
     child.attr = Object.create(attrDefaults)
     child.tag = tagName.toLowerCase()
     child.parentNode = child.parentElement = canvas
 
-    var i = child.indices =
+    child.indices =
       type.name == 'line' ? [count * 2, count * 2 + 1] :
       type.name == 'circle' ? [count * 4] :
       type.name == 'rect' ? [count * 4] :
       []
 
-    if (type.name !== 'path')
-      count += type.name == 'line' ? 2 : 1
+    if (type.name == 'circle')
+      child.fBuffer[count * 4] = 1
 
-    if (type.name == 'line')
-      lineCount += 2
+    if (type.name == 'rect')
+      child.fBuffer[count * 4] = 0
 
-    if (type.name == 'circle') {
-      pointCount += 1
-      child.fBuffer[pointCount * 4] = 1
-    }
-
-    if (type.name == 'rect') {
-      pointCount += 1
-      child.fBuffer[pointCount * 4] = 0
-    }
     return child
   }
 }
-var e = {}
-function event (type, listener) {}
-
-var tween = 'float x(i) { return a / b + b * i }';function noop () {}
+;function noop () {}
 
 function identity(x) { return x }
 
@@ -993,7 +976,6 @@ function updateTexture() {
 }
 
 function initTexture() {
-  console.log(this.data)
   gl.bindTexture(gl.TEXTURE_2D, this.data)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
