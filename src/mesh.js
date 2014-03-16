@@ -85,16 +85,18 @@ function RenderTarget(screen) {
 
   var bound_textures = false
 
+
   screen.mesh && meshes.push(screen.mesh)
 
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 
   initFbo.call(screen)
 
-  return { update: update, append: append }
+  return screen.__renderTarget__ =
+    { update: update, append: append }
 
   function append(el) {
-    return (types[el.toLowerCase()] || noop)(el)
+    return (types[el.toLowerCase()] || console.log.bind(console, 'oops'))(el)
   }
 
   function mergeProgram(d) {

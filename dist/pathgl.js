@@ -528,16 +528,18 @@ function RenderTarget(screen) {
 
   var bound_textures = false
 
+
   screen.mesh && meshes.push(screen.mesh)
 
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 
   initFbo.call(screen)
 
-  return { update: update, append: append }
+  return screen.__renderTarget__ =
+    { update: update, append: append }
 
   function append(el) {
-    return (types[el.toLowerCase()] || noop)(el)
+    return (types[el.toLowerCase()] || console.log.bind(console, 'oops'))(el)
   }
 
   function mergeProgram(d) {
@@ -648,21 +650,31 @@ var chunker =
   /^(\*|\w+)?(?:([\.\#]+[\w\-\.#]+)?)(\[([\w\-]+)(?:([\|\^\$\*\~]?\=)['"]?([ \w\-\/\?\&\=\:\.\(\)\!,@#%<>\{\}\$\*\^]+)["']?)?\])?(:([\w\-]+)(\(['"]?([^()]+)['"]?\))?)?/
 ;function SVGProxy () {
   return types.reduce(function (a, type) {
-           a[type.name] = constructProxy(type)
-           type.prototype = extend(proto[type.name], baseProto)
+           a[type.name] = function x() {
+             var self = Object.create(type.prototype)
+             self.init(x.mesh.alloc() - 1)
+             self.attr = {}
+             extend(self, x)
+             return self
+           }
+           extend(type.prototype, baseProto, proto[type.name])
            return a
          }, {})
 }
 
 var proto = {
-  circle: { cx: function (v) {
+  circle: { init: function (i) {
+              this.fBuffer[i * 4] = 1
+              this.indices = [i * 4]
+            }
+          , cx: function (v) {
               this.posBuffer[this.indices[0] + 0] = v
             }
           , cy: function (v) {
               this.posBuffer[this.indices[0] + 1] = v
             }
           , r: function (v) {
-             this.posBuffer[this.indices[0] + 2] = v
+              this.posBuffer[this.indices[0] + 2] = v
             }
 
           , cz: function (v) {
@@ -675,12 +687,18 @@ var proto = {
           , stroke: function (v) {
               this.colorBuffer[this.indices[0]] = parseColor(v)
             },
-            opacity: function () {
-            }
-          , posBuffer: null
-          }
-, ellipse: { cx: noop, cy: noop, rx: noop, ry: noop }
-, rect: { fill: function (v) {
+            opacity: function () {}
+          }, tagName: 'circle'
+, ellipse: { init: function () {
+
+
+             }, tagName: 'ellipse'
+           , cx: noop, cy: noop, rx: noop, ry: noop }
+, rect: { init: function (i) {
+            this.fBuffer[i * 4] = 0
+            this.indices = [i * 4]
+          }, tagName: 'rect'
+        , fill: function (v) {
             this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
           }
         , x: function (v){
@@ -698,9 +716,16 @@ var proto = {
         , rx: noop,
           ry:  noop
         }
-, image: { 'xlink:href': noop, height: noop, width: noop, x: noop, y: noop }
+, image: { init: function () {
 
-, line: { x1: function (v) { this.posBuffer[this.indices[0] * 2] = v }
+
+           }, tagName: 'image'
+         , 'xlink:href': noop, height: noop, width: noop, x: noop, y: noop }
+
+, line: { init: function (i) {
+            this.indices = [i * 2, i * 2 + 1]
+          }, tagName: 'line'
+        , x1: function (v) { this.posBuffer[this.indices[0] * 2] = v }
         , y1: function (v) { this.posBuffer[this.indices[0] * 2 + 1] = v }
         , x2: function (v) { this.posBuffer[this.indices[1] * 2] = v }
         , y2: function (v) { this.posBuffer[this.indices[1] * 2  + 1] = v }
@@ -711,7 +736,11 @@ var proto = {
             }, this)
           }
         }
-, path: { d: buildPath
+, path: { init: function () {
+
+
+          }, tagName: 'path'
+        , d: buildPath
         , pathLength: noop
         , stroke: function (v) {
             var fill = parseColor(v)
@@ -721,21 +750,33 @@ var proto = {
           }
         }
 
-, polygon: { points: noop }
-, polyline: { points: noop }
-, g: { appendChild: function (tag) { this.children.push(appendChild(tag)) },  ctr: function () { this.children = [] } }
-, text: { x: noop, y: noop, dx: noop, dy: noop }
+, polygon: { init: function () {
+
+
+             }, tagName: 'polygon'
+           , points: noop }
+, polyline: { init: function (i) {
+                this.indices = [i * 2, i * 2 + 1]
+              }, tagName: 'polyline'
+          , points: noop }
+, g: { init: function () {
+
+       }, tagName: 'g'
+     , appendChild: function (tag) { this.children.push(appendChild(tag)) },  ctr: function () { this.children = [] } }
+, text: { init: function () {
+
+          }, tagName: 'text'
+        , x: noop, y: noop, dx: noop, dy: noop }
 }
 
 var baseProto = {
   querySelectorAll: querySelectorAll
 
 , children: Object.freeze([])
-, ctr: constructProxy
 , querySelector: function (s) { return this.querySelectorAll(s)[0] }
 , createElementNS: identity
 , insertBefore: noop
-, ownerDocument: { createElementNS: function (_, x) { return x} }
+, ownerDocument: { createElementNS: function (_, x) { debugger ;return x } }
 , render: function render(node) {
   this.buffer && drawFill(this)
   drawStroke(this)
@@ -754,8 +795,6 @@ var baseProto = {
 
 , setAttribute: function (name, value) {
     if (value.ctr == Texture) value = + value
-    pointsChanged = true
-    linesChanged = true
     this.attr[name] = value
     this[name] && this[name](value)
   }
@@ -772,17 +811,16 @@ var baseProto = {
 }
 
 var types = [
-  function circle (i) {}
-, function rect(i) {}
-, function path(i) {}
-, function ellipse(i) {}
-, function line(i) {}
-, function path(i) {}
-, function polygon(i) {}
-, function polyline(i) {}
-, function image(i) {}
-, function text(i) {}
-, function g(i) {}
+  function circle () {}
+, function rect() {}
+, function ellipse() {}
+, function line() {}
+, function path() {}
+, function polygon() {}
+, function polyline() {}
+, function image() {}
+, function text() {}
+, function g() {}
 ]
 
 function buildPath (d) {
@@ -799,7 +837,7 @@ function insertBefore(node, next) {
 }
 
 function appendChild(el) {
-  return (this.types[el.tagName.toLowerCase()] || noop)(el.tagName)
+  return this.__renderTarget__.append(el.tagName)
 }
 
 function removeChild(el) {
@@ -823,34 +861,7 @@ var attrDefaults = {
 , x: 0
 , y: 0
 , opacity: .999
-}
-
-function constructProxy(type) {
-  return function x(tagName) {
-    var child = new type()
-    extend(child, x)
-
-    var count = x.mesh.alloc() - 1
-    child.attr = Object.create(attrDefaults)
-    child.tag = tagName.toLowerCase()
-    child.parentNode = child.parentElement = canvas
-
-    child.indices =
-      type.name == 'line' ? [count * 2, count * 2 + 1] :
-      type.name == 'circle' ? [count * 4] :
-      type.name == 'rect' ? [count * 4] :
-      []
-
-    if (type.name == 'circle')
-      child.fBuffer[count * 4] = 1
-
-    if (type.name == 'rect')
-      child.fBuffer[count * 4] = 0
-
-    return child
-  }
-}
-;function noop () {}
+};function noop () {}
 
 function identity(x) { return x }
 
