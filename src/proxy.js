@@ -123,7 +123,6 @@ var proto = {
 
 var baseProto = {
   querySelectorAll: querySelectorAll
-
 , children: Object.freeze([])
 , querySelector: function (s) { return this.querySelectorAll(s)[0] }
 , createElementNS: identity

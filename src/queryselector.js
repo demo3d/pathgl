@@ -27,7 +27,7 @@ function checkRight(_, tag, classId, attribute, attr, attrCmp, attrVal, _, pseud
   return pseudo && pseudos[pseudo] && !pseudos[pseudo](this, pseudoVal)
       || tag && tag !== '*' && this.tag && this.tag.toLowerCase() !== tag
       || attribute && !checkAttr(attrCmp, this[attr] || '', attrVal)
-      || classId && (m = classId.match(/#([\w\-]+)/)) && m[1] !== this.id
+      || classId && (m = classId.match(/#([\w\-]+)/)) && m[1] !== this.attr.id
       || classId && (classId.match(/\.[\w\-]+/g) || []).some(matchClass.bind(this)) ? 0 : this
 }
 
@@ -46,8 +46,7 @@ function byId(id) { return querySelectorAll('[id="' + id + '"]')[0] }
 function isNode(el) { return el && typeof el === 'object' }
 function previous(n) { while (n = n.previousSibling()) if (n.top) return n }
 function clean(s) { return s.replace(/([.*+?\^=!:${}()|\[\]\/\\])/, '\\$1') }
-function matchClass(d) { return ! RegExp('(^|\\s+)' + d.slice(1) + '(\\s+|$)').test(this.class) }
-function byClassName(name) { return traverse(this, function (doc) { return doc.class == name }, []) }
+function matchClass(d) { return ! RegExp('(^|\\s+)' + d.slice(1) + '(\\s+|$)').test(this.attr.class) }
 function byTagName(name) { return traverse(this, function (doc) { return name == '*' || doc.tagName == name }, []) }
 function traverse(node, fn, val) {
   return (node.__scene__ || node.children).forEach(function (node) { traverse(node, fn, val), fn(node) && val.push(node) }) || val }
