@@ -13,7 +13,7 @@ var col = 20
 
 var textures = pathgl.texture('.t')
 
-r = c.selectAll('rect').data(d3.range(20)).enter().append('rect')
+r = c.selectAll('rect').data(d3.range(col * row )).enter().append('rect')
 .attr('x', function (d) { return s/2 + s * (d % col) })
 .attr('y', function (d) { return s/2 + s * ~~(d / col) })
 .attr('width', s / 2)

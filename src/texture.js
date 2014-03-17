@@ -58,6 +58,8 @@ function RenderTexture(prog, options) {
   , gl: gl
   , data: gl.createTexture()
   , image: null
+  , width: 512
+  , height: 512
   })
 
   this.init()

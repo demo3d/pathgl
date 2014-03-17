@@ -235,7 +235,7 @@ function build_vs(subst) {
 
   for(var attr in defaults)
     vertex = vertex.replace('replace_'+attr, defaults[attr])
-  
+
   return vertex
 }
 
@@ -958,6 +958,8 @@ function RenderTexture(prog, options) {
   , gl: gl
   , data: gl.createTexture()
   , image: null
+  , width: 512
+  , height: 512
   })
 
   this.init()

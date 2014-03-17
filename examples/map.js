@@ -141,8 +141,6 @@ function draw_history(err, hist) {
            })
 
     hist = hist.sort(function(a, b) { return a.year - b.year })
-
-    //hist.forEach(function (d) { d.location[0] += 20 * Math.random(); d.location[1] += 20 *Math.random() })
     hist.forEach(function(d) {
       d.location = proj(d.location.split(' ').map(parseFloat).reverse()) || d
     })
@@ -150,11 +148,11 @@ function draw_history(err, hist) {
     pathgl.uniform('dates', [0, 1])
 
     webgl
-    .selectAll('.nil')
+    .selectAll('circle')
     .data(hist)
     .enter()
     .append('circle')
-    .attr({ class:'point'
+    .attr({ class:'event'
           , stroke: function(d){ return d3.hsl(Math.random()*120 + 120, .9, 0.5) }
           , cx: function(d){ return d.location[0] }
           , cy: function(d){ return d.location[1] }
@@ -162,7 +160,7 @@ function draw_history(err, hist) {
           , r: 5
           })
     .shader({
-      'r': '(pos.w < dates.y && pos.w > dates.x) ? 5. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
+      'r': '(pos.w < dates.y && pos.w > dates.x) ? 10. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
       //'stroke': 'vec4(1., .5, 1., (pos.w > dates.x && pos.w < dates.y ) ? 1. : 0.)'
     })
     .each(function (d) {
