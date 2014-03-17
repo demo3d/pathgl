@@ -70,10 +70,10 @@ function setStyle(style) {
     var color = /^\#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(style)
     return hexColor(parseInt(color[1] + color[1] + color[2] + color[2] + color[3] + color[3], 16))
   }
-  
-  return []
+
+  return false
 }
-''
+
 var cssColors = {
   "aliceblue": 0xF0F8FF, "antiquewhite": 0xFAEBD7, "aqua": 0x00FFFF, "aquamarine": 0x7FFFD4, "azure": 0xF0FFFF
 , "beige": 0xF5F5DC, "bisque": 0xFFE4C4, "black": 0x000000, "blanchedalmond": 0xFFEBCD, "blue": 0x0000FF, "blueviolet": 0x8A2BE2

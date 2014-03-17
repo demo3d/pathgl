@@ -91,10 +91,10 @@ function setStyle(style) {
     var color = /^\#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(style)
     return hexColor(parseInt(color[1] + color[1] + color[2] + color[2] + color[3] + color[3], 16))
   }
-  
-  return []
+
+  return false
 }
-''
+
 var cssColors = {
   "aliceblue": 0xF0F8FF, "antiquewhite": 0xFAEBD7, "aqua": 0x00FFFF, "aquamarine": 0x7FFFD4, "azure": 0xF0FFFF
 , "beige": 0xF5F5DC, "bisque": 0xFFE4C4, "black": 0x000000, "blanchedalmond": 0xFFEBCD, "blue": 0x0000FF, "blueviolet": 0x8A2BE2
@@ -474,7 +474,7 @@ function matchesSelector(selector) {
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
       gl.bufferData(gl.ARRAY_BUFFER, 4 * 1e7, gl.STREAM_DRAW)
       attributes[name] = {
-        array: extend(new Float32Array(4e5), attr)
+        array: extend(new Float32Array(options.array || 4e5), attr)
       , buffer: buffer
       , size: option.size  || 4
       , changed: true
@@ -527,7 +527,6 @@ function RenderTarget(screen) {
     , meshes = buildBuffers(gl, screen.types)
 
   var bound_textures = false
-
 
   screen.mesh && meshes.push(screen.mesh)
 
@@ -961,6 +960,10 @@ function RenderTexture(prog, options) {
   , image: null
   , width: 512
   , height: 512
+  , mesh: Mesh (gl, {
+    pos: { array: Quad(), size: 2 }
+  , attrList: ['pos']
+  }, ['pos'])
   })
 
   this.init()
@@ -968,7 +971,12 @@ function RenderTexture(prog, options) {
 }
 
 function ShaderTexture (shader, options) {
-  return RenderTexture()
+  var prog = createProgram(gl, simulation_vs, shader, ['pos'])
+  extend(options, {
+
+  })
+  prog.force = true
+  return new RenderTexture(prog, options)
 }
 
 function DataTexture (image, options, target) {
@@ -1032,6 +1040,7 @@ var forceShader = [
 , 'uniform vec2 resolution;'
 , 'vec4 texelAtOffet( vec2 offset ) { return texture2D( texture, ( gl_FragCoord.xy + offset ) / resolution ); }'
 , 'void main() {'
+    , 'gl_FragColor = vec4(1,1,0,1) ;return;'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
     , 'if ( slot == 0 ) { '
         , 'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'

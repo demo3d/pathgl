@@ -13,6 +13,7 @@ var forceShader = [
 , 'uniform vec2 resolution;'
 , 'vec4 texelAtOffet( vec2 offset ) { return texture2D( texture, ( gl_FragCoord.xy + offset ) / resolution ); }'
 , 'void main() {'
+    , 'gl_FragColor = vec4(1,1,0,1) ;return;'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
     , 'if ( slot == 0 ) { '
         , 'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'

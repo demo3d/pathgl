@@ -60,6 +60,10 @@ function RenderTexture(prog, options) {
   , image: null
   , width: 512
   , height: 512
+  , mesh: Mesh (gl, {
+    pos: { array: Quad(), size: 2 }
+  , attrList: ['pos']
+  }, ['pos'])
   })
 
   this.init()
@@ -67,7 +71,12 @@ function RenderTexture(prog, options) {
 }
 
 function ShaderTexture (shader, options) {
-  return RenderTexture()
+  var prog = createProgram(gl, simulation_vs, shader, ['pos'])
+  extend(options, {
+
+  })
+  prog.force = true
+  return new RenderTexture(prog, options)
 }
 
 function DataTexture (image, options, target) {

@@ -31,7 +31,7 @@ function Mesh (gl, options, attr) {
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
       gl.bufferData(gl.ARRAY_BUFFER, 4 * 1e7, gl.STREAM_DRAW)
       attributes[name] = {
-        array: extend(new Float32Array(4e5), attr)
+        array: extend(new Float32Array(options.array || 4e5), attr)
       , buffer: buffer
       , size: option.size  || 4
       , changed: true
@@ -84,7 +84,6 @@ function RenderTarget(screen) {
     , meshes = buildBuffers(gl, screen.types)
 
   var bound_textures = false
-
 
   screen.mesh && meshes.push(screen.mesh)
 
