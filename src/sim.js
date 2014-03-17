@@ -58,7 +58,12 @@ pathgl.sim.force = function (size) {
 
   return pathgl.texture(forceShader, { step: step , data: particleData })
 
-  function step(gl, tex, unit, count, origin, velocities) {
+
+  function step (gl, tex) {
+    emit(gl, tex, 100, pathgl.uniform('mouse').map(function (d) { return d / 500 }))
+  }
+
+  function emit(gl, tex, count, origin, velocities) {
     velocities = velocities || { x:0, y:0, z:0 }
     //gl.activeTexture( gl.TEXTURE0 + 0)
 
@@ -87,16 +92,16 @@ pathgl.sim.force = function (size) {
       }
     }
 
-    split( chunks[0] )
+    split(chunks[0])
     var i, j, n, m, chunk, data, force = 1.0;
     for (i = 0, n = chunks.length; i < n; i++) {
       chunk = chunks[i]
       data = []
       for (j = 0, m = chunk.size; j < m; j++) {
         data.push(
-          origin.x,
-          origin.y,
-          origin.z,
+          origin[0],
+          origin[1],
+          0,
           Math.random() * 10,
           velocities.x + force * random(-1.0, 1.0),
           velocities.y + force * random(-1.0, 1.0),
@@ -113,7 +118,6 @@ pathgl.sim.force = function (size) {
     gl.particleIndex %= size
   }
 }
-
 
 function random (min, max) {
   return Math.random() * ( max - min );

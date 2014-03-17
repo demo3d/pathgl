@@ -3,7 +3,6 @@ function parseColor(v) {
   return + ( a[0] * 255 ) << 16 ^ ( a[1] * 255 ) << 8 ^ ( a[2] * 255 ) << 0
 }
 
-
 function hexColor( hex ) {
   hex = Math.floor( hex )
   return [ (hex >> 16 & 255 ) / 255
@@ -12,7 +11,6 @@ function hexColor( hex ) {
 }
 
 function parse_hsl(h, s, l) {
-  // h,s,l ranges are in 0.0 - 1.0
   if ( s === 0 ) {
     return [l, l, l]
   } else {
@@ -33,7 +31,6 @@ function hue2rgb(p, q, t) {
   if (t < 1 / 2) return q
   if (t < 2 / 3) return p + (q - p) * 6 * (2 / 3 - t)
   return p
-
 }
 
 function setStyle(style) {

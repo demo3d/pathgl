@@ -16,12 +16,8 @@
 
 ####pathgl.texture(image, options)
 > image can be a image or video DOMelement, image or video url, binary data, or a fragment shader
-
+> 
 
 ####texture.update
 ####texture.repeat
 ####texture.unfold
-
-Currently, the scene graphi API is private and subject to rapid change.
-Instead of manipulating marks directly, use a library like d3 to build your
-scene.

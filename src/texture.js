@@ -42,12 +42,6 @@ var Texture = {
 , __scene__: []
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 }
-
-extend(ShaderTexture.prototype, Texture, {
-  update: function () { this.step && this.step(this.gl, this.data, 0, 100, { x: 500, y: 500, z: 500 })
-                        this.render.update()
-  }
-})
 extend(RenderTexture.prototype, appendable, Texture, {})
 extend(DataTexture.prototype, Texture, {})
 
@@ -57,7 +51,7 @@ function RenderTexture(prog, options) {
   , program: prog || program
   , gl: gl
   , data: gl.createTexture()
-  , image: null
+  , image: options.data || null
   , width: 512
   , height: 512
   , mesh: Mesh (gl, {
@@ -67,7 +61,11 @@ function RenderTexture(prog, options) {
   })
 
   this.init()
-  this.update = (this.__renderTarget__ = RenderTarget(this)).update
+  this.__renderTarget__ = RenderTarget(this)
+  this.update = function () {
+    this.__renderTarget__.update()
+    this.step && this.step(this.gl, this.data)
+  }
 }
 
 function ShaderTexture (shader, options) {
@@ -94,14 +92,14 @@ function DataTexture (image, options, target) {
 function updateTexture() {
   this.image ?
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image) :
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.FLOAT, null)
 }
 
 function initTexture() {
   gl.bindTexture(gl.TEXTURE_2D, this.data)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
   this.update()
@@ -109,15 +107,16 @@ function initTexture() {
 
 function parseImage (image) {
   // string
-  //   url
   //   selector
+  //   url
   // object
-  //   video / image
+  //   video / image / canvas
   //   imageData
   //   typedarray
   //   array / nodelist
   var query = document.querySelector(image)
   if (query) return query
+
   return extend(isVideoUrl ? new Image : document.createElement('video'), { src: image })
 }
 

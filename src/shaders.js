@@ -74,7 +74,7 @@ function createProgram(gl, vs, fs, attributes) {
   gl.deleteShader(vs)
   gl.deleteShader(fs)
 
-  ;(attributes || 'pos color fugue'.split(' ')).forEach(function (d, i){
+  ;(attributes || ['pos', 'color', 'fugue']).forEach(function (d, i){
     gl.bindAttribLocation(program, i, d)
   })
 

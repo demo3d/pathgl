@@ -24,7 +24,6 @@ function pathgl(canvas) {
   return + ( a[0] * 255 ) << 16 ^ ( a[1] * 255 ) << 8 ^ ( a[2] * 255 ) << 0
 }
 
-
 function hexColor( hex ) {
   hex = Math.floor( hex )
   return [ (hex >> 16 & 255 ) / 255
@@ -33,7 +32,6 @@ function hexColor( hex ) {
 }
 
 function parse_hsl(h, s, l) {
-  // h,s,l ranges are in 0.0 - 1.0
   if ( s === 0 ) {
     return [l, l, l]
   } else {
@@ -54,7 +52,6 @@ function hue2rgb(p, q, t) {
   if (t < 1 / 2) return q
   if (t < 2 / 3) return p + (q - p) * 6 * (2 / 3 - t)
   return p
-
 }
 
 function setStyle(style) {
@@ -202,7 +199,7 @@ function createProgram(gl, vs, fs, attributes) {
   gl.deleteShader(vs)
   gl.deleteShader(fs)
 
-  ;(attributes || 'pos color fugue'.split(' ')).forEach(function (d, i){
+  ;(attributes || ['pos', 'color', 'fugue']).forEach(function (d, i){
     gl.bindAttribLocation(program, i, d)
   })
 
@@ -271,6 +268,10 @@ pathgl.stop = function () { stopRendering = true }
 function init(c) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
+
+  if (! gl.getExtension('OES_texture_float'))
+    console.warn('does not support floating point textures')
+
   program = createProgram(gl, build_vs(), pathgl.fragmentShader)
   canvas.program = program
   monkeyPatch(canvas)
@@ -278,6 +279,7 @@ function init(c) {
   var main = RenderTarget(canvas)
   tasks.push(main.update)
   gl.clearColor(0, 0, 0, 0)
+
   startDrawLoop()
   return canvas
 }
@@ -944,12 +946,6 @@ var Texture = {
 , __scene__: []
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 }
-
-extend(ShaderTexture.prototype, Texture, {
-  update: function () { this.step && this.step(this.gl, this.data, 0, 100, { x: 500, y: 500, z: 500 })
-                        this.render.update()
-  }
-})
 extend(RenderTexture.prototype, appendable, Texture, {})
 extend(DataTexture.prototype, Texture, {})
 
@@ -959,7 +955,7 @@ function RenderTexture(prog, options) {
   , program: prog || program
   , gl: gl
   , data: gl.createTexture()
-  , image: null
+  , image: options.data || null
   , width: 512
   , height: 512
   , mesh: Mesh (gl, {
@@ -969,7 +965,11 @@ function RenderTexture(prog, options) {
   })
 
   this.init()
-  this.update = (this.__renderTarget__ = RenderTarget(this)).update
+  this.__renderTarget__ = RenderTarget(this)
+  this.update = function () {
+    this.__renderTarget__.update()
+    this.step && this.step(this.gl, this.data)
+  }
 }
 
 function ShaderTexture (shader, options) {
@@ -996,14 +996,14 @@ function DataTexture (image, options, target) {
 function updateTexture() {
   this.image ?
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image) :
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.FLOAT, null)
 }
 
 function initTexture() {
   gl.bindTexture(gl.TEXTURE_2D, this.data)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
   this.update()
@@ -1011,15 +1011,16 @@ function initTexture() {
 
 function parseImage (image) {
   // string
-  //   url
   //   selector
+  //   url
   // object
-  //   video / image
+  //   video / image / canvas
   //   imageData
   //   typedarray
   //   array / nodelist
   var query = document.querySelector(image)
   if (query) return query
+
   return extend(isVideoUrl ? new Image : document.createElement('video'), { src: image })
 }
 
@@ -1087,7 +1088,12 @@ pathgl.sim.force = function (size) {
 
   return pathgl.texture(forceShader, { step: step , data: particleData })
 
-  function step(gl, tex, unit, count, origin, velocities) {
+
+  function step (gl, tex) {
+    emit(gl, tex, 100, pathgl.uniform('mouse').map(function (d) { return d / 500 }))
+  }
+
+  function emit(gl, tex, count, origin, velocities) {
     velocities = velocities || { x:0, y:0, z:0 }
     //gl.activeTexture( gl.TEXTURE0 + 0)
 
@@ -1116,16 +1122,16 @@ pathgl.sim.force = function (size) {
       }
     }
 
-    split( chunks[0] )
+    split(chunks[0])
     var i, j, n, m, chunk, data, force = 1.0;
     for (i = 0, n = chunks.length; i < n; i++) {
       chunk = chunks[i]
       data = []
       for (j = 0, m = chunk.size; j < m; j++) {
         data.push(
-          origin.x,
-          origin.y,
-          origin.z,
+          origin[0],
+          origin[1],
+          0,
           Math.random() * 10,
           velocities.x + force * random(-1.0, 1.0),
           velocities.y + force * random(-1.0, 1.0),
@@ -1142,7 +1148,6 @@ pathgl.sim.force = function (size) {
     gl.particleIndex %= size
   }
 }
-
 
 function random (min, max) {
   return Math.random() * ( max - min );

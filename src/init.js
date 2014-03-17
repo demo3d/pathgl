@@ -7,6 +7,10 @@ pathgl.stop = function () { stopRendering = true }
 function init(c) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
+
+  if (! gl.getExtension('OES_texture_float'))
+    console.warn('does not support floating point textures')
+
   program = createProgram(gl, build_vs(), pathgl.fragmentShader)
   canvas.program = program
   monkeyPatch(canvas)
@@ -14,6 +18,7 @@ function init(c) {
   var main = RenderTarget(canvas)
   tasks.push(main.update)
   gl.clearColor(0, 0, 0, 0)
+
   startDrawLoop()
   return canvas
 }
