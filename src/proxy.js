@@ -38,7 +38,9 @@ var proto = {
               this.colorBuffer[this.indices[0]] = parseColor(v)
             },
             opacity: function () {}
-          }, tagName: 'circle'
+          , tagName: 'circle'
+          }
+
 , ellipse: { init: function () {
 
 
@@ -187,7 +189,7 @@ function insertBefore(node, next) {
 }
 
 function appendChild(el) {
-  return this.__renderTarget__.append(el.tagName)
+  return this.__scene__[this.__scene__.length] = this.__renderTarget__.append(el.tagName)
 }
 
 function removeChild(el) {

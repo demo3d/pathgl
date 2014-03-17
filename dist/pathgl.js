@@ -636,8 +636,9 @@ function previous(n) { while (n = n.previousSibling()) if (n.top) return n }
 function clean(s) { return s.replace(/([.*+?\^=!:${}()|\[\]\/\\])/, '\\$1') }
 function matchClass(d) { return ! RegExp('(^|\\s+)' + d.slice(1) + '(\\s+|$)').test(this.class) }
 function byClassName(name) { return traverse(this, function (doc) { return doc.class == name }, []) }
-function byTagName(name) { return traverse(this, function (doc) { return name == '*' || doc.tag == name }, []) }
-function traverse(node, fn, val) { return (node.__scene__ || node.children).forEach(function (node) { traverse(node, fn, val), fn(node) && val.push(node) }) || val }
+function byTagName(name) { return traverse(this, function (doc) { return name == '*' || doc.tagName == name }, []) }
+function traverse(node, fn, val) {
+  return (node.__scene__ || node.children).forEach(function (node) { traverse(node, fn, val), fn(node) && val.push(node) }) || val }
 
 var pseudos = {} //todo
 
@@ -688,7 +689,9 @@ var proto = {
               this.colorBuffer[this.indices[0]] = parseColor(v)
             },
             opacity: function () {}
-          }, tagName: 'circle'
+          , tagName: 'circle'
+          }
+
 , ellipse: { init: function () {
 
 
@@ -837,7 +840,7 @@ function insertBefore(node, next) {
 }
 
 function appendChild(el) {
-  return this.__renderTarget__.append(el.tagName)
+  return this.__scene__[this.__scene__.length] = this.__renderTarget__.append(el.tagName)
 }
 
 function removeChild(el) {
