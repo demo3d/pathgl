@@ -128,7 +128,6 @@ var cssColors = {
 }
 ;pathgl.vertexShader = [
   'precision mediump float;'
-
 , 'uniform float clock;'
 , 'uniform vec2 mouse;'
 , 'uniform vec2 resolution;'
@@ -142,6 +141,9 @@ var cssColors = {
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
 , 'uniform sampler2D texture;'
+
+, 'const mat4 modelViewMatrix = mat4(1.);'
+, 'const mat4 projectionMatrix = mat4(1.);'
 
 , 'vec4 unpack_color(float col) {'
 , '    return vec4(mod(col / 256. / 256., 256.),'

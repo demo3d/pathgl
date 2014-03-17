@@ -37,34 +37,15 @@
 		</div>
 	</div>
 	<div class="right" id="scroll">
-		<h2 id="api-reference">API Reference</h2>
-<h4 id="pathgl-element-">pathgl([element])</h4>
-<blockquote>
-<p>Takes a canvas element, css3 selector, or d3 selection as an argument
-initialize the webgl context and returns the patched canvas element
-if webgl is not available, returns false
-If called without arguments, appends a 960x500 canvas to the sceern.</p>
-</blockquote>
-<h4 id="pathgl-uniform-name-value-">pathgl.uniform(name, [value])</h4>
-<blockquote>
-<p>Set a variable that is global to all shader contexts.
-If called without a value, will return previously set value.
-Default uniforms include mouse, resolution, and clock.</p>
-</blockquote>
-<h4 id="pathgl-context-">pathgl.context()</h4>
-<blockquote>
-<p>returns the WebGL context, or null if webgl was not available</p>
-</blockquote>
-<h4 id="pathgl-texture-image-options-">pathgl.texture(image, options)</h4>
-<blockquote>
-<p>image can be a image or video DOMelement, image or video url, binary data, or a fragment shader</p>
-</blockquote>
-<h4 id="texture-update">texture.update</h4>
-<h4 id="texture-repeat">texture.repeat</h4>
-<h4 id="texture-unfold">texture.unfold</h4>
-<p>Currently, the scene graphi API is private and subject to rapid change.
-Instead of manipulating marks directly, use a library like d3 to build your
-scene.</p>
+		<p>PathGL has strong support for GPGPU or General-purpose computing on graphics
+processing units. </p>
+<p>Your task may be a good fit for the gpu if it can benefit from thousands of
+threads running in parallel. Examples include physics simulations, FFT, image
+processing effects like glows and edge detection, and query analysis.</p>
+<p>The idea is that creating a square with dimensions 1000x1000  about
+1 million fragment processors. The output of these threads are then captured
+in a texture, which can then be sampled as input, allowing state to be
+passed between frames.</p>
 
   </div>
 </body>
