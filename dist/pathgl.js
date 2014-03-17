@@ -934,7 +934,7 @@ var Texture = {
     setInterval(this.update.bind(this), 15)
   }
 , appendChild: function (el) {
-    return this.render.append(el)
+    return this.__scene__[this.__scene__.length] = this.__renderTarget__.append(el.tagName || el)
   }
 , valueOf: function () {
     return - 1
@@ -964,7 +964,7 @@ function RenderTexture(prog, options) {
   })
 
   this.init()
-  this.update = (this.render = RenderTarget(this)).update
+  this.update = (this.__renderTarget__ = RenderTarget(this)).update
 }
 
 function ShaderTexture (shader, options) {

@@ -1,5 +1,5 @@
 //var canvas = d3.select('canvas').call(pathgl)
-debug()
+p = debug()
 // var physics = pathgl.sim.force()
 // physics.repeat()
 
@@ -32,7 +32,7 @@ function debug () {
 
   d3.select(physics)
   .selectAll('circle')
-  .data(d3.range(1000), function (d) { return d })
+  .data(d3.range(100), function (d) { return d })
   .enter()
   .append('rect')
   .attr('width', 30)
@@ -50,4 +50,6 @@ function debug () {
   .attr('cx', function (d) { return 100 * (d % 10) })
   .attr('cy', function (d) { return 100 * ~~(d / 10) })
   .attr('fill', physics)
+
+  return physics
 }
