@@ -58,9 +58,8 @@ pathgl.sim.force = function (size) {
   var particleData = new Float32Array(2 * 4 * size)
   var width = Math.sqrt(size) * 2
   var height = Math.sqrt(size)
-  console.log(width, height)
   var elapsed = 0, cooldown = 16
-
+  var node  = d3.select('canvas')
   return pathgl.texture(forceShader, {
     step: step
   , data: particleData
@@ -72,14 +71,24 @@ pathgl.sim.force = function (size) {
   })
   function step () {}
 
+
+
   function mousemove() {
     if (Date.now() - elapsed < cooldown) return
     elapsed = Date.now()
     var now = Date.now() - since
-    emit(this.gl, this.texture, size * (d3.event ? Math.random() * .3 + Math.random() * .5 : 1),
-         [-1.0 + Math.sin(now * 0.001) * 2.0
-         , -0.2 + Math.cos(now * 0.004) * 0.5
-         , Math.sin(now * 0.015) * -0.05])
+    var count = size * (d3.event ? Math.random() * .3 + Math.random() * .5 : 1)
+    var loc = d3.event && d3.mouse()
+    var origin = loc
+               ? [ map(loc.x, 0, node.attr('width'), -1, 1)
+                 , map(loc.y, 0, node.attr('height'), 1, -1)
+                 , 0
+                 ]
+               : [ -1.0 + Math.sin(now * 0.001) * 2.0
+                 , -0.2 + Math.cos(now * 0.004) * 0.5
+                 , Math.sin(now * 0.015) * -0.05]
+
+    emit(this.gl, this.texture, count, origin)
   }
 
   function emit(gl, tex, count, origin, velocities) {

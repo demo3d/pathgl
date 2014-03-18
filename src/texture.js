@@ -79,8 +79,7 @@ function RenderTexture(prog, options) {
   this.init()
   this.__renderTarget__ = RenderTarget(this)
 
-  setInterval(this.mousemove.bind(this), 5000)
-  //d3.select(window).on('mousemove', )
+  d3.select(window).on('mousemove', this.mousemove.bind(this))
 
   this.start()
 
