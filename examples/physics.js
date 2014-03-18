@@ -1,18 +1,19 @@
 //p = debug()
 
 var canvas = d3.select('canvas').call(pathgl)
-var physics = pathgl.sim.force(100)
+var physics = pathgl.sim.force(300)
 
 physics.repeat()
 
 canvas
 .selectAll("circle")
-.data(d3.range(100))
-.enter().append("circle")
+.data(d3.range(300))
+.enter()
+.append("circle")
 .attr('r', 10)
-.attr('fill', function () { return 'hsl(' + Math.random() * 360 + ',100%, 50%)' })
-.attr('cx', physics)
-.attr('cy', physics)
+.attr('fill', 'red')
+.attr('cx', physics.x())
+.attr('cy', physics.y())
 
 function readback(physics) {
   gl = physics.gl

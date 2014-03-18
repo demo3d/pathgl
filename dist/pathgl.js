@@ -154,8 +154,6 @@ var cssColors = {
 
 , '    float x = replace_x;'
 , '    float y = replace_y;'
- //, '    float x = texture2D(texture, pos.xy).x;'
-//, '    float y = texture2D(texture, pos.xy).y;'
 , '    float fill = color.x;'
 , '    float stroke = color.x;'
 
@@ -921,10 +919,7 @@ pathgl.texture = function (image, options, target) {
 var Texture = {
   init: initTexture
 , update: function () { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) }
-, forEach: function () {
-    var x = range(this.size).map(function () { return {} })
-    debugger
-  }
+, forEach: function () {}
 , load: function ()  {
     var image = this.data
 
@@ -932,9 +927,6 @@ var Texture = {
     else image.addEventListener && image.addEventListener('load', this.init)
 
     return this
-  }
-, unfold: function (attrList) {
-    return pathgl.shader()
   }
 , repeat: function () {
     setInterval(this.update.bind(this), 15)
@@ -950,6 +942,14 @@ var Texture = {
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 }
 extend(RenderTexture.prototype, appendable, Texture, {
+  x: function () {
+    var sq = Math.sqrt(300)
+    return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
+  },
+  y: function () {
+    var sq = Math.sqrt(this.size)
+    return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
+  },
   update: function () {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, this.data || null)
 
@@ -1042,7 +1042,6 @@ var forceShader = [
 , 'vec4 texelAtOffet( vec2 offset ) { return texture2D( texture, ( gl_FragCoord.xy + offset ) / resolution ); }'
 , 'void main() {'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
-    , 'gl_FragColor = vec4(1) ;return;'
     , 'if ( slot == 0 ) { '
         , 'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'
         , 'vec4 dataB = texelAtOffet( vec2( 1, 0 ) );'
@@ -1084,7 +1083,7 @@ pathgl.sim.force = function (size) {
   var height = Math.sqrt(size)
   var rate = 1000
 
-  return pathgl.texture(forceShader, { step: step , data: particleData , width: width, height: height })
+  return pathgl.texture(forceShader, { step: step , data: particleData , width: width, height: height, size: size})
 
 
   function step (gl, tex) {

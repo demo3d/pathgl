@@ -14,7 +14,6 @@ var forceShader = [
 , 'vec4 texelAtOffet( vec2 offset ) { return texture2D( texture, ( gl_FragCoord.xy + offset ) / resolution ); }'
 , 'void main() {'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
-    , 'gl_FragColor = vec4(1) ;return;'
     , 'if ( slot == 0 ) { '
         , 'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'
         , 'vec4 dataB = texelAtOffet( vec2( 1, 0 ) );'
@@ -56,7 +55,7 @@ pathgl.sim.force = function (size) {
   var height = Math.sqrt(size)
   var rate = 1000
 
-  return pathgl.texture(forceShader, { step: step , data: particleData , width: width, height: height })
+  return pathgl.texture(forceShader, { step: step , data: particleData , width: width, height: height, size: size})
 
 
   function step (gl, tex) {

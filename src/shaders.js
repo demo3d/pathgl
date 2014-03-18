@@ -29,8 +29,6 @@ pathgl.vertexShader = [
 
 , '    float x = replace_x;'
 , '    float y = replace_y;'
- //, '    float x = texture2D(texture, pos.xy).x;'
-//, '    float y = texture2D(texture, pos.xy).y;'
 , '    float fill = color.x;'
 , '    float stroke = color.x;'
 

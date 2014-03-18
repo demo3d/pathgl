@@ -17,10 +17,7 @@ pathgl.texture = function (image, options, target) {
 var Texture = {
   init: initTexture
 , update: function () { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) }
-, forEach: function () {
-    var x = range(this.size).map(function () { return {} })
-    debugger
-  }
+, forEach: function () {}
 , load: function ()  {
     var image = this.data
 
@@ -28,9 +25,6 @@ var Texture = {
     else image.addEventListener && image.addEventListener('load', this.init)
 
     return this
-  }
-, unfold: function (attrList) {
-    return pathgl.shader()
   }
 , repeat: function () {
     setInterval(this.update.bind(this), 15)
@@ -46,6 +40,14 @@ var Texture = {
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 }
 extend(RenderTexture.prototype, appendable, Texture, {
+  x: function () {
+    var sq = Math.sqrt(300)
+    return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
+  },
+  y: function () {
+    var sq = Math.sqrt(this.size)
+    return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
+  },
   update: function () {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, this.data || null)
 
