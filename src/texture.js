@@ -16,10 +16,13 @@ pathgl.texture = function (image, options, target) {
 
 var Texture = {
   init: initTexture
-, update: updateTexture
-, forEach: function () {}
+, update: function () { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) }
+, forEach: function () {
+    var x = range(this.size).map(function () { return {} })
+    debugger
+  }
 , load: function ()  {
-    var image = this.image
+    var image = this.data
 
     if (image.complete || image.readyState == 4) this.init()
     else image.addEventListener && image.addEventListener('load', this.init)
@@ -42,61 +45,56 @@ var Texture = {
 , __scene__: []
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 }
-extend(RenderTexture.prototype, appendable, Texture, {})
+extend(RenderTexture.prototype, appendable, Texture, {
+  update: function () {
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, this.data || null)
+
+  }
+})
 extend(DataTexture.prototype, Texture, {})
 
 function RenderTexture(prog, options) {
-  extend(this, options, {
+  extend(this, {
     fbo: gl.createFramebuffer()
   , program: prog || program
   , gl: gl
-  , data: gl.createTexture()
-  , image: options.data || null
+  , texture: gl.createTexture()
   , width: 512
   , height: 512
-  , mesh: Mesh (gl, {
-    pos: { array: Quad(), size: 2 }
-  , attrList: ['pos']
-  }, ['pos'])
-  })
+  , mesh: Mesh (gl, { pos: { array: Quad(), size: 2 }
+                    , attrList: ['pos']
+                    })
+  }, options)
 
   this.init()
   this.__renderTarget__ = RenderTarget(this)
   this.update = function () {
     this.__renderTarget__.update()
-    this.step && this.step(this.gl, this.data)
+    if (Math.random() > .9) this.step && this.step(this.gl, this.texture)
   }
 }
 
 function ShaderTexture (shader, options) {
   var prog = createProgram(gl, simulation_vs, shader, ['pos'])
   extend(options, {
-
   })
-  prog.force = true
   return new RenderTexture(prog, options)
 }
 
 function DataTexture (image, options, target) {
   if ('string' == typeof image) image = parseImage(image)
 
-  extend(this, options, {
+  extend(this, {
     gl: gl
-  , image: image
-  , data: gl.createTexture()
-  , width: image.width || 512
-  , height: image.height || 512
-  }).load()
-}
-
-function updateTexture() {
-  this.image ?
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image) :
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.FLOAT, null)
+  , data: image
+  , texture: gl.createTexture()
+  , width: 512
+  , height: 512
+  }, image, options).load()
 }
 
 function initTexture() {
-  gl.bindTexture(gl.TEXTURE_2D, this.data)
+  gl.bindTexture(gl.TEXTURE_2D, this.texture)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)

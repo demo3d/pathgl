@@ -115,7 +115,7 @@ function RenderTarget(screen) {
 
   function bindTextures () {
     if ((textures[fbo] || []).length && bound_textures)
-      gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].data),
+      gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].texture),
     bound_textures = true
   }
 
@@ -140,5 +140,5 @@ function initFbo(width, height) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
   this.fbo.width = screen.width
   this.fbo.height = screen.height
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.data, 0)
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0)
 }

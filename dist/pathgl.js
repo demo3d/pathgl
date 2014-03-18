@@ -154,8 +154,8 @@ var cssColors = {
 
 , '    float x = replace_x;'
 , '    float y = replace_y;'
-// , '    float x = texture2D(texture, pos.xy).x;'
-// , '    float y = texture2D(texture, pos.xy).y;'
+ //, '    float x = texture2D(texture, pos.xy).x;'
+//, '    float y = texture2D(texture, pos.xy).y;'
 , '    float fill = color.x;'
 , '    float stroke = color.x;'
 
@@ -228,8 +228,8 @@ function build_vs(subst) {
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
     , r: '2. * pos.z'
-    , x: 'pos.x'
-    , y: 'pos.y'
+    , x: '(pos.x < 0.) ? texture2D(texture, abs(pos.xy)).x * resolution.x: pos.x'
+    , y: '(pos.y < 0.) ? texture2D(texture, abs(pos.xy)).y * resolution.y: pos.y'
     }, subst)
 
   for(var attr in defaults)
@@ -562,7 +562,7 @@ function RenderTarget(screen) {
 
   function bindTextures () {
     if ((textures[fbo] || []).length && bound_textures)
-      gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].data),
+      gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].texture),
     bound_textures = true
   }
 
@@ -587,7 +587,7 @@ function initFbo(width, height) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
   this.fbo.width = screen.width
   this.fbo.height = screen.height
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.data, 0)
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0)
 }
 ;//regexes sourced from sizzle
 function querySelectorAll(selector, r) {
@@ -920,10 +920,13 @@ pathgl.texture = function (image, options, target) {
 
 var Texture = {
   init: initTexture
-, update: updateTexture
-, forEach: function () {}
+, update: function () { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) }
+, forEach: function () {
+    var x = range(this.size).map(function () { return {} })
+    debugger
+  }
 , load: function ()  {
-    var image = this.image
+    var image = this.data
 
     if (image.complete || image.readyState == 4) this.init()
     else image.addEventListener && image.addEventListener('load', this.init)
@@ -946,61 +949,56 @@ var Texture = {
 , __scene__: []
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 }
-extend(RenderTexture.prototype, appendable, Texture, {})
+extend(RenderTexture.prototype, appendable, Texture, {
+  update: function () {
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, this.data || null)
+
+  }
+})
 extend(DataTexture.prototype, Texture, {})
 
 function RenderTexture(prog, options) {
-  extend(this, options, {
+  extend(this, {
     fbo: gl.createFramebuffer()
   , program: prog || program
   , gl: gl
-  , data: gl.createTexture()
-  , image: options.data || null
+  , texture: gl.createTexture()
   , width: 512
   , height: 512
-  , mesh: Mesh (gl, {
-    pos: { array: Quad(), size: 2 }
-  , attrList: ['pos']
-  }, ['pos'])
-  })
+  , mesh: Mesh (gl, { pos: { array: Quad(), size: 2 }
+                    , attrList: ['pos']
+                    })
+  }, options)
 
   this.init()
   this.__renderTarget__ = RenderTarget(this)
   this.update = function () {
     this.__renderTarget__.update()
-    this.step && this.step(this.gl, this.data)
+    if (Math.random() > .9) this.step && this.step(this.gl, this.texture)
   }
 }
 
 function ShaderTexture (shader, options) {
   var prog = createProgram(gl, simulation_vs, shader, ['pos'])
   extend(options, {
-
   })
-  prog.force = true
   return new RenderTexture(prog, options)
 }
 
 function DataTexture (image, options, target) {
   if ('string' == typeof image) image = parseImage(image)
 
-  extend(this, options, {
+  extend(this, {
     gl: gl
-  , image: image
-  , data: gl.createTexture()
-  , width: image.width || 512
-  , height: image.height || 512
-  }).load()
-}
-
-function updateTexture() {
-  this.image ?
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image) :
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.FLOAT, null)
+  , data: image
+  , texture: gl.createTexture()
+  , width: 512
+  , height: 512
+  }, image, options).load()
 }
 
 function initTexture() {
-  gl.bindTexture(gl.TEXTURE_2D, this.data)
+  gl.bindTexture(gl.TEXTURE_2D, this.texture)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
@@ -1043,8 +1041,8 @@ var forceShader = [
 , 'uniform vec2 resolution;'
 , 'vec4 texelAtOffet( vec2 offset ) { return texture2D( texture, ( gl_FragCoord.xy + offset ) / resolution ); }'
 , 'void main() {'
-    , 'gl_FragColor = vec4(1,1,0,1) ;return;'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
+    , 'gl_FragColor = vec4(1) ;return;'
     , 'if ( slot == 0 ) { '
         , 'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'
         , 'vec4 dataB = texelAtOffet( vec2( 1, 0 ) );'
@@ -1080,13 +1078,13 @@ var forceShader = [
 pathgl.sim = {}
 
 pathgl.sim.force = function (size) {
-  var particleData = new Float32Array( 4 * size * 2)
+  var particleData = new Float32Array( 4 * size)
 
-  var width = size * 2
-  var height = size
+  var width = Math.sqrt(size)
+  var height = Math.sqrt(size)
   var rate = 1000
 
-  return pathgl.texture(forceShader, { step: step , data: particleData })
+  return pathgl.texture(forceShader, { step: step , data: particleData , width: width, height: height })
 
 
   function step (gl, tex) {
