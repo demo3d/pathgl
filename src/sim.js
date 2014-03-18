@@ -11,10 +11,9 @@ var forceShader = [
 , 'const vec3 TARGET = vec3( 0, 0, 0.01 );'
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
-, 'vec4 texelAtOffet( vec2 offset ) { return texture2D( texture, ( gl_FragCoord.xy + offset ) / resolution ); }'
+, 'vec4 texelAtOffet( vec2 offset ) { return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(2048., 1024.)); }' //w, h FIXME
 , 'void main() {'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
-//, 'gl_FragColor= vec4(1., .5, 1., 1. ) ; return;'
     , 'if ( slot == 0 ) { '
         , 'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'
         , 'vec4 dataB = texelAtOffet( vec2( 1, 0 ) );'
@@ -53,18 +52,32 @@ function nextSquare(n) {
   return Math.pow(Math.ceil(Math.sqrt(n)), 2)
 }
 
+var since = Date.now()
 pathgl.sim.force = function (size) {
   var particleData = new Float32Array(2 * 4 * size)
   var width = Math.sqrt(size) * 2
   var height = Math.sqrt(size)
+  var elapsed = 0, cooldown = 16
+  console.log(width)
 
-  return pathgl.texture(forceShader, { step: step , data: particleData , width: width, height: height, size: size})
+  return pathgl.texture(forceShader, {
+    step: step
+  , data: particleData
+  , width: width
+  , height: height
+  , size: size
+  , mousemove: mousemove
+  , start: mousemove
+  })
+  function step () {}
 
-
-  function step (gl, tex) {
-    emit(gl, tex, size / 10, [-1.0 + Math.sin( Date.now() * 0.001 ) * 2.0
-                            , -0.2 + Math.cos( Date.now() * 0.004 ) * 0.5
-                            , Math.sin( gl.millis * 0.015 ) * -0.05])
+  function mousemove() {
+    if (Date.now() - elapsed < cooldown) return
+    elapsed = Date.now()
+    var now = Date.now() - since
+    emit(this.gl, this.texture, size / 2, [-1.0 + Math.sin( now * 0.001 ) * 2.0
+                            , -0.2 + Math.cos( now * 0.004 ) * 0.5
+                             , Math.sin( now * 0.015 ) * -0.05])
   }
 
   function emit(gl, tex, count, origin, velocities) {

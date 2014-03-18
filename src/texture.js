@@ -73,14 +73,16 @@ function RenderTexture(prog, options) {
                     , primitive: 'triangle_strip'
                     })
   }, options)
-
   this.init()
   this.__renderTarget__ = RenderTarget(this)
-  this.update = function () {
 
-    d3.select('body').on('click', function () {
-    var step = this.step && this.step(this.gl, this.texture)
-    }.bind(this))
+  d3.select('body')
+  .on('mousemove', this.mousemove.bind(this))
+
+  this.start()
+
+  this.update = function () {
+    this.step && this.step()
     this.__renderTarget__.update()
   }
 }

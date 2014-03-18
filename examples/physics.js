@@ -1,7 +1,7 @@
 //p = debug()
 
 var canvas = d3.select('canvas').call(pathgl)
-var n = 82
+var n = 1024  *1024
 var physics = pathgl.sim.force(n)
 
 physics.repeat()
