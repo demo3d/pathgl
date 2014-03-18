@@ -19,7 +19,41 @@ function pathgl(canvas) {
     canvas
 
   if (! canvas) return console.log('invalid selector')
-  if (! canvas.getContext) return console.log(canvas, 'is not a valid canvas');function parseColor(v) {
+  if (! canvas.getContext) return console.log(canvas, 'is not a valid canvas');
+function noop () {}
+
+function identity(x) { return x }
+
+function push(d) { return this.push(d) }
+
+function powerOfTwo(x) { return x && ! (x & (x - 1)) }
+
+function each(obj, fn) { for (var key in obj) fn(obj[key], key, obj) }
+
+function clamp (x, min, max) { return Math.min(Math.max(x, min), max) }
+
+function Quad () { return [-1.0, -1.0, 1.0, -1.0, -1.0,  1.0, 1.0,  1.0] }
+
+function isVideoUrl(url) { return url.split('.').pop().join().match(/mp4|ogg|webm/) }
+
+function uniq(ar) { return ar.filter(function (d, i) { return ar.indexOf(d) == i }) }
+
+function flatten(list){ return list.reduce(function( p,n){ return p.concat(n) }, []) }
+
+function svgToClipSpace(pos) { return [2. * (pos[0] / 960) - 1., (pos[1] / 500) * 2.] }
+
+function range(a, b) { return Array(Math.abs(b - a)).join().split(',').map(function (d, i) { return i + a }) }
+
+function hash(str) { return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0) }
+
+function extend (a, b) {
+  if (arguments.length > 2) [].forEach.call(arguments, function (b) { extend(a, b) })
+  else for (var k in b) a[k] = b[k]
+  return a
+}
+
+function pointInPolygon(x, y, shape) {}
+;function parseColor(v) {
   var a = setStyle(v)
   return + ( a[0] * 255 ) << 16 ^ ( a[1] * 255 ) << 8 ^ ( a[2] * 255 ) << 0
 }
@@ -866,40 +900,6 @@ var attrDefaults = {
 , y: 0
 , opacity: .999
 }
-;
-function noop () {}
-
-function identity(x) { return x }
-
-function push(d) { return this.push(d) }
-
-function powerOfTwo(x) { return x && ! (x & (x - 1)) }
-
-function each(obj, fn) { for (var key in obj) fn(obj[key], key, obj) }
-
-function clamp (x, min, max) { return Math.min(Math.max(x, min), max) }
-
-function Quad () { return [-1.0, -1.0, 1.0, -1.0, -1.0,  1.0, 1.0,  1.0] }
-
-function isVideoUrl(url) { return url.split('.').pop().join().match(/mp4|ogg|webm/) }
-
-function uniq(ar) { return ar.filter(function (d, i) { return ar.indexOf(d) == i }) }
-
-function flatten(list){ return list.reduce(function( p,n){ return p.concat(n) }, []) }
-
-function svgToClipSpace(pos) { return [2. * (pos[0] / 960) - 1., (pos[1] / 500) * 2.] }
-
-function range(a, b) { return Array(Math.abs(b - a)).join().split(',').map(function (d, i) { return i + a }) }
-
-function hash(str) { return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0) }
-
-function extend (a, b) {
-  if (arguments.length > 2) [].forEach.call(arguments, function (b) { extend(a, b) })
-  else for (var k in b) a[k] = b[k]
-  return a
-}
-
-function pointInPolygon(x, y, shape) {}
 ;var textures = { null: [] }
 
 //texture data - img,canv,vid, url,
@@ -1053,7 +1053,7 @@ var forceShader = [
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
 , 'vec4 texelAtOffet( vec2 offset ) { '
-  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(256., 128.)); }'
+  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(1024., 512.)); }'
 , 'void main() {'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
     , 'if ( slot == 0 ) { '
@@ -1101,6 +1101,8 @@ pathgl.sim.force = function (size) {
   var height = Math.sqrt(size)
   var elapsed = 0, cooldown = 16
   var node  = d3.select('canvas')
+  var rate = 1000
+
   return pathgl.texture(forceShader, {
     step: step
   , data: particleData
@@ -1118,13 +1120,10 @@ pathgl.sim.force = function (size) {
     if (Date.now() - elapsed < cooldown) return
     elapsed = Date.now()
     var now = Date.now() - since
-    var count = size * (d3.event ? Math.random() * .3 + Math.random() * .5 : 1)
-    var loc = d3.event && d3.mouse()
+    var count = rate * Math.random()
+    var loc = d3.event && d3.mouse(node.node())
     var origin = loc
-               ? [ map(loc.x, 0, node.attr('width'), -1, 1)
-                 , map(loc.y, 0, node.attr('height'), 1, -1)
-                 , 0
-                 ]
+               ? svgToClipSpace(loc).concat(0)
                : [ -1.0 + Math.sin(now * 0.001) * 2.0
                  , -0.2 + Math.cos(now * 0.004) * 0.5
                  , Math.sin(now * 0.015) * -0.05]
@@ -1181,4 +1180,6 @@ pathgl.sim.force = function (size) {
 
 function random (min, max) {
   return Math.random() * ( max - min );
-} }()
+}
+
+function svgToClipSpace(pos) { return [2. * (pos[0] / 960) - 1., (pos[1] / 500) * 2.] } }()

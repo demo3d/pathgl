@@ -1,5 +1,5 @@
 var canvas = d3.select('canvas').call(pathgl)
-var n = Math.pow(128, 2)
+var n = Math.pow(512, 2)
 var physics = pathgl.sim.force(n)
 
 physics.repeat()

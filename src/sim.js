@@ -12,7 +12,7 @@ var forceShader = [
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
 , 'vec4 texelAtOffet( vec2 offset ) { '
-  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(256., 128.)); }'
+  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(1024., 512.)); }'
 , 'void main() {'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
     , 'if ( slot == 0 ) { '
@@ -60,6 +60,8 @@ pathgl.sim.force = function (size) {
   var height = Math.sqrt(size)
   var elapsed = 0, cooldown = 16
   var node  = d3.select('canvas')
+  var rate = 1000
+
   return pathgl.texture(forceShader, {
     step: step
   , data: particleData
@@ -77,13 +79,10 @@ pathgl.sim.force = function (size) {
     if (Date.now() - elapsed < cooldown) return
     elapsed = Date.now()
     var now = Date.now() - since
-    var count = size * (d3.event ? Math.random() * .3 + Math.random() * .5 : 1)
-    var loc = d3.event && d3.mouse()
+    var count = rate * Math.random()
+    var loc = d3.event && d3.mouse(node.node())
     var origin = loc
-               ? [ map(loc.x, 0, node.attr('width'), -1, 1)
-                 , map(loc.y, 0, node.attr('height'), 1, -1)
-                 , 0
-                 ]
+               ? svgToClipSpace(loc).concat(0)
                : [ -1.0 + Math.sin(now * 0.001) * 2.0
                  , -0.2 + Math.cos(now * 0.004) * 0.5
                  , Math.sin(now * 0.015) * -0.05]
@@ -141,3 +140,5 @@ pathgl.sim.force = function (size) {
 function random (min, max) {
   return Math.random() * ( max - min );
 }
+
+function svgToClipSpace(pos) { return [2. * (pos[0] / 960) - 1., (pos[1] / 500) * 2.] }
