@@ -21,7 +21,7 @@ pathgl.vertexShader = [
 , '    return vec4(mod(col / 256. / 256., 256.),'
 , '                mod(col / 256. , 256.),'
 , '                mod(col, 256.),'
-, '                256.)'
+, '                200.)'
 , '                / 256.;'
 , '}'
 , 'void main() {'
@@ -100,11 +100,10 @@ function build_vs(subst) {
   })
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '2. * pos.z'
+    , r: '(pos.z < 0.) ? texture2D(texture, abs(pos.xy)).x * 10. : (2. * pos.z)'
     , x: '(pos.x < 0.) ? texture2D(texture, abs(pos.xy)).x * resolution.x: pos.x'
     , y: '(pos.y < 0.) ? texture2D(texture, abs(pos.xy)).y * resolution.y: pos.y'
     }, subst)
-
   for(var attr in defaults)
     vertex = vertex.replace('replace_'+attr, defaults[attr])
 

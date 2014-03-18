@@ -8,11 +8,11 @@ var simulation_vs = [
 
 var forceShader = [
 , 'precision mediump float;'
-, 'const vec3 TARGET = vec3( 0, 0, 0.01 );'
+, 'const vec3 TARGET = vec3( .5, .5, 0.01 );'
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
 , 'vec4 texelAtOffet( vec2 offset ) { '
-  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(1024., 512.)); }'
+  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(2048., 1024.)); }'
 , 'void main() {'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
     , 'if ( slot == 0 ) { '
@@ -60,7 +60,8 @@ pathgl.sim.force = function (size) {
   var height = Math.sqrt(size)
   var elapsed = 0, cooldown = 16
   var node  = d3.select('canvas')
-  var rate = 1000
+  var rate = 10000
+  var particleIndex = 0
 
   return pathgl.texture(forceShader, {
     step: step
@@ -87,6 +88,7 @@ pathgl.sim.force = function (size) {
                  , -0.2 + Math.cos(now * 0.004) * 0.5
                  , Math.sin(now * 0.015) * -0.05]
 
+
     emit(this.gl, this.texture, count, origin)
   }
 
@@ -95,8 +97,8 @@ pathgl.sim.force = function (size) {
     gl.activeTexture( gl.TEXTURE0 + tex.unit)
     gl.bindTexture(gl.TEXTURE_2D, tex)
 
-    var x = ~~(( gl.particleIndex * 2) % width)
-    var y = ~~(gl.particleIndex / height)
+    var x = ~~(( particleIndex * 2) % width)
+    var y = ~~(particleIndex / height)
     var chunks = [{ x: x, y: y, size: count * 2 }]
 
     function split( chunk ) {
@@ -132,13 +134,12 @@ pathgl.sim.force = function (size) {
                        gl.RGBA, gl.FLOAT, new Float32Array(data))
     }
 
-    gl.particleIndex += count
-    gl.particleIndex %= size
+    particleIndex += count
+    particleIndex %= size
   }
 }
 
 function random (min, max) {
   return Math.random() * ( max - min );
 }
-
-function svgToClipSpace(pos) { return [2. * (pos[0] / 960) - 1., (pos[1] / 500) * 2.] }
+function svgToClipSpace(pos) { return [2 * (pos[0] / 960) - 1, 1 - (pos[1] / 500 * 2)] }

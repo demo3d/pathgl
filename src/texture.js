@@ -28,6 +28,12 @@ var Texture = {
   }
 , repeat: function () {
     setInterval(this.update.bind(this), 15)
+    var i = this.length = this.size
+    var self = Object.create(this)
+    while(i--) {
+      this[i] = self
+    }
+    return this
   }
 , appendChild: function (el) {
     return this.__scene__[this.__scene__.length] = this.__renderTarget__.append(el.tagName || el)
@@ -90,6 +96,9 @@ function RenderTexture(prog, options) {
 }
 
 function ShaderTexture (shader, options) {
+  if (!pathgl.context().floatingTexture)
+    return console.warn('does not support floating point textures')
+
   var prog = createProgram(gl, simulation_vs, shader, ['pos'])
   extend(options, {
   })

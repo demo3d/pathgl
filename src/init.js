@@ -8,8 +8,9 @@ function init(c) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
-  if (! gl.getExtension('OES_texture_float'))
-    console.warn('does not support floating point textures')
+  gl.floatingTexture = !!gl.getExtension('OES_texture_float')
+
+  pathgl.context = d3.functor(gl)
 
   program = createProgram(gl, build_vs(), pathgl.fragmentShader)
   canvas.program = program

@@ -103,8 +103,6 @@ var proto = {
         }
 
 , polygon: { init: function () {
-
-
              }, tagName: 'polygon'
            , points: noop }
 , polyline: { init: function (i) {
