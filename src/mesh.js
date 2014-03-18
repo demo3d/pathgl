@@ -105,7 +105,7 @@ function RenderTarget(screen) {
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
     bindTextures()
     beforeRender(gl)
 
@@ -121,7 +121,7 @@ function RenderTarget(screen) {
   }
 
   function beforeRender(gl) {
-    if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
+    //if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
 }

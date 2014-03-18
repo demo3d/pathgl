@@ -584,7 +584,7 @@ function RenderTarget(screen) {
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
     bindTextures()
     beforeRender(gl)
 
@@ -600,7 +600,7 @@ function RenderTarget(screen) {
   }
 
   function beforeRender(gl) {
-    if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
+    //if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
 }
@@ -1046,7 +1046,8 @@ function isShader(str) {
   return str.length > 50
 }
 ;  return init(canvas)
-};var simulation_vs = [
+}
+;var simulation_vs = [
   'precision mediump float;'
 , 'attribute vec2 pos;'
 , '  void main() {'
