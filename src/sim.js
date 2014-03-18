@@ -12,7 +12,7 @@ var forceShader = [
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
 , 'vec4 texelAtOffet( vec2 offset ) { '
-  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(2048., 1024.)); }'
+  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(1024., 512.)); }'
 , 'void main() {'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
     , 'if ( slot == 0 ) { '
