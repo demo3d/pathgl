@@ -68,8 +68,6 @@ function Mesh (gl, options, attr) {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
 
-
-    //if (options.primitive != 'points') debugger
     gl.drawArrays(primitive, offset || 0, count)
   }
   function set () {}
@@ -107,7 +105,7 @@ function RenderTarget(screen) {
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
     bindTextures()
     beforeRender(gl)
 
@@ -123,8 +121,8 @@ function RenderTarget(screen) {
   }
 
   function beforeRender(gl) {
-    //if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
-    //gl.viewport(0, 0, screen.width, screen.height)
+    if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
+    gl.viewport(0, 0, screen.width, screen.height)
   }
 }
 
@@ -143,5 +141,6 @@ function initFbo(width, height) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
   this.fbo.width = screen.width
   this.fbo.height = screen.height
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0)
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, null)
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 }

@@ -513,8 +513,6 @@ function matchesSelector(selector) {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
 
-
-    //if (options.primitive != 'points') debugger
     gl.drawArrays(primitive, offset || 0, count)
   }
   function set () {}
@@ -552,7 +550,7 @@ function RenderTarget(screen) {
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
     bindTextures()
     beforeRender(gl)
 
@@ -568,8 +566,8 @@ function RenderTarget(screen) {
   }
 
   function beforeRender(gl) {
-    //if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
-    //gl.viewport(0, 0, screen.width, screen.height)
+    if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
+    gl.viewport(0, 0, screen.width, screen.height)
   }
 }
 
@@ -588,7 +586,8 @@ function initFbo(width, height) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
   this.fbo.width = screen.width
   this.fbo.height = screen.height
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, 0)
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, null)
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 }
 ;//regexes sourced from sizzle
 function querySelectorAll(selector, r) {
@@ -966,17 +965,20 @@ function RenderTexture(prog, options) {
   , texture: gl.createTexture()
   , width: 512
   , height: 512
-  , mesh: Mesh (gl, { pos: { array: Quad(), size: 2 }
-                    , attrList: ['pos']
-                    , count: 4
-                    , primitive: 'triangle_strip'
-                    })
+  , mesh: Mesh(gl, { pos: { array: Quad(), size: 2 }
+                   , attrList: ['pos']
+                   , count: 4
+                   , primitive: 'triangle_strip'
+                   })
   }, options)
+
+  this.texture.unit = 0
+
   this.init()
   this.__renderTarget__ = RenderTarget(this)
 
-  d3.select('body')
-  .on('mousemove', this.mousemove.bind(this))
+  setInterval(this.mousemove.bind(this), 5000)
+  //d3.select(window).on('mousemove', )
 
   this.start()
 
@@ -1047,7 +1049,8 @@ var forceShader = [
 , 'const vec3 TARGET = vec3( 0, 0, 0.01 );'
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
-, 'vec4 texelAtOffet( vec2 offset ) { return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(2048., 1024.)); }' //w, h FIXME
+, 'vec4 texelAtOffet( vec2 offset ) { '
+  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(256., 128.)); }'
 , 'void main() {'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
     , 'if ( slot == 0 ) { '
@@ -1093,8 +1096,8 @@ pathgl.sim.force = function (size) {
   var particleData = new Float32Array(2 * 4 * size)
   var width = Math.sqrt(size) * 2
   var height = Math.sqrt(size)
+  console.log(width, height)
   var elapsed = 0, cooldown = 16
-  console.log(width)
 
   return pathgl.texture(forceShader, {
     step: step
@@ -1111,34 +1114,27 @@ pathgl.sim.force = function (size) {
     if (Date.now() - elapsed < cooldown) return
     elapsed = Date.now()
     var now = Date.now() - since
-    emit(this.gl, this.texture, size / 2, [-1.0 + Math.sin( now * 0.001 ) * 2.0
-                            , -0.2 + Math.cos( now * 0.004 ) * 0.5
-                             , Math.sin( now * 0.015 ) * -0.05])
+    emit(this.gl, this.texture, size * (d3.event ? Math.random() * .3 + Math.random() * .5 : 1),
+         [-1.0 + Math.sin(now * 0.001) * 2.0
+         , -0.2 + Math.cos(now * 0.004) * 0.5
+         , Math.sin(now * 0.015) * -0.05])
   }
 
   function emit(gl, tex, count, origin, velocities) {
     velocities = velocities || { x:0, y:0, z:0 }
-    //gl.activeTexture( gl.TEXTURE0 + 0)
+    gl.activeTexture( gl.TEXTURE0 + tex.unit)
     gl.bindTexture(gl.TEXTURE_2D, tex)
 
     var x = ~~(( gl.particleIndex * 2) % width)
     var y = ~~(gl.particleIndex / height)
-    var chunks = [{
-      x: x,
-      y: y,
-      size: count * 2
-    }]
+    var chunks = [{ x: x, y: y, size: count * 2 }]
 
     function split( chunk ) {
       var boundary = chunk.x + chunk.size;
       if (boundary > width) {
         var delta = boundary - width
         chunk.size -= delta;
-        chunk = {
-          x: 0,
-          y: ( chunk.y + 1 ) % height,
-          size: delta
-        }
+        chunk = { x: 0, y: ( chunk.y + 1 ) % height, size: delta }
         chunks.push(chunk)
         split(chunk)
       }

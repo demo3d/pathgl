@@ -67,17 +67,20 @@ function RenderTexture(prog, options) {
   , texture: gl.createTexture()
   , width: 512
   , height: 512
-  , mesh: Mesh (gl, { pos: { array: Quad(), size: 2 }
-                    , attrList: ['pos']
-                    , count: 4
-                    , primitive: 'triangle_strip'
-                    })
+  , mesh: Mesh(gl, { pos: { array: Quad(), size: 2 }
+                   , attrList: ['pos']
+                   , count: 4
+                   , primitive: 'triangle_strip'
+                   })
   }, options)
+
+  this.texture.unit = 0
+
   this.init()
   this.__renderTarget__ = RenderTarget(this)
 
-  d3.select('body')
-  .on('mousemove', this.mousemove.bind(this))
+  setInterval(this.mousemove.bind(this), 5000)
+  //d3.select(window).on('mousemove', )
 
   this.start()
 
