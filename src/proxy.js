@@ -158,7 +158,7 @@ var baseProto = {
 
 , textContent: noop
 , removeEventListener: noop
-, addEventListener: event
+, addEventListener: noop
 }
 
 var types = [

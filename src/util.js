@@ -12,21 +12,15 @@ function clamp (x, min, max) { return Math.min(Math.max(x, min), max) }
 
 function Quad () { return [-1.0, -1.0, 1.0, -1.0, -1.0,  1.0, 1.0,  1.0] }
 
+function isVideoUrl(url) { return url.split('.').pop().join().match(/mp4|ogg|webm/) }
+
 function uniq(ar) { return ar.filter(function (d, i) { return ar.indexOf(d) == i }) }
 
-function flatten(ar) { return ar.reduce(function (a, b) { return a.concat(b.map ? flatten(b) : b) }) }
+function flatten(list){ return list.reduce(function( p,n){ return p.concat(n) }, []) }
 
-function range(a, b) {
-  return Array(Math.abs(b - a)).join().split(',').map(function (d, i) { return i + a })
-}
+function range(a, b) { return Array(Math.abs(b - a)).join().split(',').map(function (d, i) { return i + a }) }
 
-function isVideoUrl(url) {
-  return (url.split('.').pop() || '').join().match(/mp4|ogg|webm/)
-}
-
-function hash(str) {
-  return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0)
-}
+function hash(str) { return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0) }
 
 function extend (a, b) {
   if (arguments.length > 2) [].forEach.call(arguments, function (b) { extend(a, b) })

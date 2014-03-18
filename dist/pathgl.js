@@ -445,9 +445,9 @@ function matchesSelector(selector) {
 //offscreen render color test
 ;function Mesh (gl, options, attr) {
   var attributes = {}
-    , count = attr ? attr.length : 0
+    , count = options.count || 0
     , attrList = options.attrList || ['pos', 'color', 'fugue']
-    , primitive = gl[(options.primitive || 'triangle_fan') .toUpperCase()]
+    , primitive = gl[options.primitive.toUpperCase()]
 
   init()
   return {
@@ -476,7 +476,7 @@ function matchesSelector(selector) {
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
       gl.bufferData(gl.ARRAY_BUFFER, 4 * 1e7, gl.STREAM_DRAW)
       attributes[name] = {
-        array: extend(new Float32Array(options.array || 4e5), attr)
+        array: new Float32Array(options[name] && options[name].array || 4e5)
       , buffer: buffer
       , size: option.size  || 4
       , changed: true
@@ -508,10 +508,13 @@ function matchesSelector(selector) {
       gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
       gl.vertexAttribPointer(attr.loc, attr.size, gl.FLOAT, false, 0, 0)
       gl.enableVertexAttribArray(attr.loc)
+
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
 
+
+    //if (options.primitive != 'points') debugger
     gl.drawArrays(primitive, offset || 0, count)
   }
   function set () {}
@@ -549,7 +552,7 @@ function RenderTarget(screen) {
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
     bindTextures()
     beforeRender(gl)
 
@@ -559,14 +562,14 @@ function RenderTarget(screen) {
   }
 
   function bindTextures () {
-    if ((textures[fbo] || []).length && bound_textures)
-      gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].texture),
-    bound_textures = true
+    if (screen.texture) gl.bindTexture(gl.TEXTURE_2D, screen.texture)
+    // if ((textures[fbo] || []).length && bound_textures)
+    //   gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].texture)
   }
 
   function beforeRender(gl) {
-    if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
-    gl.viewport(0, 0, screen.width, screen.height)
+    //if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
+    //gl.viewport(0, 0, screen.width, screen.height)
   }
 }
 
@@ -809,7 +812,7 @@ var baseProto = {
 
 , textContent: noop
 , removeEventListener: noop
-, addEventListener: event
+, addEventListener: noop
 }
 
 var types = [
@@ -877,21 +880,15 @@ function clamp (x, min, max) { return Math.min(Math.max(x, min), max) }
 
 function Quad () { return [-1.0, -1.0, 1.0, -1.0, -1.0,  1.0, 1.0,  1.0] }
 
+function isVideoUrl(url) { return url.split('.').pop().join().match(/mp4|ogg|webm/) }
+
 function uniq(ar) { return ar.filter(function (d, i) { return ar.indexOf(d) == i }) }
 
-function flatten(ar) { return ar.reduce(function (a, b) { return a.concat(b.map ? flatten(b) : b) }) }
+function flatten(list){ return list.reduce(function( p,n){ return p.concat(n) }, []) }
 
-function range(a, b) {
-  return Array(Math.abs(b - a)).join().split(',').map(function (d, i) { return i + a })
-}
+function range(a, b) { return Array(Math.abs(b - a)).join().split(',').map(function (d, i) { return i + a }) }
 
-function isVideoUrl(url) {
-  return (url.split('.').pop() || '').join().match(/mp4|ogg|webm/)
-}
-
-function hash(str) {
-  return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0)
-}
+function hash(str) { return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0) }
 
 function extend (a, b) {
   if (arguments.length > 2) [].forEach.call(arguments, function (b) { extend(a, b) })
@@ -941,9 +938,14 @@ var Texture = {
 , __scene__: []
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 }
+
 extend(RenderTexture.prototype, appendable, Texture, {
+  z: function () {
+    var sq = Math.sqrt(this.size)
+    return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
+  },
   x: function () {
-    var sq = Math.sqrt(300)
+    var sq = Math.sqrt(this.size)
     return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
   },
   y: function () {
@@ -952,7 +954,6 @@ extend(RenderTexture.prototype, appendable, Texture, {
   },
   update: function () {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, this.data || null)
-
   }
 })
 extend(DataTexture.prototype, Texture, {})
@@ -967,14 +968,19 @@ function RenderTexture(prog, options) {
   , height: 512
   , mesh: Mesh (gl, { pos: { array: Quad(), size: 2 }
                     , attrList: ['pos']
+                    , count: 4
+                    , primitive: 'triangle_strip'
                     })
   }, options)
 
   this.init()
   this.__renderTarget__ = RenderTarget(this)
   this.update = function () {
+
+    d3.select('body').on('click', function () {
+    var step = this.step && this.step(this.gl, this.texture)
+    }.bind(this))
     this.__renderTarget__.update()
-    if (Math.random() > .9) this.step && this.step(this.gl, this.texture)
   }
 }
 
@@ -1042,6 +1048,7 @@ var forceShader = [
 , 'vec4 texelAtOffet( vec2 offset ) { return texture2D( texture, ( gl_FragCoord.xy + offset ) / resolution ); }'
 , 'void main() {'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
+//, 'gl_FragColor= vec4(1., .5, 1., 1. ) ; return;'
     , 'if ( slot == 0 ) { '
         , 'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'
         , 'vec4 dataB = texelAtOffet( vec2( 1, 0 ) );'
@@ -1076,24 +1083,27 @@ var forceShader = [
 
 pathgl.sim = {}
 
-pathgl.sim.force = function (size) {
-  var particleData = new Float32Array( 4 * size)
+function nextSquare(n) {
+  return Math.pow(Math.ceil(Math.sqrt(n)), 2)
+}
 
-  var width = Math.sqrt(size)
+pathgl.sim.force = function (size) {
+  var particleData = new Float32Array(2 * 4 * size)
+  var width = Math.sqrt(size) * 2
   var height = Math.sqrt(size)
-  var rate = 1000
 
   return pathgl.texture(forceShader, { step: step , data: particleData , width: width, height: height, size: size})
 
 
   function step (gl, tex) {
-    emit(gl, tex, 100, pathgl.uniform('mouse').map(function (d) { return d / 500 }))
+    emit(gl, tex, size / 10, [-1.0 + Math.sin( Date.now() * 0.001 ) * 2.0
+                            , -0.2 + Math.cos( Date.now() * 0.004 ) * 0.5
+                            , Math.sin( gl.millis * 0.015 ) * -0.05])
   }
 
   function emit(gl, tex, count, origin, velocities) {
     velocities = velocities || { x:0, y:0, z:0 }
     //gl.activeTexture( gl.TEXTURE0 + 0)
-
     gl.bindTexture(gl.TEXTURE_2D, tex)
 
     var x = ~~(( gl.particleIndex * 2) % width)

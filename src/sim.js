@@ -14,6 +14,7 @@ var forceShader = [
 , 'vec4 texelAtOffet( vec2 offset ) { return texture2D( texture, ( gl_FragCoord.xy + offset ) / resolution ); }'
 , 'void main() {'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
+//, 'gl_FragColor= vec4(1., .5, 1., 1. ) ; return;'
     , 'if ( slot == 0 ) { '
         , 'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'
         , 'vec4 dataB = texelAtOffet( vec2( 1, 0 ) );'
@@ -48,24 +49,27 @@ var forceShader = [
 
 pathgl.sim = {}
 
-pathgl.sim.force = function (size) {
-  var particleData = new Float32Array( 4 * size)
+function nextSquare(n) {
+  return Math.pow(Math.ceil(Math.sqrt(n)), 2)
+}
 
-  var width = Math.sqrt(size)
+pathgl.sim.force = function (size) {
+  var particleData = new Float32Array(2 * 4 * size)
+  var width = Math.sqrt(size) * 2
   var height = Math.sqrt(size)
-  var rate = 1000
 
   return pathgl.texture(forceShader, { step: step , data: particleData , width: width, height: height, size: size})
 
 
   function step (gl, tex) {
-    emit(gl, tex, 100, pathgl.uniform('mouse').map(function (d) { return d / 500 }))
+    emit(gl, tex, size / 10, [-1.0 + Math.sin( Date.now() * 0.001 ) * 2.0
+                            , -0.2 + Math.cos( Date.now() * 0.004 ) * 0.5
+                            , Math.sin( gl.millis * 0.015 ) * -0.05])
   }
 
   function emit(gl, tex, count, origin, velocities) {
     velocities = velocities || { x:0, y:0, z:0 }
     //gl.activeTexture( gl.TEXTURE0 + 0)
-
     gl.bindTexture(gl.TEXTURE_2D, tex)
 
     var x = ~~(( gl.particleIndex * 2) % width)

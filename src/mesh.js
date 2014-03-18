@@ -1,8 +1,8 @@
 function Mesh (gl, options, attr) {
   var attributes = {}
-    , count = attr ? attr.length : 0
+    , count = options.count || 0
     , attrList = options.attrList || ['pos', 'color', 'fugue']
-    , primitive = gl[(options.primitive || 'triangle_fan') .toUpperCase()]
+    , primitive = gl[options.primitive.toUpperCase()]
 
   init()
   return {
@@ -31,7 +31,7 @@ function Mesh (gl, options, attr) {
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
       gl.bufferData(gl.ARRAY_BUFFER, 4 * 1e7, gl.STREAM_DRAW)
       attributes[name] = {
-        array: extend(new Float32Array(options.array || 4e5), attr)
+        array: new Float32Array(options[name] && options[name].array || 4e5)
       , buffer: buffer
       , size: option.size  || 4
       , changed: true
@@ -63,10 +63,13 @@ function Mesh (gl, options, attr) {
       gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
       gl.vertexAttribPointer(attr.loc, attr.size, gl.FLOAT, false, 0, 0)
       gl.enableVertexAttribArray(attr.loc)
+
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
 
+
+    //if (options.primitive != 'points') debugger
     gl.drawArrays(primitive, offset || 0, count)
   }
   function set () {}
@@ -104,7 +107,7 @@ function RenderTarget(screen) {
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
     bindTextures()
     beforeRender(gl)
 
@@ -114,14 +117,14 @@ function RenderTarget(screen) {
   }
 
   function bindTextures () {
-    if ((textures[fbo] || []).length && bound_textures)
-      gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].texture),
-    bound_textures = true
+    if (screen.texture) gl.bindTexture(gl.TEXTURE_2D, screen.texture)
+    // if ((textures[fbo] || []).length && bound_textures)
+    //   gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].texture)
   }
 
   function beforeRender(gl) {
-    if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
-    gl.viewport(0, 0, screen.width, screen.height)
+    //if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
+    //gl.viewport(0, 0, screen.width, screen.height)
   }
 }
 

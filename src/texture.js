@@ -39,9 +39,14 @@ var Texture = {
 , __scene__: []
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 }
+
 extend(RenderTexture.prototype, appendable, Texture, {
+  z: function () {
+    var sq = Math.sqrt(this.size)
+    return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
+  },
   x: function () {
-    var sq = Math.sqrt(300)
+    var sq = Math.sqrt(this.size)
     return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
   },
   y: function () {
@@ -50,7 +55,6 @@ extend(RenderTexture.prototype, appendable, Texture, {
   },
   update: function () {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, this.data || null)
-
   }
 })
 extend(DataTexture.prototype, Texture, {})
@@ -65,14 +69,19 @@ function RenderTexture(prog, options) {
   , height: 512
   , mesh: Mesh (gl, { pos: { array: Quad(), size: 2 }
                     , attrList: ['pos']
+                    , count: 4
+                    , primitive: 'triangle_strip'
                     })
   }, options)
 
   this.init()
   this.__renderTarget__ = RenderTarget(this)
   this.update = function () {
+
+    d3.select('body').on('click', function () {
+    var step = this.step && this.step(this.gl, this.texture)
+    }.bind(this))
     this.__renderTarget__.update()
-    if (Math.random() > .9) this.step && this.step(this.gl, this.texture)
   }
 }
 

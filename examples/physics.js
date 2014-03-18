@@ -1,32 +1,20 @@
 //p = debug()
 
 var canvas = d3.select('canvas').call(pathgl)
-var physics = pathgl.sim.force(300)
+var n = 82
+var physics = pathgl.sim.force(n)
 
 physics.repeat()
 
-canvas
-.selectAll("circle")
-.data(d3.range(300))
-.enter()
-.append("circle")
-.attr('r', 10)
-.attr('fill', 'red')
-.attr('cx', physics.x())
-.attr('cy', physics.y())
-
-function readback(physics) {
-  gl = physics.gl
-
-  var fb = gl.createFramebuffer();
-  gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, physics.data, 0)
-  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE) {
-    var pixels = new Uint8Array(10 *10 * 4)
-    gl.readPixels(0, 0,10,10, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
-  }
-  return pixels
-}
+// canvas
+// .selectAll("circle")
+// .data(d3.range(n))
+// .enter()
+// .append("circle")
+// .attr('fill', 'red')
+// .attr('cx', physics.x())
+// .attr('cy', physics.y())
+// .attr('r', 5)
 
 function debug () {
   var canvas = d3.select('canvas').call(pathgl)
