@@ -25,8 +25,6 @@ function parse (str, stroke) {
   lb.count += buffer.length - l
 }
 
-var uniforms = {}
-
 pathgl.uniform = function (attr, value) {
   if (arguments.length == 1) return uniforms[attr]
   uniforms[attr] = value
@@ -35,6 +33,11 @@ pathgl.uniform = function (attr, value) {
 pathgl.applyCSS = applyCSSRules
 
 function applyCSSRules () {
+  if (! d3) return console.warn('this method depends on d3')
+  d3.selectAll('link[rel=styleSheet]').each(function () {
+    d3.text
+  })
+
   var k = d3.selectAll('style')[0].map(function () { return this.sheet })
           .reduce(function (acc, item) {
             var itemRules = {}

@@ -55,13 +55,26 @@ Default uniforms include mouse, resolution, and clock.</p>
 <blockquote>
 <p>returns the WebGL context, or null if webgl was not available</p>
 </blockquote>
+<h4 id="pathgl-applycssrules-">pathgl.applyCSSRules()</h4>
+<blockquote>
+<p>Parses all css rules on the page and applies them to all webgl context.</p>
+</blockquote>
 <h4 id="pathgl-texture-image-options-">pathgl.texture(image, options)</h4>
 <blockquote>
-<p>image can be a image or video DOMelement, image or video url, binary data, or a fragment shader</p>
+<p>Loads an image into video memory and returns a reference which can be bound
+to the attribute of any selection.
+Image can be an image or video DOMelement, image or video url, typed array, a
+fragment shader, or a canvas element.</p>
+<h4 id="texture-update-">texture.update()</h4>
+<p>Resamples the source data and rewrites the contents of the texture, if needed.</p>
+<h4 id="texture-repeat-">texture.repeat()</h4>
+<p>Calls texture.update on every frame.</p>
+<h4 id="texture-unwrap-">texture.unwrap()</h4>
+<p>generates an array of objects that contain coordinates
+can be used to join a texture to a selection</p>
+<h4 id="texture-pipe-destinationtexture-">texture.pipe(destinationTexture)</h4>
+<p>Pulls the data out of a texture, and writes it to the supplied destination.</p>
 </blockquote>
-<h4 id="texture-update">texture.update</h4>
-<h4 id="texture-repeat">texture.repeat</h4>
-<h4 id="texture-unfold">texture.unfold</h4>
 
   </div>
 </body>

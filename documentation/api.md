@@ -14,10 +14,20 @@
 ####pathgl.context()
 > returns the WebGL context, or null if webgl was not available
 
-####pathgl.texture(image, options)
-> image can be a image or video DOMelement, image or video url, binary data, or a fragment shader
-> 
+####pathgl.applyCSSRules()
+> Parses all css rules on the page and applies them to all webgl context.
 
-####texture.update
-####texture.repeat
-####texture.unfold
+####pathgl.texture(image, options)
+> Loads an image into video memory and returns a reference which can be bound
+> to the attribute of any selection.
+> Image can be an image or video DOMelement, image or video url, typed array, a
+> fragment shader, or a canvas element.
+####texture.update()
+> Resamples the source data and rewrites the contents of the texture, if needed.
+####texture.repeat()
+> Calls texture.update on every frame.
+####texture.unwrap()
+> generates an array of objects that contain coordinates
+> can be used to join a texture to a selection
+####texture.pipe(destinationTexture)
+> Pulls the data out of a texture, and writes it to the supplied destination.

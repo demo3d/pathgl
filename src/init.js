@@ -1,8 +1,9 @@
 var stopRendering = false
 var tasks = []
+var uniforms = {}
+var start = Date.now()
 
 pathgl.stop = function () { stopRendering = true }
-
 
 function init(c) {
   if (! (gl = initContext(canvas = c)))
@@ -107,20 +108,7 @@ var raf = window.requestAnimationFrame
        || window.mozRequestAnimationFrame
        || function(callback) { window.setTimeout(callback, 1000 / 60) }
 
-
-var start = Date.now()
 function startDrawLoop() {
   tasks.forEach(function (task) { task() })
   pathgl.raf = raf(startDrawLoop)
-}
-
-var time1 = Date.now()
-  , frames = {}
-
-pathgl.frameCounter = frames
-
-function countFrames(elapsed) {
-  var dt = elapsed - time1
-  frames[dt] = (frames[dt] || (frames[dt] = 0)) + 1
-  time1 = elapsed
 }

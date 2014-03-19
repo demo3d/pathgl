@@ -35,7 +35,6 @@ function play () {
               , y2: function (d, i) { return Math.sin(i * 2) * 300 }
               })
 
-  dropAndLoad(document.querySelector('.right'), initDnD, "ArrayBuffer")
   d3.timer(function () {
     if (! analyzer) return
     freqData = new Uint8Array(analyzer.fftSize)
@@ -100,29 +99,4 @@ function initDnD (arrayBuffer) {
     source.start(0)
     analyzer = analyser
   })
-}
-
-function dropAndLoad(dropElement, callback, readFormat) {
-  readFormat = readFormat || "DataUrl"
-
-  dropElement.addEventListener('dragover', function(e) {
-    e.stopPropagation()
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'copy'
-  }, false)
-
-  dropElement.addEventListener('drop', function(e) {
-    e.stopPropagation()
-    e.preventDefault()
-    loadFile(e.dataTransfer.files[0])
-  }, false)
-
-  function loadFile(files) {
-    var file = files
-    var reader = new FileReader()
-    reader.onload = function(e) {
-      callback(e.target.result)
-    }
-    reader['readAs'+readFormat](file)
-  }
 }

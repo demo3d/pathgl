@@ -1,17 +1,8 @@
 var textures = { null: [] }
-
-//texture data - img,canv,vid, url,
-//tetxure target - construct render target
-//texture shader - construct render target & add mesh
-
-//shaderTexture
-//imageTexture
-//renderTexture
-
 pathgl.texture = function (image, options, target) {
   return new (image == null ? RenderTexture :
           isShader(image) ? ShaderTexture :
-          DataTexture)(image, options || {}, target)
+          DataTexture)(image, extend(options || {}, { src: image }), target)
 }
 
 var Texture = {
@@ -42,6 +33,8 @@ var Texture = {
 , valueOf: function () {
     return - 1
   }
+, copy: function () { return pathgl.texture(this.src) }
+, pipe: pipeTexture
 , querySelectorAll: querySelectorAll
 , __scene__: []
 , ownerDocument: { createElementNS: function (_, x) { return x } }
@@ -145,4 +138,9 @@ function parseImage (image) {
 
 function isShader(str) {
   return str.length > 50
+}
+
+
+
+function pipeTexture() {
 }

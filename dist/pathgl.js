@@ -295,9 +295,10 @@ function glslTypedef(type) {
   return 1
 };var stopRendering = false
 var tasks = []
+var uniforms = {}
+var start = Date.now()
 
 pathgl.stop = function () { stopRendering = true }
-
 
 function init(c) {
   if (! (gl = initContext(canvas = c)))
@@ -402,22 +403,9 @@ var raf = window.requestAnimationFrame
        || window.mozRequestAnimationFrame
        || function(callback) { window.setTimeout(callback, 1000 / 60) }
 
-
-var start = Date.now()
 function startDrawLoop() {
   tasks.forEach(function (task) { task() })
   pathgl.raf = raf(startDrawLoop)
-}
-
-var time1 = Date.now()
-  , frames = {}
-
-pathgl.frameCounter = frames
-
-function countFrames(elapsed) {
-  var dt = elapsed - time1
-  frames[dt] = (frames[dt] || (frames[dt] = 0)) + 1
-  time1 = elapsed
 }
 ;function parse (str, stroke) {
   var buffer = [], lb = this.buffer, pb = this.posBuffer, indices = this.indices, count = 0
@@ -446,8 +434,6 @@ function countFrames(elapsed) {
   lb.count += buffer.length - l
 }
 
-var uniforms = {}
-
 pathgl.uniform = function (attr, value) {
   if (arguments.length == 1) return uniforms[attr]
   uniforms[attr] = value
@@ -456,6 +442,11 @@ pathgl.uniform = function (attr, value) {
 pathgl.applyCSS = applyCSSRules
 
 function applyCSSRules () {
+  if (! d3) return console.warn('this method depends on d3')
+  d3.selectAll('link[rel=styleSheet]').each(function () {
+    d3.text
+  })
+
   var k = d3.selectAll('style')[0].map(function () { return this.sheet })
           .reduce(function (acc, item) {
             var itemRules = {}
@@ -910,19 +901,10 @@ var attrDefaults = {
 , opacity: .999
 }
 ;var textures = { null: [] }
-
-//texture data - img,canv,vid, url,
-//tetxure target - construct render target
-//texture shader - construct render target & add mesh
-
-//shaderTexture
-//imageTexture
-//renderTexture
-
 pathgl.texture = function (image, options, target) {
   return new (image == null ? RenderTexture :
           isShader(image) ? ShaderTexture :
-          DataTexture)(image, options || {}, target)
+          DataTexture)(image, extend(options || {}, { src: image }), target)
 }
 
 var Texture = {
@@ -953,6 +935,8 @@ var Texture = {
 , valueOf: function () {
     return - 1
   }
+, copy: function () { return pathgl.texture(this.src) }
+, pipe: pipeTexture
 , querySelectorAll: querySelectorAll
 , __scene__: []
 , ownerDocument: { createElementNS: function (_, x) { return x } }
@@ -1057,7 +1041,11 @@ function parseImage (image) {
 function isShader(str) {
   return str.length > 50
 }
-;  return init(canvas)
+
+
+
+function pipeTexture() {
+};  return init(canvas)
 }
 ;var simulation_vs = [
   'precision mediump float;'
