@@ -22,7 +22,7 @@
 		<h3>Examples</h3>
 		<ul class="examples">
 			<li class="mobile-only"><a href="/examples/swarm.html">200k Circles</a>
-			<li class="desktop-only"><a href="/examples/physics.html">Physics Simulation</a>
+			<li class="desktop-only"><a href="/examples/physics.html">Particle Simulation</a>
       <li><a href="/examples/map.html">Map of History</a>
       <li><a href="/examples/music.html">Music Visualizer</a>
     </ul>
@@ -52,13 +52,13 @@
 javascript-like language with specialized support for vector manipulation.</p>
 <p>In webGL, a pixel is a vector with 4 floats. Typically these
 elements represent RGBA color channels, but we can use them for anything.
-For example, by thinking of each pixel as a vector containing</p>
+For example, by thinking of each pixel as a vector containing
+<code>(positionX, positionY, velocityX, velocityY)</code>, we can simulate a particle by
+integrating velocity into position on every frame.</p>
 <p>Drawing a square with dimensions 1000x1000 spawns 1 million
 threads. The output of these threads can be written to a texture,
 which is then sampled as input on the next cycle, allowing state to be
 passed between frames.</p>
-<p><code>(positionX, positionY, velocityX, velocityY)</code>, we can simulate a particle by
-integrating velocity into position on every frame.</p>
 <p>A task may benefit from gpgpu if it </p>
 <ol>
 <li>has a high computation to IO ratio</li>

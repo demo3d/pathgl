@@ -17,6 +17,8 @@ var svg = d3.select(selector)
 var webgl = d3.select('canvas').attr(size).attr('class', 'no-click')
 var p = d3.select('.blurb')
 
+d3.select('.blurb').text('Click circles for more information.')
+
 d3.json('data/world-50m.json', draw_world)
 d3.csv('data/hist.csv', draw_history)
 
@@ -169,8 +171,6 @@ function draw_history(err, hist) {
     .shader({
       'r': '(pos.w < dates.y && pos.w > dates.x) ? 20. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
     })
-    .on('mouseover', tip.show)
-    .on('mouseout', tip.hide)
     .each(function (d) { return d.node = this })
   }
 

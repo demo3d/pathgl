@@ -44,6 +44,8 @@ function push(d) { return this.push(d) }
 
 function powerOfTwo(x) { return x && ! (x & (x - 1)) }
 
+function nextSquare(n) { return Math.pow(Math.ceil(Math.sqrt(n)), 2) }
+
 function each(obj, fn) { for (var key in obj) fn(obj[key], key, obj) }
 
 function clamp (x, min, max) { return Math.min(Math.max(x, min), max) }
@@ -283,8 +285,8 @@ function build_vs(subst) {
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
     , r: '(pos.z < 0.) ? texture2D(texture, abs(pos.xy)).x * 10. : (2. * pos.z)'
-    , x: '(pos.x < 0.) ? texture2D(texture, abs(pos.xy)).x * resolution.x: pos.x'
-    , y: '(pos.y < 0.) ? texture2D(texture, abs(pos.xy)).y * resolution.y: pos.y'
+    , x: '(pos.x < 0.) ? texture2D(texture, abs(pos.xy)).x * resolution.x : pos.x'
+    , y: '(pos.y < 0.) ? texture2D(texture, abs(pos.xy)).y * resolution.y : pos.y'
     }, subst)
 
   for(var attr in defaults)
@@ -1098,9 +1100,6 @@ var forceShader = [
 , '}'
 ].join('\n')
 
-function nextSquare(n) {
-  return Math.pow(Math.ceil(Math.sqrt(n)), 2)
-}
 
 var since = Date.now()
 pathgl.sim.force = function (size) {
@@ -1108,7 +1107,6 @@ pathgl.sim.force = function (size) {
   var width = Math.sqrt(size) * 2
   var height = Math.sqrt(size)
   var elapsed = 0, cooldown = 16
-  var node  = d3.select('canvas')
   var rate = 1000
   var particleIndex = 0
 
@@ -1123,9 +1121,10 @@ pathgl.sim.force = function (size) {
   function step () {}
   function start () {
     var now = Date.now() - since
-    , origin = [ -1.0 + Math.sin(now * 0.001) * 2.0
+      , origin = [ -1.0 + Math.sin(now * 0.001) * 2.0
                  , -0.2 + Math.cos(now * 0.004) * 0.5
-                 , Math.sin(now * 0.015) * -0.05]
+                 , Math.sin(now * 0.015) * -0.05
+                 ]
 
     pathgl.uniform('dimensions', [width, height])
     d3.select(window).on('mousemove.physics', mousemove.bind(this))
@@ -1134,7 +1133,7 @@ pathgl.sim.force = function (size) {
   function mousemove() {
     if (Date.now() - elapsed < cooldown) return
     var count = rate * Math.random()
-      , origin = svgToClipSpace(d3.mouse(node.node())).concat(0)
+      , origin = svgToClipSpace(d3.mouse(d3.select('canvas').node())).concat(0)
     elapsed = Date.now()
     emit(this.gl, this.texture, count, origin)
   }

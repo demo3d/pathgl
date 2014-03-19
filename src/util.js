@@ -7,6 +7,8 @@ function push(d) { return this.push(d) }
 
 function powerOfTwo(x) { return x && ! (x & (x - 1)) }
 
+function nextSquare(n) { return Math.pow(Math.ceil(Math.sqrt(n)), 2) }
+
 function each(obj, fn) { for (var key in obj) fn(obj[key], key, obj) }
 
 function clamp (x, min, max) { return Math.min(Math.max(x, min), max) }
