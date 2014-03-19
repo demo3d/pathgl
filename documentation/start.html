@@ -2,7 +2,7 @@
 <head>
 	<meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-	<title> We feel free because we lack the very language to articulate our unfreedom </title>
+	<title>WebGL Library for Data Visualization and Simulation - PathGL</title>
 	<script src="/lib/d3.js"></script>
 	<script src="/lib/topojson.v1.min.js"></script>
 	
@@ -16,7 +16,9 @@
     <a href="/dist/pathgl.zip">Download</a>
 
 		<h3>Examples</h3>
-    <ul class="examples">
+		<ul class="examples">
+			<li class="mobile-only"><a href="/examples/swarm.html">200k Circles</a>
+			<li class="desktop-only"><a href="/examples/physics.html">Physics Simulation</a>
       <li><a href="/examples/swarm.html">200k Circles</a>
       <li><a href="/examples/map.html">Map of History</a>
       <li><a href="/examples/music.html">Music Visualizer</a>
@@ -24,9 +26,11 @@
 		
 		<h3>Documentation</h3>
 		<ul class="docs">
-      <!-- <li><a href="/documentation/start.html">Getting Started</a> -->
+			<li><a href="/documentation/start.html">Getting Started</a>
 			<li><a href="/documentation/api.html">API Reference</a>
       <li><a href="/documentation/webgl.html">The Graphics Pipeline</a>
+			<li><a href="/documentation/svg.html">SVG Differences</a>
+			<li><a href="/documentation/gpgpu.html">GPGPU</a>
 		</ul>
 		<div class="mode">
 			<h3>Rendering Mode</h3>
@@ -37,21 +41,29 @@
 		</div>
 	</div>
 	<div class="right" id="scroll">
-		<p>Download the latest version and include it in your html.
+		<h1 id="pathgl">PathGL</h1>
+<p>Pathgl sits between d3 and the dom and lets you draw to webgl instead of svg.</p>
+<h2 id="getting-started">Getting Started</h2>
+<p>Download the <a href="http://adnanwahab.org/pathgl/dist/pathgl.zip">latest release</a> and
+include in your html.
 Or link directly to the latest release, copy this snippet:</p>
-<p>&lt;script src=&quot;http://d3js.org/d3.v3.min.js&quot; charset=&quot;utf-8&quot;&gt;&lt;/script&gt;
-&lt;script src=&quot;http://adnanwahab.com/pathgl/dist/pathgl.js&quot;&gt;&lt;/script&gt;
+<pre><code class="lang-html">&lt;script src=&quot;http://adnanwahab.com/pathgl/dist/pathgl.min.js&quot;
+charset=&quot;utf-8&quot;&gt;&lt;/script&gt;
+</code></pre>
+<p>If webgl is available then your circles will be WEBGL, if not, fallback to svg.</p>
+<pre><code class="lang-html">&lt;script src=&quot;http://d3js.org/d3.v3.min.js&quot; charset=&quot;utf-8&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;http://adnanwahab.com/pathgl/dist/pathgl.min.js&quot;
+charset=&quot;utf-8&quot;&gt;&lt;/script&gt;
 &lt;script&gt;
-d3.select(&#39;canvas&#39;).call(pathgl)
+d3.select(&#39;canvas&#39;)
 .append(&#39;circle&#39;)
 .attr(&#39;r&#39;, 100)
 .attr(&#39;cx&#39;, 50)
 .attr(&#39;cy&#39;, 50)
-.attr(&#39;fill&#39;, &#39;pink&#39;)
 &lt;/script&gt;
-
-</p>
-<p>If you don&#39;t see a pink circle, something is wrong uh oh.</p>
+</code></pre>
+<h5 id="want-commonjs-">Want CommonJS?</h5>
+<p>If you want to use pathGL within a module system, <code>npm install pathgl --save</code>.</p>
 
   </div>
 </body>

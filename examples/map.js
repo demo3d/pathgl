@@ -1,175 +1,46 @@
-var selector = 'svg'
-var size = {width: .85 * innerWidth, height: innerHeight * .9}
-var width = size.width,
-    height = size.height,
-    rotate = [10, -10],
-    velocity = [.03, -.001],
-    time = Date.now();
+<!DOCTYPE html>
+<head>
+	<meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>WebGL Library for Data Visualization and Simulation - PathGL</title>
+	<script src="/lib/d3.js"></script>
+	<script src="/lib/topojson.v1.min.js"></script>
+	
+	<script src="/dist/pathgl.js"></script>
+  <link rel="stylesheet" href="/lib/adnan.css">
+</head>
 
-var simplify = d3.geo.transform({ point: function(x, y, z) { this.stream.point(x, y); } })
-var proj = d3.geo.wagner4().scale(225).translate([size.width / 2 - 75, size.height / 2]).precision(.1)
-  , path = d3.geo.path().projection(proj)
+<body>
+  <div class="nav">
+    <a href="http://github.com/adnan-wahab/pathgl">Github Repo</a>
+    <a href="/dist/pathgl.zip">Download</a>
 
-var svg = d3.select(selector)
-          .attr("width", width)
-          .attr("height", height)
-          .call(pathgl)
-
-var webgl = d3.select('canvas').attr(size).call(pathgl).attr('class', 'no-click')
-var p = d3.select('.blurb')
-
-d3.json('data/world-50m.json', draw_world)
-d3.csv('data/hist.csv', draw_history)
-
-function mouseover(d) {
-  d3.select('.title').text(d.title + ' ' + d.year + ', '  + d.event);
-}
-
-function draw_world(err, world) {
-  if (err) svg.append('path')
-  .attr('class', 'graticule noclick')
-  .datum(d3.geo.graticule())
-  .attr('d', path)
-  .attr('stroke-dasharray', '3 3')
-  .attr('fill', 'none')
-  .attr('stroke', '#999')
-
-  svg.append("path")
-  .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a == b && a.id !== 10 }))
-  .attr({ class: 'world'
-        , d: path
-        , fill: 'none'
-        , 'stroke': 'grey'
-        , 'stroke-width': 1
-        })
-}
-
-function draw_history(err, hist) {
-  var dates, m, to
-    , from = -500
-
-  d3.select('body')
-  .append('div')
-  .attr('class', 'current_year')
-
-  var gram = d3.layout.histogram()
-             .bins(size.width / 5)
-             .range([-500, 2030])
-             .value(function (d) { return + d.year })(hist)
-
-  var x = d3.scale.linear()
-          .domain([-500, 2010])
-          .range([0, size.width])
-
-  var y = d3.scale.pow().exponent(.8)
-          .domain([0, d3.max(gram, function (d) { return d.y })])
-          .range([0, size.height * .3])
-
-  var xAxis = d3.svg.axis()
-              .scale(x)
-              .orient("bottom")
-
-  svg.selectAll('rect')
-  .data(gram).enter()
-  .append('rect')
-  .attr('fill', 'indianred')
-  .attr('width', 4)
-  .attr('height', function (d) { return y(d.y)  })
-  .attr('x', function (d, i) { return x(d.x)  })
-  .attr('y', function (d) { return size.height - y(d.y) - 30 })
-
-  var axis = d3.svg.axis()
-             .scale(x)
-             .orient("bottom")
-
-  svg.append("g")
-  .attr("class", "x axis")
-  .attr("transform", "translate(0," + (size.height - 30) + ")")
-  .call(xAxis)
-
-  svg
-  .on('click', function () { from = ~~ x.invert(+d3.mouse(this)[0]) })
-  .on('mousemove', function () {
-    d3.select('line').attr('stroke-width', 2)
-    .attr('transform','translate('+d3.mouse(this)[0]+',0)')
-  })
-  .on('mouseout', function ( ){ d3.select('line').attr('stroke-width',1) })
-  var brush = d3.svg.brush().x(x).on("brush", brushmove).extent([-500, -400])
-
-  var b = svg.append("g")
-          .attr("class", "brush")
-          .call(brush)
-          .attr('transform', 'translate(' + [0, height * .85] +  ')')
-          .selectAll("rect")
-          .attr('fill', 'blue')
-          .attr('opacity', '.7')
-          .attr("height", height * .1);
-
-  function brushmove() {
-    adnan(d3.event.target.extent());
-  }
-
-  function adnan (s) {
-    pathgl.uniform('dates', s)
-    document.title = s.map(Math.round)
-    d3.select('.current_year').text(from < 0 ? '' + Math.abs(+from) + ' BC' : from)
-    svg.on('click', function () {
-      var x = d3.event.x, y = d3.event.y
-
-      var event = hist.filter(function (event) {
-                    return s[0] < (+ event.year)  && (+ event.year) < s[1]
-                  }).map(function (e) {
-                    var c = e.node
-                      e.dist = distance(c.attr.cx, c.attr.cy, x, y)
-                      return e
-                    })
-                    .sort(function (a, b) { return a.dist - b.dist })
-        p.text(event.length && event[0].event)
-      })
-    }
-    adnan([-500, -400])
-
-    d3.select('.right').insert('p', '*')
-    .attr('class', 'title')
-    .style({ color: 'white'
-           , position: 'absolute'
-           , top: 475 + 'px'
-           , left: 150 + 'px'
-           , width: "35%"
-           , 'font-size': '10px'
-           , 'text-anchor': 'end'
-           })
-
-    hist = hist.sort(function(a, b) { return a.year - b.year })
-    hist.forEach(function(d) {
-      d.location = proj(d.location.split(' ').map(parseFloat).reverse()) || d
-    })
-
-    pathgl.uniform('dates', [0, 1])
-
-    webgl
-    .selectAll('circle')
-    .data(hist)
-    .enter()
-    .append('circle')
-    .attr({ class:'event'
-          , stroke: function(d){ return d3.hsl(Math.random()*120 + 120, .9, 0.5) }
-          , cx: function(d){ return d.location[0] }
-          , cy: function(d){ return d.location[1] }
-          , cz: function(d){ return + d.year }
-          , r: 5
-          })
-    .shader({
-      'r': '(pos.w < dates.y && pos.w > dates.x) ? 10. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
-      //'stroke': 'vec4(1., .5, 1., (pos.w > dates.x && pos.w < dates.y ) ? 1. : 0.)'
-    })
-    .each(function (d) {
-      return d.node = this
-    })
-  }
-
-
-function distance (x1, y1, x2, y2) {
-  var xd = x2 - x1, yd = y2 - y1
-  return xd * xd + yd * yd
-}
+		<h3>Examples</h3>
+		<ul class="examples">
+			<li class="mobile-only"><a href="/examples/swarm.html">200k Circles</a>
+			<li class="desktop-only"><a href="/examples/physics.html">Physics Simulation</a>
+      <li><a href="/examples/swarm.html">200k Circles</a>
+      <li><a href="/examples/map.html">Map of History</a>
+      <li><a href="/examples/music.html">Music Visualizer</a>
+    </ul>
+		
+		<h3>Documentation</h3>
+		<ul class="docs">
+			<li><a href="/documentation/start.html">Getting Started</a>
+			<li><a href="/documentation/api.html">API Reference</a>
+      <li><a href="/documentation/webgl.html">The Graphics Pipeline</a>
+			<li><a href="/documentation/svg.html">SVG Differences</a>
+			<li><a href="/documentation/gpgpu.html">GPGPU</a>
+		</ul>
+		<div class="mode">
+			<h3>Rendering Mode</h3>
+			<label for="svg">SVG<input type="radio" name="mode" id="svg"></label>
+			<label for="webgl">WebGL<input type="radio" name="mode" checked="1" id="webgl"></label>
+			<img class="t" src="data/test.png">
+			<img class="l" src="data/leaves.jpg">
+		</div>
+	</div>
+	<div class="right" id="scroll">
+		<script src="map.js"></script>
+  </div>
+</body>
