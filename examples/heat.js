@@ -1,3 +1,4 @@
+
 function debug () {
   var canvas = d3.select('canvas').call(pathgl)
 

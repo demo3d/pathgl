@@ -25,27 +25,29 @@ function parse (str, stroke) {
   lb.count += buffer.length - l
 }
 
-pathgl.uniform = function (attr, value) {
-  if (program[attr]) return program[attr](value)
-}
+var uniforms = {}
 
+pathgl.uniform = function (attr, value) {
+  if (arguments.length == 1) return uniforms[attr]
+  uniforms[attr] = value
+}
 
 pathgl.applyCSS = applyCSSRules
 
 function applyCSSRules () {
-  var k =d3.selectAll('style')[0].map(function () { return this.sheet })
-         .reduce(function (acc, item) {
-           var itemRules = {}
-           each(item.cssRules, function (rules, i) {
-             var l = rules.length, cssom = {}
-             while(l--) {
-               var name = rules[rules[l]]
-               cssom[name] = rules[name]
-             }
-             itemRules[rules.selectorText] = cssom
-           })
-             return extend(acc, itemRules)
-         }, {})
+  var k = d3.selectAll('style')[0].map(function () { return this.sheet })
+          .reduce(function (acc, item) {
+            var itemRules = {}
+            each(item.cssRules, function (rules, i) {
+              var l = rules.length, cssom = {}
+              while(l--) {
+                var name = rules[rules[l]]
+                cssom[name] = rules[name]
+              }
+              itemRules[rules.selectorText] = cssom
+            })
+              return extend(acc, itemRules)
+          }, {})
 
   each(k, function (styles, selector) {
     d3.select(selector).attr(styles)

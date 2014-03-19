@@ -27,7 +27,8 @@ var Texture = {
     return this
   }
 , repeat: function () {
-    setInterval(this.update.bind(this), 15)
+    setInterval(this.update.bind(this), 16)
+    //tasks.push(this.update.bind(this))
     var i = this.length = this.size
     var self = Object.create(this)
     while(i--) {

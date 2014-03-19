@@ -61,6 +61,7 @@ pathgl.fragmentShader = [
 ].join('\n')
 
 function createProgram(gl, vs, fs, attributes) {
+  var src = vs + '\n' + fs
   program = gl.createProgram()
 
   vs = compileShader(gl, gl.VERTEX_SHADER, vs)
@@ -73,22 +74,28 @@ function createProgram(gl, vs, fs, attributes) {
   gl.deleteShader(fs)
 
   ;(attributes || ['pos', 'color', 'fugue']).forEach(function (d, i){
-    gl.bindAttribLocation(program, i, d)
-  })
+     gl.bindAttribLocation(program, i, d)
+   })
 
   gl.linkProgram(program)
   gl.useProgram(program)
-
   if (! gl.getProgramParameter(program, gl.LINK_STATUS)) throw name + ': ' + gl.getProgramInfoLog(program)
 
-  each({ type: [0]
-       , mouse: [0, 0]
-       , dates: [0, 0]
-       , resolution: [0, 0]
-       , clock: [0]
-       }, bindUniform.bind(program))
+  var re = /uniform\s+(\S+)\s+(\S+)\s*;/g, match = null
+  while ((match = re.exec(src)) != null) bindUniform(match[2], match[1])
 
-    return program
+  return program
+
+  function bindUniform(key, type) {
+    var loc = gl.getUniformLocation(program, key)
+      , method = 'uniform' + glslTypedef(type) + 'fv'
+      , keep
+    program[key] = function (data) {
+      if (keep == data || ! arguments.length) return
+      gl[method](loc, Array.isArray(data) ? data : [data])
+      keep = data
+    }
+  }
 }
 
 function build_vs(subst) {
@@ -104,6 +111,7 @@ function build_vs(subst) {
     , x: '(pos.x < 0.) ? texture2D(texture, abs(pos.xy)).x * resolution.x: pos.x'
     , y: '(pos.y < 0.) ? texture2D(texture, abs(pos.xy)).y * resolution.y: pos.y'
     }, subst)
+
   for(var attr in defaults)
     vertex = vertex.replace('replace_'+attr, defaults[attr])
 
@@ -122,12 +130,8 @@ function compileShader (gl, type, src) {
   return shader
 }
 
-function bindUniform(val, key) {
-  var loc = gl.getUniformLocation(program, key), keep
-  ;(program[key] = function (data) {
-      if (keep == data) return
-      if (data == null) return keep
-      gl['uniform' + val.length + 'fv'](loc, Array.isArray(data) ? data : [data])
-      keep = data
-    })(val)
+
+function glslTypedef(type) {
+  if (type.match('vec')) return type[type.length - 1]
+  return 1
 }

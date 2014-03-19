@@ -105,13 +105,19 @@ function RenderTarget(screen) {
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
     bindTextures()
+    setUniforms()
     beforeRender(gl)
 
     pathgl.uniform('clock', new Date - start)
 
     for(i = -1; ++i < meshes.length;) meshes[i].draw()
+  }
+
+  function setUniforms () {
+    for (var k in uniforms)
+      program[k] && program[k](uniforms[k])
   }
 
   function bindTextures () {
@@ -121,7 +127,7 @@ function RenderTarget(screen) {
   }
 
   function beforeRender(gl) {
-    //if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
+    if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
 }

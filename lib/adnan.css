@@ -236,9 +236,15 @@ html, body {
     }
 }
 
-
-
 .x.axis .domain, .x.axis line {
     fill: none;
     stroke: #333;
+}
+
+@media (min-device-pixel-radio: 2) and (max-width: 640px) {
+    .desktop-only { display: none; }
+}
+
+@media (min-width: 640px) {
+    .mobile-only { display: none; }
 }

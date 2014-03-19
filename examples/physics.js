@@ -1,5 +1,5 @@
 d3.select('canvas').call(pathgl).selectAll("circle")
-.data(pathgl.sim.force(512 * 512).repeat())
+.data(pathgl.sim.force(16).repeat())
 .enter().append("circle")
 .attr('r', function (d,i) { return d.x()(d,i) })
 .attr('cx', function (d,i) { return d.x()(d,i) })

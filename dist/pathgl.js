@@ -220,6 +220,7 @@ pathgl.fragmentShader = [
 ].join('\n')
 
 function createProgram(gl, vs, fs, attributes) {
+  var src = vs + '\n' + fs
   program = gl.createProgram()
 
   vs = compileShader(gl, gl.VERTEX_SHADER, vs)
@@ -232,22 +233,28 @@ function createProgram(gl, vs, fs, attributes) {
   gl.deleteShader(fs)
 
   ;(attributes || ['pos', 'color', 'fugue']).forEach(function (d, i){
-    gl.bindAttribLocation(program, i, d)
-  })
+     gl.bindAttribLocation(program, i, d)
+   })
 
   gl.linkProgram(program)
   gl.useProgram(program)
-
   if (! gl.getProgramParameter(program, gl.LINK_STATUS)) throw name + ': ' + gl.getProgramInfoLog(program)
 
-  each({ type: [0]
-       , mouse: [0, 0]
-       , dates: [0, 0]
-       , resolution: [0, 0]
-       , clock: [0]
-       }, bindUniform.bind(program))
+  var re = /uniform\s+(\S+)\s+(\S+)\s*;/g, match = null
+  while ((match = re.exec(src)) != null) bindUniform(match[2], match[1])
 
-    return program
+  return program
+
+  function bindUniform(key, type) {
+    var loc = gl.getUniformLocation(program, key)
+      , method = 'uniform' + glslTypedef(type) + 'fv'
+      , keep
+    program[key] = function (data) {
+      if (keep == data || ! arguments.length) return
+      gl[method](loc, Array.isArray(data) ? data : [data])
+      keep = data
+    }
+  }
 }
 
 function build_vs(subst) {
@@ -263,6 +270,7 @@ function build_vs(subst) {
     , x: '(pos.x < 0.) ? texture2D(texture, abs(pos.xy)).x * resolution.x: pos.x'
     , y: '(pos.y < 0.) ? texture2D(texture, abs(pos.xy)).y * resolution.y: pos.y'
     }, subst)
+
   for(var attr in defaults)
     vertex = vertex.replace('replace_'+attr, defaults[attr])
 
@@ -281,16 +289,11 @@ function compileShader (gl, type, src) {
   return shader
 }
 
-function bindUniform(val, key) {
-  var loc = gl.getUniformLocation(program, key), keep
-  ;(program[key] = function (data) {
-      if (keep == data) return
-      if (data == null) return keep
-      gl['uniform' + val.length + 'fv'](loc, Array.isArray(data) ? data : [data])
-      keep = data
-    })(val)
-}
-;var stopRendering = false
+
+function glslTypedef(type) {
+  if (type.match('vec')) return type[type.length - 1]
+  return 1
+};var stopRendering = false
 var tasks = []
 
 pathgl.stop = function () { stopRendering = true }
@@ -443,27 +446,29 @@ function countFrames(elapsed) {
   lb.count += buffer.length - l
 }
 
-pathgl.uniform = function (attr, value) {
-  if (program[attr]) return program[attr](value)
-}
+var uniforms = {}
 
+pathgl.uniform = function (attr, value) {
+  if (arguments.length == 1) return uniforms[attr]
+  uniforms[attr] = value
+}
 
 pathgl.applyCSS = applyCSSRules
 
 function applyCSSRules () {
-  var k =d3.selectAll('style')[0].map(function () { return this.sheet })
-         .reduce(function (acc, item) {
-           var itemRules = {}
-           each(item.cssRules, function (rules, i) {
-             var l = rules.length, cssom = {}
-             while(l--) {
-               var name = rules[rules[l]]
-               cssom[name] = rules[name]
-             }
-             itemRules[rules.selectorText] = cssom
-           })
-             return extend(acc, itemRules)
-         }, {})
+  var k = d3.selectAll('style')[0].map(function () { return this.sheet })
+          .reduce(function (acc, item) {
+            var itemRules = {}
+            each(item.cssRules, function (rules, i) {
+              var l = rules.length, cssom = {}
+              while(l--) {
+                var name = rules[rules[l]]
+                cssom[name] = rules[name]
+              }
+              itemRules[rules.selectorText] = cssom
+            })
+              return extend(acc, itemRules)
+          }, {})
 
   each(k, function (styles, selector) {
     d3.select(selector).attr(styles)
@@ -584,13 +589,19 @@ function RenderTarget(screen) {
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
     bindTextures()
+    setUniforms()
     beforeRender(gl)
 
     pathgl.uniform('clock', new Date - start)
 
     for(i = -1; ++i < meshes.length;) meshes[i].draw()
+  }
+
+  function setUniforms () {
+    for (var k in uniforms)
+      program[k] && program[k](uniforms[k])
   }
 
   function bindTextures () {
@@ -600,7 +611,7 @@ function RenderTarget(screen) {
   }
 
   function beforeRender(gl) {
-    //if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
+    if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
 }
@@ -927,7 +938,8 @@ var Texture = {
     return this
   }
 , repeat: function () {
-    setInterval(this.update.bind(this), 15)
+    setInterval(this.update.bind(this), 16)
+    //tasks.push(this.update.bind(this))
     var i = this.length = this.size
     var self = Object.create(this)
     while(i--) {
@@ -1060,8 +1072,9 @@ var forceShader = [
 , 'const vec3 TARGET = vec3( .5, .5, 0.01 );'
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
+, 'uniform vec2 dimensions;'
 , 'vec4 texelAtOffet( vec2 offset ) { '
-  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(1024., 512.)); }'
+  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(32., 16.)); }'
 , 'void main() {'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
     , 'if ( slot == 0 ) { '
