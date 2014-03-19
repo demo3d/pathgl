@@ -1,5 +1,5 @@
 # PathGL
-Pathgl sits between d3 and the dom and lets you draw to webgl instead of svg.
+Pathgl is a library for data visualization and simulation using d3.
 
 ## Getting Started
 Download the [latest release](http://adnanwahab.org/pathgl/dist/pathgl.zip) and
@@ -24,5 +24,10 @@ d3.select('canvas')
 </script>
 ```
 
-##### Want CommonJS?
+#### Want CommonJS?
 If you want to use pathGL within a module system, `npm install pathgl --save`.
+
+### Next Steps
+Check out the examples to learn more.
+Tutorials on creating your own data tiles and simulation textures coming soon!
+

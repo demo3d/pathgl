@@ -24,4 +24,3 @@ javascript-like language with specialized support for vector manipulation.
 
 In the near future, gpgpu may be possible with compute shaders, or even webCL, which
 will decouple render specific details  from gpgpu entirely.
-

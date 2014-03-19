@@ -1,46 +1,13 @@
-<!DOCTYPE html>
-<head>
-	<meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-	<title>WebGL Library for Data Visualization and Simulation - PathGL</title>
-	<script src="/lib/d3.js"></script>
-	<script src="/lib/topojson.v1.min.js"></script>
-	
-	<script src="/dist/pathgl.js"></script>
-  <link rel="stylesheet" href="/lib/adnan.css">
-</head>
-
-<body>
-  <div class="nav">
-    <a href="http://github.com/adnan-wahab/pathgl">Github Repo</a>
-    <a href="/dist/pathgl.zip">Download</a>
-
-		<h3>Examples</h3>
-		<ul class="examples">
-			<li class="mobile-only"><a href="/examples/swarm.html">200k Circles</a>
-			<li class="desktop-only"><a href="/examples/physics.html">Physics Simulation</a>
-      <li><a href="/examples/swarm.html">200k Circles</a>
-      <li><a href="/examples/map.html">Map of History</a>
-      <li><a href="/examples/music.html">Music Visualizer</a>
-    </ul>
-		
-		<h3>Documentation</h3>
-		<ul class="docs">
-			<li><a href="/documentation/start.html">Getting Started</a>
-			<li><a href="/documentation/api.html">API Reference</a>
-      <li><a href="/documentation/webgl.html">The Graphics Pipeline</a>
-			<li><a href="/documentation/svg.html">SVG Differences</a>
-			<li><a href="/documentation/gpgpu.html">GPGPU</a>
-		</ul>
-		<div class="mode">
-			<h3>Rendering Mode</h3>
-			<label for="svg">SVG<input type="radio" name="mode" id="svg"></label>
-			<label for="webgl">WebGL<input type="radio" name="mode" checked="1" id="webgl"></label>
-			<img class="t" src="data/test.png">
-			<img class="l" src="data/leaves.jpg">
-		</div>
-	</div>
-	<div class="right" id="scroll">
-		<script src="swarm.js"></script>
-  </div>
-</body>
+d3.select('canvas').call(pathgl)
+.selectAll("circle")
+.data(d3.range(2e5))
+.enter().append("circle")
+.attr('fill', function () { return "hsl(" + Math.random() * 360 + ",100%, 50%)" })
+.attr('cx', function (d, i) { return d / 1e8 })
+.attr('cy', function (d, i) { return (2e5  -  d) / 20000 })
+.attr('r', function (d, i) { return d  % 1000 })
+.shader({ cx: 'resolution.x / 2. + cos(pos.z + clock * pos.x) * pos.z * 10.;'
+        , cy: 'resolution.y / 2. + sin(pos.z + clock * pos.x) * pos.z * 10.;'
+        , stroke: 'vec4(unpack_color(stroke).xyz * .5 + vec3(mouse.x / resolution.x, mouse.y / resolution.y, 1.), 1.);'
+        , r: 'pos.y + pos.y * max(distance(x, mouse.x) / resolution.x, distance(y, mouse.y) / resolution.y)'
+        })
