@@ -3,8 +3,7 @@ function init(c) {
     return !! console.log('webGL context could not be initialized')
 
   if (! gl.getExtension('OES_texture_float'))
-    return console.warn('does not support floating point textures')
-
+    console.warn('does not support floating point textures')
 
   pathgl.context = function () { return gl }
 
