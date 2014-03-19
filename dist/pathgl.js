@@ -3,7 +3,6 @@ var pathgl = this.pathgl = {}
 pathgl.stop = function () {}
 pathgl.context = function () {}
 pathgl.texture = function (image, options, target) {
-  return
   return new (image == null ? RenderTexture :
           isShader(image) ? ShaderTexture :
           DataTexture)(image, extend(options || {}, { src: image }), target)
@@ -1093,8 +1092,6 @@ var forceShader = [
 , '    }'
 , '}'
 ].join('\n')
-
-pathgl.sim = {}
 
 function nextSquare(n) {
   return Math.pow(Math.ceil(Math.sqrt(n)), 2)

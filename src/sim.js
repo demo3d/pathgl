@@ -50,8 +50,6 @@ var forceShader = [
 , '}'
 ].join('\n')
 
-pathgl.sim = {}
-
 function nextSquare(n) {
   return Math.pow(Math.ceil(Math.sqrt(n)), 2)
 }
