@@ -8,13 +8,15 @@ var simulation_vs = [
 
 var forceShader = [
 , 'precision mediump float;'
-, 'const vec3 TARGET = vec3( .5, .5, 0.01 );'
+
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
+, 'uniform vec2 mouse;'
 , 'uniform vec2 dimensions;'
 , 'vec4 texelAtOffet( vec2 offset ) { '
-  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(32., 16.)); }'
+  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / dimensions); }'
 , 'void main() {'
+    , 'vec3 TARGET = vec3(mouse / resolution, 0.01 );'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
     , 'if ( slot == 0 ) { '
         , 'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'
@@ -61,7 +63,7 @@ pathgl.sim.force = function (size) {
   var height = Math.sqrt(size)
   var elapsed = 0, cooldown = 16
   var node  = d3.select('canvas')
-  var rate = 10000
+  var rate = 1000
   var particleIndex = 0
 
   return pathgl.texture(forceShader, {
@@ -70,26 +72,24 @@ pathgl.sim.force = function (size) {
   , width: width
   , height: height
   , size: size
-  , mousemove: mousemove
-  , start: mousemove
+  , start: start
   })
   function step () {}
-
-
-
-  function mousemove() {
-    if (Date.now() - elapsed < cooldown) return
-    elapsed = Date.now()
+  function start () {
     var now = Date.now() - since
-    var count = rate * Math.random()
-    var loc = d3.event && d3.mouse(node.node())
-    var origin = loc
-               ? svgToClipSpace(loc).concat(0)
-               : [ -1.0 + Math.sin(now * 0.001) * 2.0
+    , origin = [ -1.0 + Math.sin(now * 0.001) * 2.0
                  , -0.2 + Math.cos(now * 0.004) * 0.5
                  , Math.sin(now * 0.015) * -0.05]
 
-
+    pathgl.uniform('dimensions', [width, height])
+    d3.select(window).on('mousemove.physics', mousemove.bind(this))
+    emit(this.gl, this.texture, 40000, origin)
+  }
+  function mousemove() {
+    if (Date.now() - elapsed < cooldown) return
+    var count = rate * Math.random()
+      , origin = svgToClipSpace(d3.mouse(node.node())).concat(0)
+    elapsed = Date.now()
     emit(this.gl, this.texture, count, origin)
   }
 

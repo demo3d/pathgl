@@ -40,20 +40,20 @@
 		<h2 id="api-reference">API Reference</h2>
 <h4 id="pathgl-element-">pathgl([element])</h4>
 <blockquote>
-<p>Takes a canvas element, css3 selector, or d3 selection as an argument
-initialize the webgl context and returns the patched canvas element
+<p>initialize the webgl context and returns the patched canvas element
+Takes a canvas element, css3 selector, or d3 selection as an argument
 if webgl is not available, returns false
 If called without arguments, appends a 960x500 canvas to the sceern.</p>
+</blockquote>
+<h4 id="pathgl-context-">pathgl.context()</h4>
+<blockquote>
+<p>returns the WebGL context, or null if webgl was not available</p>
 </blockquote>
 <h4 id="pathgl-uniform-name-value-">pathgl.uniform(name, [value])</h4>
 <blockquote>
 <p>Set a variable that is global to all shader contexts.
 If called without a value, will return previously set value.
 Default uniforms include mouse, resolution, and clock.</p>
-</blockquote>
-<h4 id="pathgl-context-">pathgl.context()</h4>
-<blockquote>
-<p>returns the WebGL context, or null if webgl was not available</p>
 </blockquote>
 <h4 id="pathgl-applycssrules-">pathgl.applyCSSRules()</h4>
 <blockquote>
@@ -65,14 +65,26 @@ Default uniforms include mouse, resolution, and clock.</p>
 to the attribute of any selection.
 Image can be an image or video DOMelement, image or video url, typed array, a
 fragment shader, or a canvas element.</p>
+</blockquote>
 <h4 id="texture-update-">texture.update()</h4>
+<blockquote>
 <p>Resamples the source data and rewrites the contents of the texture, if needed.</p>
+</blockquote>
 <h4 id="texture-repeat-">texture.repeat()</h4>
-<p>Calls texture.update on every frame.</p>
+<blockquote>
+<p>Calls texture.update on every frame until stop is called.</p>
+</blockquote>
+<h4 id="texture-stop-">texture.stop()</h4>
+<blockquote>
+<p>Calls texture.update on every frame until stop is called.</p>
+</blockquote>
 <h4 id="texture-unwrap-">texture.unwrap()</h4>
+<blockquote>
 <p>generates an array of objects that contain coordinates
 can be used to join a texture to a selection</p>
+</blockquote>
 <h4 id="texture-pipe-destinationtexture-">texture.pipe(destinationTexture)</h4>
+<blockquote>
 <p>Pulls the data out of a texture, and writes it to the supplied destination.</p>
 </blockquote>
 

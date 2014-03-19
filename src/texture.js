@@ -8,6 +8,20 @@ pathgl.texture = function (image, options, target) {
 var Texture = {
   init: initTexture
 , update: function () { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) }
+
+, z: function () {
+    var sq = Math.sqrt(this.size)
+    return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
+  }
+, x: function () {
+    var sq = Math.sqrt(this.size)
+    return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
+  }
+, y: function () {
+    var sq = Math.sqrt(this.size)
+    return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
+  }
+
 , forEach: function () {}
 , load: function ()  {
     var image = this.data
@@ -18,14 +32,14 @@ var Texture = {
     return this
   }
 , repeat: function () {
-    setInterval(this.update.bind(this), 16)
-    //tasks.push(this.update.bind(this))
-    var i = this.length = this.size
-    var self = Object.create(this)
-    while(i--) {
-      this[i] = self
-    }
+    this.task = this.update.bind(this)
+    tasks.push(this.task)
     return this
+  }
+
+, stop : function () {
+    this.task && tasks.splice(tasks.indexOf(this.task))
+      delete this.task
   }
 , appendChild: function (el) {
     return this.__scene__[this.__scene__.length] = this.__renderTarget__.append(el.tagName || el)
@@ -38,21 +52,10 @@ var Texture = {
 , querySelectorAll: querySelectorAll
 , __scene__: []
 , ownerDocument: { createElementNS: function (_, x) { return x } }
+, unwrap: unwrap
 }
 
 extend(RenderTexture.prototype, appendable, Texture, {
-  z: function () {
-    var sq = Math.sqrt(this.size)
-    return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
-  },
-  x: function () {
-    var sq = Math.sqrt(this.size)
-    return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
-  },
-  y: function () {
-    var sq = Math.sqrt(this.size)
-    return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
-  },
   update: function () {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, this.data || null)
   }
@@ -78,8 +81,6 @@ function RenderTexture(prog, options) {
 
   this.init()
   this.__renderTarget__ = RenderTarget(this)
-
-  d3.select(window).on('mousemove', this.mousemove.bind(this))
 
   this.start()
 
@@ -143,4 +144,10 @@ function isShader(str) {
 
 
 function pipeTexture() {
+}
+
+function unwrap() {
+  var uv = new Array(this.size), i = this.size || 0
+  while(i--) uv[i] = {x: this.x()(i, i), y: this.y(i, i)(i, i) }
+   return uv
 }

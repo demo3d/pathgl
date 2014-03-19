@@ -910,6 +910,20 @@ pathgl.texture = function (image, options, target) {
 var Texture = {
   init: initTexture
 , update: function () { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) }
+
+, z: function () {
+    var sq = Math.sqrt(this.size)
+    return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
+  }
+, x: function () {
+    var sq = Math.sqrt(this.size)
+    return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
+  }
+, y: function () {
+    var sq = Math.sqrt(this.size)
+    return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
+  }
+
 , forEach: function () {}
 , load: function ()  {
     var image = this.data
@@ -920,14 +934,14 @@ var Texture = {
     return this
   }
 , repeat: function () {
-    setInterval(this.update.bind(this), 16)
-    //tasks.push(this.update.bind(this))
-    var i = this.length = this.size
-    var self = Object.create(this)
-    while(i--) {
-      this[i] = self
-    }
+    this.task = this.update.bind(this)
+    tasks.push(this.task)
     return this
+  }
+
+, stop : function () {
+    this.task && tasks.splice(tasks.indexOf(this.task))
+      delete this.task
   }
 , appendChild: function (el) {
     return this.__scene__[this.__scene__.length] = this.__renderTarget__.append(el.tagName || el)
@@ -940,21 +954,10 @@ var Texture = {
 , querySelectorAll: querySelectorAll
 , __scene__: []
 , ownerDocument: { createElementNS: function (_, x) { return x } }
+, unwrap: unwrap
 }
 
 extend(RenderTexture.prototype, appendable, Texture, {
-  z: function () {
-    var sq = Math.sqrt(this.size)
-    return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
-  },
-  x: function () {
-    var sq = Math.sqrt(this.size)
-    return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
-  },
-  y: function () {
-    var sq = Math.sqrt(this.size)
-    return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
-  },
   update: function () {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, this.data || null)
   }
@@ -980,8 +983,6 @@ function RenderTexture(prog, options) {
 
   this.init()
   this.__renderTarget__ = RenderTarget(this)
-
-  d3.select(window).on('mousemove', this.mousemove.bind(this))
 
   this.start()
 
@@ -1045,6 +1046,12 @@ function isShader(str) {
 
 
 function pipeTexture() {
+}
+
+function unwrap() {
+  var uv = new Array(this.size), i = this.size || 0
+  while(i--) uv[i] = {x: this.x()(i, i), y: this.y(i, i)(i, i) }
+   return uv
 };  return init(canvas)
 }
 ;var simulation_vs = [
@@ -1057,13 +1064,15 @@ function pipeTexture() {
 
 var forceShader = [
 , 'precision mediump float;'
-, 'const vec3 TARGET = vec3( .5, .5, 0.01 );'
+
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
+, 'uniform vec2 mouse;'
 , 'uniform vec2 dimensions;'
 , 'vec4 texelAtOffet( vec2 offset ) { '
-  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / vec2(32., 16.)); }'
+  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / dimensions); }'
 , 'void main() {'
+    , 'vec3 TARGET = vec3(mouse / resolution, 0.01 );'
     , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
     , 'if ( slot == 0 ) { '
         , 'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'
@@ -1110,7 +1119,7 @@ pathgl.sim.force = function (size) {
   var height = Math.sqrt(size)
   var elapsed = 0, cooldown = 16
   var node  = d3.select('canvas')
-  var rate = 10000
+  var rate = 1000
   var particleIndex = 0
 
   return pathgl.texture(forceShader, {
@@ -1119,26 +1128,24 @@ pathgl.sim.force = function (size) {
   , width: width
   , height: height
   , size: size
-  , mousemove: mousemove
-  , start: mousemove
+  , start: start
   })
   function step () {}
-
-
-
-  function mousemove() {
-    if (Date.now() - elapsed < cooldown) return
-    elapsed = Date.now()
+  function start () {
     var now = Date.now() - since
-    var count = rate * Math.random()
-    var loc = d3.event && d3.mouse(node.node())
-    var origin = loc
-               ? svgToClipSpace(loc).concat(0)
-               : [ -1.0 + Math.sin(now * 0.001) * 2.0
+    , origin = [ -1.0 + Math.sin(now * 0.001) * 2.0
                  , -0.2 + Math.cos(now * 0.004) * 0.5
                  , Math.sin(now * 0.015) * -0.05]
 
-
+    pathgl.uniform('dimensions', [width, height])
+    d3.select(window).on('mousemove.physics', mousemove.bind(this))
+    emit(this.gl, this.texture, 40000, origin)
+  }
+  function mousemove() {
+    if (Date.now() - elapsed < cooldown) return
+    var count = rate * Math.random()
+      , origin = svgToClipSpace(d3.mouse(node.node())).concat(0)
+    elapsed = Date.now()
     emit(this.gl, this.texture, count, origin)
   }
 
