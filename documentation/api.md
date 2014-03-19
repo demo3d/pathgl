@@ -1,11 +1,5 @@
 ## API Reference
 
-####pathgl([element])
-> initialize the webgl context and returns the patched canvas element
-> Takes a canvas element, css3 selector, or d3 selection as an argument
-> if webgl is not available, returns false
-> If called without arguments, appends a 960x500 canvas to the sceern.
-
 ####pathgl.context()
 > returns the WebGL context, or null if webgl was not available
 
@@ -16,6 +10,12 @@
 
 ####pathgl.applyCSSRules()
 > Parses all css rules on the page and applies them to all webgl context.
+
+####pathgl.init([element])
+> initialize the webgl context and returns the patched canvas element
+> Takes a canvas element, css3 selector, or d3 selection as an argument
+> if webgl is not available, returns false
+> If called without arguments, appends a 960x500 canvas to the sceern.
 
 ####pathgl.texture(image, options)
 > Loads an image into video memory and returns a reference which can be bound

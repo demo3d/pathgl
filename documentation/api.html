@@ -38,13 +38,6 @@
 	</div>
 	<div class="right" id="scroll">
 		<h2 id="api-reference">API Reference</h2>
-<h4 id="pathgl-element-">pathgl([element])</h4>
-<blockquote>
-<p>initialize the webgl context and returns the patched canvas element
-Takes a canvas element, css3 selector, or d3 selection as an argument
-if webgl is not available, returns false
-If called without arguments, appends a 960x500 canvas to the sceern.</p>
-</blockquote>
 <h4 id="pathgl-context-">pathgl.context()</h4>
 <blockquote>
 <p>returns the WebGL context, or null if webgl was not available</p>
@@ -58,6 +51,13 @@ Default uniforms include mouse, resolution, and clock.</p>
 <h4 id="pathgl-applycssrules-">pathgl.applyCSSRules()</h4>
 <blockquote>
 <p>Parses all css rules on the page and applies them to all webgl context.</p>
+</blockquote>
+<h4 id="pathgl-init-element-">pathgl.init([element])</h4>
+<blockquote>
+<p>initialize the webgl context and returns the patched canvas element
+Takes a canvas element, css3 selector, or d3 selection as an argument
+if webgl is not available, returns false
+If called without arguments, appends a 960x500 canvas to the sceern.</p>
 </blockquote>
 <h4 id="pathgl-texture-image-options-">pathgl.texture(image, options)</h4>
 <blockquote>

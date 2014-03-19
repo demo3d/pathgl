@@ -1,13 +1,16 @@
-HTMLCanvasElement.prototype.appendChild = function () {}
+HTMLCanvasElement.prototype.appendChild = function (el) {
+  pathgl.init()
+  this.appendChild(el)
+}
 
-this.pathgl = pathgl
+this.pathgl = {}
 
 pathgl.stop = function () {}
 pathgl.context = function () {}
 pathgl.uniform = function () {}
 pathgl.texture = function () {}
 
-function pathgl(canvas) {
+pathgl.init = function (canvas) {
   var gl, program, programs
 
   if (canvas == null)

@@ -1,5 +1,6 @@
 # PathGL [![Build Status](https://travis-ci.org/adnan-wahab/pathgl.png?branch=master)](https://travis-ci.org/adnan-wahab/pathgl) [![dependency Status](https://david-dm.org/adnan-wahab/pathgl/status.png?theme=shields.io)](https://david-dm.org/adnan-wahab/pathgl#info=dependencies) [![devDependency Status](https://david-dm.org/adnan-wahab/pathgl/dev-status.png?theme=shields.io)](https://david-dm.org/adnan-wahab/pathgl#info=devDependencies)
-Pathgl sits between d3 and the dom and lets you draw to webgl instead of svg.
+Pathgl is a webGL library for data visualization and simulation.
+Sits between d3 and the dom and lets you draw to webgl instead of svg.
 
 ## Getting Started
 Download the [latest release](http://adnanwahab.org/pathgl/dist/pathgl.zip) and include in your html.
@@ -18,10 +19,7 @@ d3.select('canvas')
 .attr('r', 100)
 .attr('cx', 50)
 .attr('cy', 50)
+.attr('fill', 'pink')
 </script>
 ```
-
-## Want CommonJS?
-If you want to use pathGL within a module system, `npm install pathgl --save`.
-
-## Next Steps
+Want to learn more? Visit http://pathgl.com

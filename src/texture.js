@@ -39,7 +39,7 @@ var Texture = {
 
 , stop : function () {
     this.task && tasks.splice(tasks.indexOf(this.task))
-      delete this.task
+    delete this.task
   }
 , appendChild: function (el) {
     return this.__scene__[this.__scene__.length] = this.__renderTarget__.append(el.tagName || el)
@@ -140,8 +140,6 @@ function parseImage (image) {
 function isShader(str) {
   return str.length > 50
 }
-
-
 
 function pipeTexture() {
 }

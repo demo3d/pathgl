@@ -1,4 +1,4 @@
-d3.select('canvas').call(pathgl).selectAll("circle")
+d3.select('canvas').call(pathgl.init).selectAll("circle")
 .data(pathgl.sim.force(512 * 512).repeat().unwrap())
 .enter().append("circle")
 .attr('r', function (d,i) { return d.x })

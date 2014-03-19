@@ -1,14 +1,17 @@
 ! function() {
-HTMLCanvasElement.prototype.appendChild = function () {}
+HTMLCanvasElement.prototype.appendChild = function (el) {
+  pathgl.init()
+  this.appendChild(el)
+}
 
-this.pathgl = pathgl
+this.pathgl = {}
 
 pathgl.stop = function () {}
 pathgl.context = function () {}
 pathgl.uniform = function () {}
 pathgl.texture = function () {}
 
-function pathgl(canvas) {
+pathgl.init = function (canvas) {
   var gl, program, programs
 
   if (canvas == null)
@@ -653,7 +656,7 @@ function leftCheck(doc, symbols, divided, cand) {
 function checkRight(_, tag, classId, attribute, attr, attrCmp, attrVal, _, pseudo, _, pseudoVal, m) {
   return pseudo && pseudos[pseudo] && !pseudos[pseudo](this, pseudoVal)
       || tag && tag !== '*' && this.tag && this.tag.toLowerCase() !== tag
-      || attribute && !checkAttr(attrCmp, this[attr] || '', attrVal)
+      || attribute && !checkAttr(attrCmp, this.attr[attr] || '', attrVal)
       || classId && (m = classId.match(/#([\w\-]+)/)) && m[1] !== this.attr.id
       || classId && (classId.match(/\.[\w\-]+/g) || []).some(matchClass.bind(this)) ? 0 : this
 }
@@ -941,7 +944,7 @@ var Texture = {
 
 , stop : function () {
     this.task && tasks.splice(tasks.indexOf(this.task))
-      delete this.task
+    delete this.task
   }
 , appendChild: function (el) {
     return this.__scene__[this.__scene__.length] = this.__renderTarget__.append(el.tagName || el)
@@ -1042,8 +1045,6 @@ function parseImage (image) {
 function isShader(str) {
   return str.length > 50
 }
-
-
 
 function pipeTexture() {
 }
