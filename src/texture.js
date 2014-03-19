@@ -1,10 +1,3 @@
-var textures = { null: [] }
-pathgl.texture = function (image, options, target) {
-  return new (image == null ? RenderTexture :
-          isShader(image) ? ShaderTexture :
-          DataTexture)(image, extend(options || {}, { src: image }), target)
-}
-
 var Texture = {
   init: initTexture
 , update: function () { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) }

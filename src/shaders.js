@@ -130,7 +130,6 @@ function compileShader (gl, type, src) {
   return shader
 }
 
-
 function glslTypedef(type) {
   if (type.match('vec')) return type[type.length - 1]
   return 1

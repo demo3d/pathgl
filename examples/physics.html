@@ -16,17 +16,21 @@
     <a href="/dist/pathgl.zip">Download</a>
 
 		<h3>Examples</h3>
-    <ul class="examples">
-      <li><a href="/examples/physics.html">200k Particles</a>
+		<ul class="examples">
+			<li class="mobile-only"><a href="/examples/swarm.html">200k Circles</a>
+			<li class="desktop-only"><a href="/examples/physics.html">Physics Simulation</a>
+      <li><a href="/examples/swarm.html">200k Circles</a>
       <li><a href="/examples/map.html">Map of History</a>
       <li><a href="/examples/music.html">Music Visualizer</a>
     </ul>
 		
 		<h3>Documentation</h3>
 		<ul class="docs">
-      <!-- <li><a href="/documentation/start.html">Getting Started</a> -->
+			<li><a href="/documentation/start.html">Getting Started</a>
 			<li><a href="/documentation/api.html">API Reference</a>
       <li><a href="/documentation/webgl.html">The Graphics Pipeline</a>
+			<li><a href="/documentation/svg.html">SVG Differences</a>
+			<li><a href="/documentation/gpgpu.html">GPGPU</a>
 		</ul>
 		<div class="mode">
 			<h3>Rendering Mode</h3>
@@ -37,15 +41,8 @@
 		</div>
 	</div>
 	<div class="right" id="scroll">
-		<div class="header">
-			<div class="blurb">Binding simulation textures to selections.</div>
-			<a class="source" href="physics.js" target="_oo">View Source</a>
-		</div>
+		<canvas></canvas>
 		<svg></svg>
-		<canvas height="500" width="960"></canvas>
 		<script src="physics.js"></script>
   </div>
-	</div>
 </body>
-
-

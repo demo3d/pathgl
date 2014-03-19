@@ -41,8 +41,10 @@
 		</div>
 	</div>
 	<div class="right" id="scroll">
+		<canvas></canvas>
+		<svg></svg>
 		<h1 id="pathgl">PathGL</h1>
-<p>Pathgl sits between d3 and the dom and lets you draw to webgl instead of svg.</p>
+<p>Pathgl is a library for data visualization and simulation using d3.</p>
 <h2 id="getting-started">Getting Started</h2>
 <p>Download the <a href="http://adnanwahab.org/pathgl/dist/pathgl.zip">latest release</a> and
 include in your html.
@@ -52,18 +54,22 @@ charset=&quot;utf-8&quot;&gt;&lt;/script&gt;
 </code></pre>
 <p>If webgl is available then your circles will be WEBGL, if not, fallback to svg.</p>
 <pre><code class="lang-html">&lt;script src=&quot;http://d3js.org/d3.v3.min.js&quot; charset=&quot;utf-8&quot;&gt;&lt;/script&gt;
-&lt;script src=&quot;http://adnanwahab.com/pathgl/dist/pathgl.min.js&quot;
-charset=&quot;utf-8&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;http://pathgl.com/dist/pathgl.js&quot;&gt;&lt;/script&gt;
+&lt;canvas height=&quot;600px&quot; width=&quot;600px&quot;&gt;&lt;/canvas&gt;
 &lt;script&gt;
 d3.select(&#39;canvas&#39;)
 .append(&#39;circle&#39;)
 .attr(&#39;r&#39;, 100)
 .attr(&#39;cx&#39;, 50)
 .attr(&#39;cy&#39;, 50)
+.attr(&#39;fill&#39;, &#39;pink&#39;)
 &lt;/script&gt;
 </code></pre>
-<h5 id="want-commonjs-">Want CommonJS?</h5>
+<h4 id="want-commonjs-">Want CommonJS?</h4>
 <p>If you want to use pathGL within a module system, <code>npm install pathgl --save</code>.</p>
+<h3 id="next-steps">Next Steps</h3>
+<p>Check out the examples to learn more.
+Tutorials on creating your own data tiles and simulation textures coming soon!</p>
 
   </div>
 </body>

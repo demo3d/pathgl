@@ -1,28 +1,33 @@
 ! function() {
-HTMLCanvasElement.prototype.appendChild = function (el) {
-  pathgl.init()
-  this.appendChild(el)
-}
-
-this.pathgl = {}
-
+var pathgl = this.pathgl = {}
 pathgl.stop = function () {}
 pathgl.context = function () {}
-pathgl.uniform = function () {}
-pathgl.texture = function () {}
+pathgl.texture = function (image, options, target) {
+  return
+  return new (image == null ? RenderTexture :
+          isShader(image) ? ShaderTexture :
+          DataTexture)(image, extend(options || {}, { src: image }), target)
+}
+HTMLCanvasElement.prototype.appendChild = function (el) {
+  pathgl.init(this)
+  return this.appendChild(el)
+}
+
+var gl, program, programs
+var textures = { null: [] }
+var stopRendering = false
+var tasks = []
+var uniforms = {}
+var start = Date.now()
 
 pathgl.init = function (canvas) {
-  var gl, program, programs
-
-  if (canvas == null)
-    canvas = document.body.appendChild(extend(document.createElement('canvas'), { height: 500, width: 960 }))
-
   canvas = 'string' == typeof canvas ? document.querySelector(canvas) :
     canvas instanceof d3.selection ? canvas.node() :
     canvas
 
-  if (! canvas) return console.log('invalid selector')
-  if (! canvas.getContext) return console.log(canvas, 'is not a valid canvas');
+  if (! canvas.getContext) return console.log(canvas, 'is not a valid canvas')
+  init(canvas)
+};
 function noop () {}
 
 function identity(x) { return x }
@@ -292,24 +297,16 @@ function compileShader (gl, type, src) {
   return shader
 }
 
-
 function glslTypedef(type) {
   if (type.match('vec')) return type[type.length - 1]
   return 1
-};var stopRendering = false
-var tasks = []
-var uniforms = {}
-var start = Date.now()
-
-pathgl.stop = function () { stopRendering = true }
-
-function init(c) {
+};function init(c) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
   gl.floatingTexture = !!gl.getExtension('OES_texture_float')
 
-  pathgl.context = d3.functor(gl)
+  pathgl.context = function () { return gl }
 
   program = createProgram(gl, build_vs(), pathgl.fragmentShader)
   canvas.program = program
@@ -365,7 +362,6 @@ function monkeyPatch(canvas) {
       pAttr: d3_pAttr
     , shader: d3_shader
     })
-
   extend(canvas, appendable).gl = gl
 }
 
@@ -375,11 +371,11 @@ var appendable = {
   , querySelector: function (s) { return this.querySelectorAll(s)[0] }
   , removeChild: removeChild
   , insertBefore: insertBefore
-
   , __scene__: []
   , __pos__: []
   , __program__: void 0
-  }
+}
+
 function initContext(canvas) {
   var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
   return gl && extend(gl, { viewportWidth: canvas.width, viewportHeight: canvas.height })
@@ -408,7 +404,7 @@ var raf = window.requestAnimationFrame
 
 function startDrawLoop() {
   tasks.forEach(function (task) { task() })
-  pathgl.raf = raf(startDrawLoop)
+  raf(startDrawLoop)
 }
 ;function parse (str, stroke) {
   var buffer = [], lb = this.buffer, pb = this.posBuffer, indices = this.indices, count = 0
@@ -903,14 +899,7 @@ var attrDefaults = {
 , y: 0
 , opacity: .999
 }
-;var textures = { null: [] }
-pathgl.texture = function (image, options, target) {
-  return new (image == null ? RenderTexture :
-          isShader(image) ? ShaderTexture :
-          DataTexture)(image, extend(options || {}, { src: image }), target)
-}
-
-var Texture = {
+;var Texture = {
   init: initTexture
 , update: function () { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) }
 
@@ -1053,9 +1042,7 @@ function unwrap() {
   var uv = new Array(this.size), i = this.size || 0
   while(i--) uv[i] = {x: this.x()(i, i), y: this.y(i, i)(i, i) }
    return uv
-};  return init(canvas)
-}
-;var simulation_vs = [
+};;var simulation_vs = [
   'precision mediump float;'
 , 'attribute vec2 pos;'
 , '  void main() {'

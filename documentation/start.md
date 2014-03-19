@@ -13,14 +13,15 @@ charset="utf-8"></script>
 If webgl is available then your circles will be WEBGL, if not, fallback to svg.
 ```html
 <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-<script src="http://adnanwahab.com/pathgl/dist/pathgl.min.js"
-charset="utf-8"></script>
+<script src="http://pathgl.com/dist/pathgl.js"></script>
+<canvas height="600px" width="600px"></canvas>
 <script>
 d3.select('canvas')
 .append('circle')
 .attr('r', 100)
 .attr('cx', 50)
 .attr('cy', 50)
+.attr('fill', 'pink')
 </script>
 ```
 

@@ -1,17 +1,10 @@
-var stopRendering = false
-var tasks = []
-var uniforms = {}
-var start = Date.now()
-
-pathgl.stop = function () { stopRendering = true }
-
 function init(c) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
   gl.floatingTexture = !!gl.getExtension('OES_texture_float')
 
-  pathgl.context = d3.functor(gl)
+  pathgl.context = function () { return gl }
 
   program = createProgram(gl, build_vs(), pathgl.fragmentShader)
   canvas.program = program
@@ -67,7 +60,6 @@ function monkeyPatch(canvas) {
       pAttr: d3_pAttr
     , shader: d3_shader
     })
-
   extend(canvas, appendable).gl = gl
 }
 
@@ -77,11 +69,11 @@ var appendable = {
   , querySelector: function (s) { return this.querySelectorAll(s)[0] }
   , removeChild: removeChild
   , insertBefore: insertBefore
-
   , __scene__: []
   , __pos__: []
   , __program__: void 0
-  }
+}
+
 function initContext(canvas) {
   var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
   return gl && extend(gl, { viewportWidth: canvas.width, viewportHeight: canvas.height })
@@ -110,5 +102,5 @@ var raf = window.requestAnimationFrame
 
 function startDrawLoop() {
   tasks.forEach(function (task) { task() })
-  pathgl.raf = raf(startDrawLoop)
+  raf(startDrawLoop)
 }
