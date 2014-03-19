@@ -5,6 +5,7 @@
 	<title>WebGL Library for Data Visualization and Simulation - PathGL</title>
 	<script src="/lib/d3.js"></script>
 	<script src="/lib/topojson.v1.min.js"></script>
+	<script src="/lib/projection.js"></script>
 	
 	<script src="/dist/pathgl.js"></script>
   <link rel="stylesheet" href="/lib/adnan.css">
@@ -19,7 +20,6 @@
 		<ul class="examples">
 			<li class="mobile-only"><a href="/examples/swarm.html">200k Circles</a>
 			<li class="desktop-only"><a href="/examples/physics.html">Physics Simulation</a>
-      <li><a href="/examples/swarm.html">200k Circles</a>
       <li><a href="/examples/map.html">Map of History</a>
       <li><a href="/examples/music.html">Music Visualizer</a>
     </ul>
@@ -41,7 +41,8 @@
 		</div>
 	</div>
 	<div class="right" id="scroll">
-		<canvas></canvas>
+		<div class="blurb"></div>
+		<canvas width="960" height="500" ></canvas>
 		<svg></svg>
 		<h2 id="api-reference">API Reference</h2>
 <h4 id="pathgl-context-">pathgl.context()</h4>
@@ -57,13 +58,6 @@ Default uniforms include mouse, resolution, and clock.</p>
 <h4 id="pathgl-applycssrules-">pathgl.applyCSSRules()</h4>
 <blockquote>
 <p>Parses all css rules on the page and applies them to all webgl context.</p>
-</blockquote>
-<h4 id="pathgl-init-element-">pathgl.init([element])</h4>
-<blockquote>
-<p>initialize the webgl context and returns the patched canvas element
-Takes a canvas element, css3 selector, or d3 selection as an argument
-if webgl is not available, returns false
-If called without arguments, appends a 960x500 canvas to the sceern.</p>
 </blockquote>
 <h4 id="pathgl-texture-image-options-">pathgl.texture(image, options)</h4>
 <blockquote>

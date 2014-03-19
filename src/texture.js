@@ -84,12 +84,8 @@ function RenderTexture(prog, options) {
 }
 
 function ShaderTexture (shader, options) {
-  if (!pathgl.context().floatingTexture)
-    return console.warn('does not support floating point textures')
-
   var prog = createProgram(gl, simulation_vs, shader, ['pos'])
-  extend(options, {
-  })
+  extend(options, {})
   return new RenderTexture(prog, options)
 }
 

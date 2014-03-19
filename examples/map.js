@@ -13,9 +13,8 @@ var proj = d3.geo.wagner4().scale(225).translate([size.width / 2 - 75, size.heig
 var svg = d3.select(selector)
           .attr("width", width)
           .attr("height", height)
-          .call(pathgl)
 
-var webgl = d3.select('canvas').attr(size).call(pathgl).attr('class', 'no-click')
+var webgl = d3.select('canvas').attr(size).attr('class', 'no-click')
 var p = d3.select('.blurb')
 
 d3.json('data/world-50m.json', draw_world)

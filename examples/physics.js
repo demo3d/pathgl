@@ -1,3 +1,5 @@
+pathgl.init('canvas')
+
 d3.select('canvas').selectAll("circle")
 .data(pathgl.sim.force(512 * 512).repeat().unwrap())
 .enter().append("circle")

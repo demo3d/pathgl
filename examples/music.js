@@ -1,4 +1,8 @@
-d3.select('.play').on('click', play)
+d3.select('.blurb')
+.append('a')
+.attr('href', '#')
+.text('click to play Overture by Beats Antique')
+.on('click', play)
 
 var size = { width: 960, height: 500 }
 
@@ -18,7 +22,6 @@ var node = audio.on('loadeddata', function () { promise = true}).node()
 
 function play () {
   var s = d3.select('canvas')
-          .call(pathgl)
 
   var scale = Math.PI * 2 / numLines
 

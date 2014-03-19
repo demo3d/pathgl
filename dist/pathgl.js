@@ -1,12 +1,21 @@
 ! function() {
 var pathgl = this.pathgl = {}
+pathgl.sim = {}
 pathgl.stop = function () {}
-pathgl.context = function () {}
+pathgl.context = function () { return gl }
 pathgl.texture = function (image, options, target) {
-  return new (image == null ? RenderTexture :
+ return new (image == null ? RenderTexture :
           isShader(image) ? ShaderTexture :
           DataTexture)(image, extend(options || {}, { src: image }), target)
 }
+
+pathgl.uniform = function (attr, value) {
+  return arguments.length == 1 ? uniforms[attr] : uniforms[attr] = value
+}
+
+pathgl.applyCSS = applyCSSRules
+
+
 HTMLCanvasElement.prototype.appendChild = function (el) {
   pathgl.init(this)
   return this.appendChild(el)
@@ -303,7 +312,9 @@ function glslTypedef(type) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
-  gl.floatingTexture = !!gl.getExtension('OES_texture_float')
+  if (! gl.getExtension('OES_texture_float'))
+    return console.warn('does not support floating point textures')
+
 
   pathgl.context = function () { return gl }
 
@@ -431,13 +442,6 @@ function startDrawLoop() {
 
   lb.count += buffer.length - l
 }
-
-pathgl.uniform = function (attr, value) {
-  if (arguments.length == 1) return uniforms[attr]
-  uniforms[attr] = value
-}
-
-pathgl.applyCSS = applyCSSRules
 
 function applyCSSRules () {
   if (! d3) return console.warn('this method depends on d3')
@@ -984,12 +988,8 @@ function RenderTexture(prog, options) {
 }
 
 function ShaderTexture (shader, options) {
-  if (!pathgl.context().floatingTexture)
-    return console.warn('does not support floating point textures')
-
   var prog = createProgram(gl, simulation_vs, shader, ['pos'])
-  extend(options, {
-  })
+  extend(options, {})
   return new RenderTexture(prog, options)
 }
 
@@ -1051,7 +1051,6 @@ function unwrap() {
 
 var forceShader = [
 , 'precision mediump float;'
-
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 mouse;'

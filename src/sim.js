@@ -8,7 +8,6 @@ var simulation_vs = [
 
 var forceShader = [
 , 'precision mediump float;'
-
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 mouse;'

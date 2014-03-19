@@ -5,6 +5,7 @@
 	<title>WebGL Library for Data Visualization and Simulation - PathGL</title>
 	<script src="/lib/d3.js"></script>
 	<script src="/lib/topojson.v1.min.js"></script>
+	<script src="/lib/projection.js"></script>
 	
 	<script src="/dist/pathgl.js"></script>
   <link rel="stylesheet" href="/lib/adnan.css">
@@ -19,7 +20,6 @@
 		<ul class="examples">
 			<li class="mobile-only"><a href="/examples/swarm.html">200k Circles</a>
 			<li class="desktop-only"><a href="/examples/physics.html">Physics Simulation</a>
-      <li><a href="/examples/swarm.html">200k Circles</a>
       <li><a href="/examples/map.html">Map of History</a>
       <li><a href="/examples/music.html">Music Visualizer</a>
     </ul>
@@ -41,7 +41,8 @@
 		</div>
 	</div>
 	<div class="right" id="scroll">
-		<canvas></canvas>
+		<div class="blurb"></div>
+		<canvas width="960" height="500" ></canvas>
 		<svg></svg>
 		<p>Most visualizations do not need to rebuffer new data on every frame. PathGL is
 designed to exploit this fact, by exposing a powerful set of abstractions that

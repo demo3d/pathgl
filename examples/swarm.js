@@ -1,6 +1,6 @@
 d3.select('canvas')
 .selectAll('circle')
-.data(d3.range(2e5))
+.data(d3.range(1e5))
 .enter().append('circle')
 .attr('fill', function () { return "hsl(" + Math.random() * 360 + ",100%, 50%)" })
 .attr('cx', function (d, i) { return d / 1e8 })

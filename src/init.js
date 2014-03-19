@@ -2,7 +2,9 @@ function init(c) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
-  gl.floatingTexture = !!gl.getExtension('OES_texture_float')
+  if (! gl.getExtension('OES_texture_float'))
+    return console.warn('does not support floating point textures')
+
 
   pathgl.context = function () { return gl }
 

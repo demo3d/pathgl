@@ -25,13 +25,6 @@ function parse (str, stroke) {
   lb.count += buffer.length - l
 }
 
-pathgl.uniform = function (attr, value) {
-  if (arguments.length == 1) return uniforms[attr]
-  uniforms[attr] = value
-}
-
-pathgl.applyCSS = applyCSSRules
-
 function applyCSSRules () {
   if (! d3) return console.warn('this method depends on d3')
   d3.selectAll('link[rel=styleSheet]').each(function () {
