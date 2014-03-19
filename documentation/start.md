@@ -27,7 +27,6 @@ If you want to use pathGL within a module system, `npm install pathgl --save`.
 </script>
 ```
 
-### Next Steps
+## Next Steps
 Check out the examples to learn more.
 Tutorials on creating your own data tiles and simulation textures coming soon!
-
