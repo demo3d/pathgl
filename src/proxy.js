@@ -126,10 +126,6 @@ var baseProto = {
 , createElementNS: identity
 , insertBefore: noop
 , ownerDocument: { createElementNS: function (_, x) { debugger ;return x } }
-, render: function render(node) {
-  this.buffer && drawFill(this)
-  drawStroke(this)
-}
 , previousSibling: function () { canvas.scene[canvas.__scene__.indexOf(this) - 1] }
 , nextSibling: function () { canvas.scene[canvas.__scene__.indexOf()  + 1] }
 , parent: function () { return __scene__ }
@@ -156,7 +152,10 @@ var baseProto = {
 
 , textContent: noop
 , removeEventListener: noop
-, addEventListener: noop
+, addEventListener: addEventListener
+, ownerSVGElement: {
+  createSVGPoint: function () {}
+}
 }
 
 var types = [

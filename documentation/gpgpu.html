@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <head>
 	<meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport"
+	      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title>WebGL Library for Data Visualization and Simulation - PathGL</title>
+	
 	<script src="/lib/d3.js"></script>
 	<script src="/lib/topojson.v1.min.js"></script>
 	<script src="/lib/projection.js"></script>
+	<script src="/lib/tip.js"></script>
 	
 	<script src="/dist/pathgl.js"></script>
   <link rel="stylesheet" href="/lib/adnan.css">
@@ -45,27 +48,26 @@
 		<canvas width="960" height="500" ></canvas>
 		<svg></svg>
 		<p>GPGPU is a technique for offloading heavy computation to the graphics card.</p>
-<p>Creating a square with dimensions 1000x1000 spawns 1 million
-threads. The output of these threads can written to a texture,
-which can then be sampled as input on the next cycle, allowing state to be
-passed between frames.</p>
+<p>GPGPU programs are written as fragment shaders in GLSL, a statically typed
+javascript-like language with specialized support for vector manipulation.</p>
 <p>In webGL, a pixel is a vector with 4 floats. Typically these
 elements represent RGBA color channels, but we can use them for anything.
-For example, by thinking of each pixel as a vector containing
-<code>(positionX, positionY, velocityX, velocityY)</code>, we can simulate a particle by
+For example, by thinking of each pixel as a vector containing</p>
+<p>Drawing a square with dimensions 1000x1000 spawns 1 million
+threads. The output of these threads can be written to a texture,
+which is then sampled as input on the next cycle, allowing state to be
+passed between frames.</p>
+<p><code>(positionX, positionY, velocityX, velocityY)</code>, we can simulate a particle by
 integrating velocity into position on every frame.</p>
 <p>A task may benefit from gpgpu if it </p>
 <ol>
 <li>has a high computation to IO ratio</li>
 <li>decomposes cleanly to map, reduce, filter, scatter, gather, sort, and search operations</li>
 <li>has minimal dependency between data elements</li>
+<li>is expressed mostly through vector arithmetic</li>
 </ol>
 <p>Examples include fft, image processing, simulating physical models like weather and
 cosmology, neural networks, cryptography, and so on. </p>
-<p>Currently, gpgpu programs must be written as fragment shaders in GLSL, a statically typed
-javascript-like language with specialized support for vector manipulation.</p>
-<p>In the near future, gpgpu may be possible with compute shaders, or even webCL, which
-will decouple render specific details  from gpgpu entirely.</p>
 
   </div>
 </body>

@@ -9,6 +9,7 @@ pathgl.texture = function (image, options, target) {
           DataTexture)(image, extend(options || {}, { src: image }), target)
 }
 
+
 pathgl.uniform = function (attr, value) {
   return arguments.length == 1 ? uniforms[attr] : uniforms[attr] = value
 }
@@ -17,8 +18,7 @@ pathgl.applyCSS = applyCSSRules
 
 
 HTMLCanvasElement.prototype.appendChild = function (el) {
-  pathgl.init(this)
-  return this.appendChild(el)
+  if (pathgl.init(this)) return this.appendChild(el)
 }
 
 var gl, program, programs
@@ -34,7 +34,7 @@ pathgl.init = function (canvas) {
     canvas
 
   if (! canvas.getContext) return console.log(canvas, 'is not a valid canvas')
-  init(canvas)
+  return !! init(canvas)
 };
 function noop () {}
 
@@ -313,8 +313,7 @@ function glslTypedef(type) {
     return !! console.log('webGL context could not be initialized')
 
   if (! gl.getExtension('OES_texture_float'))
-    return console.warn('does not support floating point textures')
-
+    console.warn('does not support floating point textures')
 
   pathgl.context = function () { return gl }
 
@@ -475,7 +474,15 @@ function matchesSelector(selector) {
     if (interpret.apply(this, q(tokens.pop())) && (!tokens.length || ancestorMatch(this, tokens, selector.match(dividers)))) return true
 };//cpu intersection tests
 //offscreen render color test
-;function Mesh (gl, options, attr) {
+
+var pickings  = {}
+
+function addEvenLtistener (evt, listener, capture) {
+  //oaaa
+  (pickings[this.attr.cx] = (pickings[this.attr.cx] || {}))
+  [this.attr.cy] = this
+  this.mouseover = listener
+};function Mesh (gl, options, attr) {
   var attributes = {}
     , count = options.count || 0
     , attrList = options.attrList || ['pos', 'color', 'fugue']
@@ -817,10 +824,6 @@ var baseProto = {
 , createElementNS: identity
 , insertBefore: noop
 , ownerDocument: { createElementNS: function (_, x) { debugger ;return x } }
-, render: function render(node) {
-  this.buffer && drawFill(this)
-  drawStroke(this)
-}
 , previousSibling: function () { canvas.scene[canvas.__scene__.indexOf(this) - 1] }
 , nextSibling: function () { canvas.scene[canvas.__scene__.indexOf()  + 1] }
 , parent: function () { return __scene__ }
@@ -847,7 +850,10 @@ var baseProto = {
 
 , textContent: noop
 , removeEventListener: noop
-, addEventListener: noop
+, addEventListener: addEventListener
+, ownerSVGElement: {
+  createSVGPoint: function () {}
+}
 }
 
 var types = [

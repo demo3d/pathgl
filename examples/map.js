@@ -88,25 +88,33 @@ function draw_history(err, hist) {
 
   svg
   .on('click', function () { from = ~~ x.invert(+d3.mouse(this)[0]) })
-  .on('mousemove', function () {
-    d3.select('line').attr('stroke-width', 2)
-    .attr('transform','translate('+d3.mouse(this)[0]+',0)')
-  })
-  .on('mouseout', function ( ){ d3.select('line').attr('stroke-width',1) })
   var brush = d3.svg.brush().x(x).on("brush", brushmove).extent([-500, -400])
 
   var b = svg.append("g")
           .attr("class", "brush")
           .call(brush)
           .attr('transform', 'translate(' + [0, height * .85] +  ')')
-          .selectAll("rect")
-          .attr('fill', 'blue')
-          .attr('opacity', '.7')
-          .attr("height", height * .1);
+
+  b.selectAll("rect")
+  .attr('fill', 'blue')
+  .attr('opacity', '.7')
+  .attr("height", height * .1)
+  .on('mouseover', function () { this.pause = 1 })
+  .on('mouseout', function () { this.pause = 0 })
+
+
+  setInterval(function () {
+    if (b.node().pause) return
+    if (brush.empty()) brush.extent([0, 10])
+    brush.extent(brush.extent().map(function (d) { return d + 1 })).event(b)
+;    b.call(brush)
+  }, 16)
 
   function brushmove() {
-    adnan(d3.event.target.extent());
+    adnan(d3.event.target.extent())
   }
+
+  var tip = d3.tip().attr('class', 'd3-tip').html(function(d) { return d.event })
 
   function adnan (s) {
     pathgl.uniform('dates', s)
@@ -150,7 +158,7 @@ function draw_history(err, hist) {
     .selectAll('circle')
     .data(hist)
     .enter()
-    .append('circle')
+    .append('circle').call(tip)
     .attr({ class:'event'
           , stroke: function(d){ return d3.hsl(Math.random()*120 + 120, .9, 0.5) }
           , cx: function(d){ return d.location[0] }
@@ -159,14 +167,12 @@ function draw_history(err, hist) {
           , r: 5
           })
     .shader({
-      'r': '(pos.w < dates.y && pos.w > dates.x) ? 10. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
-      //'stroke': 'vec4(1., .5, 1., (pos.w > dates.x && pos.w < dates.y ) ? 1. : 0.)'
+      'r': '(pos.w < dates.y && pos.w > dates.x) ? 20. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
     })
-    .each(function (d) {
-      return d.node = this
-    })
+    .on('mouseover', tip.show)
+    .on('mouseout', tip.hide)
+    .each(function (d) { return d.node = this })
   }
-
 
 function distance (x1, y1, x2, y2) {
   var xd = x2 - x1, yd = y2 - y1
