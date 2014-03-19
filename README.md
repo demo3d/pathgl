@@ -2,24 +2,4 @@
 Pathgl is a webGL library for data visualization and simulation.
 Sits between d3 and the dom and lets you draw to webgl instead of svg.
 
-## Getting Started
-Download the [latest release](http://adnanwahab.org/pathgl/dist/pathgl.zip) and include in your html.
-Or link directly to the latest release, copy this snippet: 
-```html
-<script src="http://adnanwahab.com/pathgl/dist/pathgl.min.js" charset="utf-8"></script>
-```
-
-If webgl is available then your circles will be WEBGL, if not, fallback to svg.
-```html
-<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-<script src="http://adnanwahab.com/pathgl/dist/pathgl.min.js" charset="utf-8"></script>
-<script>
-d3.select('canvas')
-.append('circle')
-.attr('r', 100)
-.attr('cx', 50)
-.attr('cy', 50)
-.attr('fill', 'pink')
-</script>
-```
-Want to learn more? Visit http://pathgl.com
+Want to learn more? Visit http://pathgl.com/documentation/start.html
