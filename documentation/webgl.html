@@ -47,20 +47,18 @@
 		<div class="blurb"></div>
 		<canvas width="960" height="500" ></canvas>
 		<svg></svg>
-		<h1 id="how-does-webgl-work-">How does Webgl work?</h1>
-<p>  WebGL has a pipeline architecture, much like the assembly line used to build a car.</p>
+		<p>WebGL has a pipeline architecture, like the assembly line used to build a car.</p>
 <ol>
 <li>javascript sends list of points to GPU</li>
 <li>vertex shader places points</li>
 <li>points are assembeled into triangles</li>
 <li>triangles are chopped up into fragments</li>
 <li>fragment shader colors fragments</li>
-<li><p>framebuffer is draw to screen (optional)</p>
+<li>framebuffer is drawn to screen </li>
+</ol>
 <p>Stages 2 and 5 are programmable using GLSL.
 We want to offload as much work as we can to them, so that your cpu is free to do
 other things, like handle user input.</p>
-</li>
-</ol>
 <h2 id="1-geometry-specifications">1. Geometry Specifications</h2>
 <p>  PathGL converts your selections into WebGL accessible memory locations called
   buffers. These buffers are then sent to the GPU every frame to be drawn.</p>

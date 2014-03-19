@@ -1,16 +1,15 @@
-#How does Webgl work?
-  WebGL has a pipeline architecture, much like the assembly line used to build a car.
+WebGL has a pipeline architecture, like the assembly line used to build a car.
 
 1. javascript sends list of points to GPU
 2. vertex shader places points
 3. points are assembeled into triangles
 4. triangles are chopped up into fragments
 5. fragment shader colors fragments
-6. framebuffer is draw to screen (optional)
+6. framebuffer is drawn to screen 
 
-  Stages 2 and 5 are programmable using GLSL.
-  We want to offload as much work as we can to them, so that your cpu is free to do
-  other things, like handle user input.
+Stages 2 and 5 are programmable using GLSL.
+We want to offload as much work as we can to them, so that your cpu is free to do
+other things, like handle user input.
 
 ## 1. Geometry Specifications
   PathGL converts your selections into WebGL accessible memory locations called

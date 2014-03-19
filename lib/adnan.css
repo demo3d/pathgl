@@ -196,7 +196,6 @@ label {
 }
 
 h1 {
-    text-align: center;
     width: 50%;
 }
 
@@ -205,9 +204,7 @@ h1 {
     display: none;
 }
 
-.source {
-
-}
+.source {}
 
 .header {
     position: relative;
@@ -250,7 +247,7 @@ html, body {
 }
 
 
-li {
+ul li {
     list-style: none;
 }
 
