@@ -5,7 +5,6 @@ var size = { width: .8 * innerWidth, height: innerHeight * .9}
 var c = d3.select('canvas')
         .attr('height', size.height)
         .attr('width', size.width)
-        .call(pathgl)
 
 var col = 20
   , s = size.width / col

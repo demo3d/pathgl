@@ -14,7 +14,6 @@ var Texture = {
     var sq = Math.sqrt(this.size)
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
   }
-
 , forEach: function () {}
 , load: function ()  {
     var image = this.data
@@ -96,9 +95,9 @@ function DataTexture (image, options, target) {
     gl: gl
   , data: image
   , texture: gl.createTexture()
-  , width: 512
-  , height: 512
-  }, image, options).load()
+  , width: image.width || 512
+  , height: image.height || 512
+  }, options).load()
 }
 
 function initTexture() {
