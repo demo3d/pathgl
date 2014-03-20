@@ -39,7 +39,9 @@ var proto = {
             },
             opacity: function () {}
           , tagName: 'circle'
+          , schema: 'cx cy r cz'.split(' ')
           }
+
 
 , ellipse: { init: function () {
 

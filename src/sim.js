@@ -39,7 +39,7 @@ var forceShader = [
         , 'float phase = dataA.w;'
         , 'if ( phase > 0.0 ) {'
             , 'vec3 delta = normalize( TARGET - pos );'
-            , 'vel += delta * 0.05;'
+            , 'vel += delta * 0.1;'
         , '    vel *= 0.991;'
         , '} else {'
         , '    vel = vec3(0);'
@@ -67,7 +67,9 @@ pathgl.sim.force = function (size) {
   , size: size
   , start: start
   })
-  function step () {}
+  function step () {
+    //console.log(uniforms)
+  }
   function start () {
     var now = Date.now() - since
       , origin = [ -1.0 + Math.sin(now * 0.001) * 2.0
@@ -76,10 +78,11 @@ pathgl.sim.force = function (size) {
                  ]
 
     pathgl.uniform('dimensions', [width, height])
-    d3.select(window).on('mousemove.physics', mousemove.bind(this))
+    d3.select('canvas').on('mousemove.physics', mousemove.bind(this))
     emit(this.gl, this.texture, 40000, origin)
   }
   function mousemove() {
+
     if (Date.now() - elapsed < cooldown) return
     var count = rate * Math.random()
       , origin = svgToClipSpace(d3.mouse(d3.select('canvas').node())).concat(0)

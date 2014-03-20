@@ -5,8 +5,6 @@ function init(c) {
   if (! gl.getExtension('OES_texture_float'))
     console.warn('does not support floating point textures')
 
-  pathgl.context = function () { return gl }
-
   program = createProgram(gl, build_vs(), pathgl.fragmentShader)
   canvas.program = program
   monkeyPatch(canvas)
@@ -58,7 +56,12 @@ function touchmoved(e) {
 function monkeyPatch(canvas) {
   if(window.d3)
     extend(window.d3.selection.prototype, {
-      pAttr: d3_pAttr
+      vAttr: d3_vAttr
+    , shader: d3_shader
+    })
+  if (window.d3)
+    extend(window.d3.transition.prototype, {
+      vAttr: d3_vAttr
     , shader: d3_shader
     })
   extend(canvas, appendable).gl = gl
@@ -80,13 +83,12 @@ function initContext(canvas) {
   return gl && extend(gl, { viewportWidth: canvas.width, viewportHeight: canvas.height })
 }
 
-function d3_pAttr(obj) {
+function d3_vAttr(attr, fn) {
   //check if svg
-  this.each(function(d) {
-    for(var attr in obj)
-      this.posBuffer[this.indices[0] + this.schema.indexOf(attr)] = obj[attr](d)
+  this.each(function(d, i) {
+    this.colorBuffer[this.indices[0]] = parseColor(fn(d, i))
   })
-    pointsChanged = true
+
   return this
 }
 

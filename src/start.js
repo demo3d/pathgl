@@ -2,8 +2,11 @@ var pathgl = this.pathgl = {}
 pathgl.sim = {}
 pathgl.stop = function () {}
 pathgl.context = function () { return gl }
+
+var inited = 0
 pathgl.texture = function (image, options, target) {
- return new (image == null ? RenderTexture :
+  if (! inited) pathgl.init('canvas')
+  return new (image == null ? RenderTexture :
           isShader(image) ? ShaderTexture :
           DataTexture)(image, extend(options || {}, { src: image }), target)
 }
@@ -28,6 +31,7 @@ var uniforms = {}
 var start = Date.now()
 
 pathgl.init = function (canvas) {
+  inited = 1
   canvas = 'string' == typeof canvas ? document.querySelector(canvas) :
     canvas instanceof d3.selection ? canvas.node() :
     canvas

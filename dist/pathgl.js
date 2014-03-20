@@ -3,8 +3,11 @@ var pathgl = this.pathgl = {}
 pathgl.sim = {}
 pathgl.stop = function () {}
 pathgl.context = function () { return gl }
+
+var inited = 0
 pathgl.texture = function (image, options, target) {
- return new (image == null ? RenderTexture :
+  if (! inited) pathgl.init('canvas')
+  return new (image == null ? RenderTexture :
           isShader(image) ? ShaderTexture :
           DataTexture)(image, extend(options || {}, { src: image }), target)
 }
@@ -29,6 +32,7 @@ var uniforms = {}
 var start = Date.now()
 
 pathgl.init = function (canvas) {
+  inited = 1
   canvas = 'string' == typeof canvas ? document.querySelector(canvas) :
     canvas instanceof d3.selection ? canvas.node() :
     canvas
@@ -284,7 +288,7 @@ function build_vs(subst) {
   })
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? texture2D(texture, abs(pos.xy)).x * 10. : (2. * pos.z)'
+    , r: '(pos.z < 0.) ? 4. - texture2D(texture, abs(pos.xy)).z : (2. * pos.z)'
     , x: '(pos.x < 0.) ? texture2D(texture, abs(pos.xy)).x * resolution.x : pos.x'
     , y: '(pos.y < 0.) ? texture2D(texture, abs(pos.xy)).y * resolution.y : pos.y'
     }, subst)
@@ -316,8 +320,6 @@ function glslTypedef(type) {
 
   if (! gl.getExtension('OES_texture_float'))
     console.warn('does not support floating point textures')
-
-  pathgl.context = function () { return gl }
 
   program = createProgram(gl, build_vs(), pathgl.fragmentShader)
   canvas.program = program
@@ -370,7 +372,12 @@ function touchmoved(e) {
 function monkeyPatch(canvas) {
   if(window.d3)
     extend(window.d3.selection.prototype, {
-      pAttr: d3_pAttr
+      vAttr: d3_vAttr
+    , shader: d3_shader
+    })
+  if (window.d3)
+    extend(window.d3.transition.prototype, {
+      vAttr: d3_vAttr
     , shader: d3_shader
     })
   extend(canvas, appendable).gl = gl
@@ -392,13 +399,12 @@ function initContext(canvas) {
   return gl && extend(gl, { viewportWidth: canvas.width, viewportHeight: canvas.height })
 }
 
-function d3_pAttr(obj) {
+function d3_vAttr(attr, fn) {
   //check if svg
-  this.each(function(d) {
-    for(var attr in obj)
-      this.posBuffer[this.indices[0] + this.schema.indexOf(attr)] = obj[attr](d)
+  this.each(function(d, i) {
+    this.colorBuffer[this.indices[0]] = parseColor(fn(d, i))
   })
-    pointsChanged = true
+
   return this
 }
 
@@ -739,7 +745,9 @@ var proto = {
             },
             opacity: function () {}
           , tagName: 'circle'
+          , schema: 'cx cy r cz'.split(' ')
           }
+
 
 , ellipse: { init: function () {
 
@@ -1090,7 +1098,7 @@ var forceShader = [
         , 'float phase = dataA.w;'
         , 'if ( phase > 0.0 ) {'
             , 'vec3 delta = normalize( TARGET - pos );'
-            , 'vel += delta * 0.05;'
+            , 'vel += delta * 0.1;'
         , '    vel *= 0.991;'
         , '} else {'
         , '    vel = vec3(0);'
@@ -1118,7 +1126,9 @@ pathgl.sim.force = function (size) {
   , size: size
   , start: start
   })
-  function step () {}
+  function step () {
+    //console.log(uniforms)
+  }
   function start () {
     var now = Date.now() - since
       , origin = [ -1.0 + Math.sin(now * 0.001) * 2.0
@@ -1127,10 +1137,11 @@ pathgl.sim.force = function (size) {
                  ]
 
     pathgl.uniform('dimensions', [width, height])
-    d3.select(window).on('mousemove.physics', mousemove.bind(this))
+    d3.select('canvas').on('mousemove.physics', mousemove.bind(this))
     emit(this.gl, this.texture, 40000, origin)
   }
   function mousemove() {
+
     if (Date.now() - elapsed < cooldown) return
     var count = rate * Math.random()
       , origin = svgToClipSpace(d3.mouse(d3.select('canvas').node())).concat(0)
