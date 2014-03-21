@@ -994,7 +994,7 @@ function RenderTexture(prog, options) {
   this.init()
   this.__renderTarget__ = RenderTarget(this)
 
-  this.start()
+  this.start && this.start()
 
   this.update = function () {
     this.step && this.step()
