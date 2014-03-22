@@ -1,21 +1,19 @@
-var RTT = pathgl.texture().repeat()
 
-d3.select(RTT)
-.selectAll('circle')
-.data(d3.range(100), function (d) { return d })
-.enter()
-.append('rect')
-.attr('width', 30)
-.attr('height', 30)
-.attr('x', function (d) { return 100 * (d % 10) })
-.attr('y', function (d) { return 60 * ~~(d / 10) })
-.attr('fill', function () { return 'hsl(' + Math.random() * 360 + ',100%, 50%)' })
+var stream = getWebcam()
 
-d3.select('canvas')
-.selectAll("circle")
-.data(d3.range(100), function (d) { return d })
-.enter().append("circle")
+c = d3.select('canvas').append('circle')
+.attr('cx', 50)
+.attr('cy', 100)
 .attr('r', 50)
-.attr('cx', function (d) { return 100 * (d % 10) })
-.attr('cy', function (d) { return 100 * ~~(d / 10) })
-.attr('fill', RTT)
+.attr('fill', stream)
+
+
+function getWebcam() {
+d3.select('body').append('video')
+  navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia
+
+  var video = document.querySelector('video'), tex = pathgl.texture(video)
+  navigator.getUserMedia({video:1}, stream, function(error) {})
+  function stream(s){video.src=window.URL.createObjectURL(s); tex.repeat() }
+  return tex
+}
