@@ -35,5 +35,15 @@ The main storage for gpgpu programs is texture memory. This is a 'stream registe
 file' that tracks producer-consumer relationships. It is not like a cpu cache, and does
 not store real data, but pointers to where new data will come from.
 
+
 Examples include fft, image processing, simulating physical models like weather and
 cosmology, neural networks, cryptography, and so on. 
+
+The cpu-gpu relationship is similar to the request-response cycle in webbrowsers.
+The cpu can send send and request data, while the gpu can only respond to requests,
+and compute kernels. Unlike webservers, kernels are launched by the client. In the
+future, advanced versions of webCL may allow gpus to launch kernels, which would be
+like forking off a child process. 
+
+Kernels are meant to look like serial programs, even if they may be running on a
+thousand threads in parallel.
