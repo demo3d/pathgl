@@ -15,7 +15,23 @@ var col = 20
   , s = size.width / col
   , row = Math.round(size.height / s)
 
-var textures = pathgl.texture('.t')
+function launch() {
+  pathgl.kernel(avgShader)
+  .read(webcam)
+  .matchWith(mosaic)
+  .write(texture)
+
+  pathgl.kernel()
+  .read(webcam, mosaic)
+  .matchWith(avgShader)
+  .write(texture)
+
+  pathgl.texture(avgShader)
+  .read(webcam)
+  .matchWith(mosaic)
+}
+
+var textures = pathgl.texture('img')
 
 r = c.selectAll('rect').data(d3.range(col * row )).enter().append('rect')
 .attr('x', function (d) { return s/2 + s * (d % col) })

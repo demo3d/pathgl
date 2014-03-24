@@ -289,8 +289,8 @@ function build_vs(subst) {
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
     , r: '(pos.z < 0.) ? 4. - texture2D(texture, abs(pos.xy)).z : (2. * pos.z)'
-    , x: '(pos.x < 0.) ? texture2D(texture, abs(pos.xy)).x * resolution.x : pos.x'
-    , y: '(pos.y < 0.) ? texture2D(texture, abs(pos.xy)).y * resolution.y : pos.y'
+    , x: '(pos.x < 1.) ? texture2D(texture, abs(pos.xy)).x * resolution.x : pos.x'
+    , y: '(pos.y < 1.) ? texture2D(texture, abs(pos.xy)).y * resolution.y : pos.y'
     }, subst)
 
   for(var attr in defaults)
@@ -1018,7 +1018,6 @@ function DataTexture (image, options, target) {
   , height: image.height || 512
   }, options)
 
-  console.log(this.texture)
   this.load()
 }
 

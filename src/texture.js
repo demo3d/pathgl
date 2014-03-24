@@ -98,7 +98,6 @@ function DataTexture (image, options, target) {
   , height: image.height || 512
   }, options)
 
-  console.log(this.texture)
   this.load()
 }
 
