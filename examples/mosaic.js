@@ -1,4 +1,9 @@
-//setTimeout(getVideo, 5000)
+d3.json('https://api.imgur.com/3/gallery/hot/viral/0.json')
+.header("Authorization", 'Client-Id 9e7ab6a35eb2f7a')
+.header("Accept", 'application/json')
+.get(function (err, data) {
+  //if (! err) pathgl.texture(data.map(function (d) { return d.link }))
+})
 
 var size = { width: .8 * innerWidth, height: innerHeight * .9}
 

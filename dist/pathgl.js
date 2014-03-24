@@ -939,7 +939,7 @@ var attrDefaults = {
     var image = this.data
 
     if (image.complete || image.readyState == 4) this.init()
-    else image.addEventListener && image.addEventListener('load', this.init)
+    else image.addEventListener && image.addEventListener('load', this.init.bind(this))
 
     return this
   }
@@ -1010,14 +1010,16 @@ function ShaderTexture (shader, options) {
 
 function DataTexture (image, options, target) {
   if ('string' == typeof image) image = parseImage(image)
-
   extend(this, {
     gl: gl
   , data: image
   , texture: gl.createTexture()
   , width: image.width || 512
   , height: image.height || 512
-  }, options).load()
+  }, options)
+
+  console.log(this.texture)
+  this.load()
 }
 
 function initTexture() {
