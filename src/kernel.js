@@ -7,7 +7,8 @@ function kernel () {
   var self = {
       read: read
     , write: write
-    , match: match
+    , map: map
+    , match: matchWith
     , exec: exec
   }
 
@@ -15,17 +16,22 @@ function kernel () {
 
   function read() {
     source = [].slice.call(arguments)
+    return this
   }
 
   function write() {
-
+    return this
   }
 
-  function match() {
-
+  function map () {
+    return this
   }
 
-  function exec () {
+  function matchWith() {
+    return this
+  }
 
+  function exec() {
+    return this
   }
 }

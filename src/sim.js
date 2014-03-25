@@ -6,7 +6,7 @@ var simulation_vs = [
 , '  }'
 ].join('\n')
 
-var forceShader = [
+var particleShader = [
 , 'precision mediump float;'
 , 'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
@@ -15,11 +15,11 @@ var forceShader = [
 , 'vec4 texelAtOffet(vec2 offset) { '
   + 'return texture2D(texture, (gl_FragCoord.xy + offset) / dimensions); }'
 , 'void main() {'
-    , 'vec3 TARGET = vec3(mouse / resolution, 0.01 );'
-    , 'int slot = int( mod( gl_FragCoord.x, 2.0 ) );'
-    , 'if ( slot == 0 ) { '
-        , 'vec4 dataA = texelAtOffet( vec2( 0, 0 ) );'
-        , 'vec4 dataB = texelAtOffet( vec2( 1, 0 ) );'
+    , 'vec3 TARGET = vec3(mouse / resolution, 0.01);'
+    , 'int slot = int(mod(gl_FragCoord.x, 2.0));'
+    , 'if (slot == 0) { '
+        , 'vec4 dataA = texelAtOffet(vec2(0, 0));'
+        , 'vec4 dataB = texelAtOffet(vec2(1, 0));'
         , 'vec3 pos = dataA.xyz;'
         , 'vec3 vel = dataB.xyz;'
         , 'float phase = dataA.w;'
@@ -49,10 +49,14 @@ var forceShader = [
 , '}'
 ].join('\n')
 
-
 var since = Date.now()
-pathgl.sim.force = function (size) {
-  var particleData = new Float32Array(2 * 4 * size)
+pathgl.sim.particles = function (size) {
+  var texture = pathgl.texture(size)
+  var k = pathgl.kernel()
+          .read(texture)
+          .map(particleShader)
+          .write(texture)
+
   var width = Math.sqrt(size) * 2
   var height = Math.sqrt(size)
   var elapsed = 0, cooldown = 16
@@ -60,17 +64,13 @@ pathgl.sim.force = function (size) {
   var particleIndex = 0
   var gl, texture
 
-  return pathgl.texture(forceShader, {
-    step: step
-  , data: particleData
-  , width: width
+  return pathgl.texture(particleShader, {
+    width: width
   , height: height
   , size: size
   , start: start
   , emit: emit
   })
-
-  function step () { }
 
   function start () {
     var now = Date.now() - since
