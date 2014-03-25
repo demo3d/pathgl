@@ -62,8 +62,7 @@ pathgl.sim.particles = function (size) {
   var elapsed = 0, cooldown = 16
   var rate = 100
   var particleIndex = 0
-  var gl, texture
-
+  
   return pathgl.texture(particleShader, {
     width: width
   , height: height

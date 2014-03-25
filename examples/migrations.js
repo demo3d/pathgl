@@ -16,6 +16,7 @@ var svg = d3.select(selector)
 
 var webgl = d3.select('canvas').attr(size).attr('class', 'no-click')
 
+d3.json('data/birds.json', draw_birds)
 d3.json('data/world-50m.json', draw_world)
 
 function draw_world(err, world) {
@@ -36,3 +37,28 @@ function draw_world(err, world) {
         , 'stroke-width': 1
         })
 }
+
+function draw_birds(err, data) {
+  data.forEach(function (d) {
+    d.location = proj([d[1], d[0]])
+  })
+  webgl
+    .selectAll('circle')
+    .data(data)
+    .enter()
+    .append('circle')
+    .attr({ class:'event'
+          , stroke: function(d){ return d3.hsl(Math.random()*120, .9, 0.5) }
+          , cx: function(d){ return d.location[0] * 1.1  }
+          , cy: function(d){ return d.location[1] / 2 + 50}
+          , cz: function(d){ return d[2] }
+          , r: 5
+          })
+    .shader({'r': '5. - distance(pos.w, dates.x);'})
+}
+var x = 0
+setInterval(function () {
+  pathgl.uniform('dates', [x = (x + .2) % 52, 0])
+}, 32)
+
+//lat long week num_cites
