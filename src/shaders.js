@@ -109,7 +109,7 @@ function build_vs(subst) {
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
     , r: '(pos.z < 0.) ? 4. - texture2D(texture, abs(pos.xy)).z : (2. * pos.z)'
     , x: '(pos.x < 1.) ? texture2D(texture, abs(pos.xy)).x * resolution.x : pos.x'
-    , y: '(pos.y < 1.) ? texture2D(texture, abs(pos.xy)).y * resolution.y : pos.y'
+    , y: '(pos.y < 1.) ? texture2D(texture, abs(pos.xy)).y * resolution.y: pos.y'
     }, subst)
 
   for(var attr in defaults)

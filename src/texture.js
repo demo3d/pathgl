@@ -79,6 +79,7 @@ function RenderTexture(prog, options) {
   this.update = function () {
     this.step && this.step()
     this.__renderTarget__.update()
+    this.__renderTarget__.update()
   }
 }
 

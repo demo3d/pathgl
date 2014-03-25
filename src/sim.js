@@ -2,7 +2,7 @@ var simulation_vs = [
   'precision mediump float;'
 , 'attribute vec2 pos;'
 , '  void main() {'
-, '  gl_Position = vec4( pos.xy, 1.0 , 1.0);'
+, '  gl_Position = vec4(pos.xy, 1.0 , 1.0);'
 , '  }'
 ].join('\n')
 
@@ -12,7 +12,7 @@ var forceShader = [
 , 'uniform vec2 resolution;'
 , 'uniform vec2 mouse;'
 , 'uniform vec2 dimensions;'
-, 'vec4 texelAtOffet( vec2 offset ) { '
+, 'vec4 texelAtOffet(vec2 offset) { '
   + 'return texture2D(texture, (gl_FragCoord.xy + offset) / dimensions); }'
 , 'void main() {'
     , 'vec3 TARGET = vec3(mouse / resolution, 0.01 );'
@@ -23,28 +23,28 @@ var forceShader = [
         , 'vec3 pos = dataA.xyz;'
         , 'vec3 vel = dataB.xyz;'
         , 'float phase = dataA.w;'
-        , 'if ( phase > 0.0 ) {'
+        , 'if (phase > 0.0) {'
             , 'pos += vel * 0.005;'
-            , 'if ( length( TARGET - pos ) < 0.035 ) phase = 0.0;'
+            , 'if (length(TARGET - pos) < 0.035) phase = 0.0;'
         , '    else phase += 0.1;'
         , '} else {'
         , '    pos = vec3(-1);'
         , '}'
-    , '    gl_FragColor = vec4( pos, phase );'
-    , '} else if ( slot == 1 ) { '
-        , 'vec4 dataA = texelAtOffet( vec2( -1, 0 ) );'
-        , 'vec4 dataB = texelAtOffet( vec2( 0, 0 ) );'
+    , '    gl_FragColor = vec4(pos, phase);'
+    , '} else if (slot == 1) { '
+        , 'vec4 dataA = texelAtOffet(vec2(-1, 0));'
+        , 'vec4 dataB = texelAtOffet(vec2(0, 0));'
         , 'vec3 pos = dataA.xyz;'
         , 'vec3 vel = dataB.xyz;'
         , 'float phase = dataA.w;'
-        , 'if ( phase > 0.0 ) {'
-            , 'vec3 delta = normalize( TARGET - pos );'
-            , 'vel += delta * 0.1;'
+        , 'if (phase > 0.0) {'
+            , 'vec3 delta = normalize(TARGET - pos);'
+            , 'vel += delta * 0.05;'
         , '    vel *= 0.991;'
         , '} else {'
         , '    vel = vec3(0);'
         , '}'
-    , '    gl_FragColor = vec4( vel, 1.0 );'
+    , '    gl_FragColor = vec4(vel, 1.0);'
 , '    }'
 , '}'
 ].join('\n')
@@ -56,11 +56,9 @@ pathgl.sim.force = function (size) {
   var width = Math.sqrt(size) * 2
   var height = Math.sqrt(size)
   var elapsed = 0, cooldown = 16
-  var rate = 500
+  var rate = 100
   var particleIndex = 0
   var gl, texture
-
-  var mousemove = mousemove.bind(this)
 
   return pathgl.texture(forceShader, {
     step: step
@@ -69,7 +67,7 @@ pathgl.sim.force = function (size) {
   , height: height
   , size: size
   , start: start
-  , emit: mousemove
+  , emit: emit
   })
 
   function step () { }
@@ -82,16 +80,20 @@ pathgl.sim.force = function (size) {
                  ]
 
     pathgl.uniform('dimensions', [width, height])
-    emit(gl = this.gl, texture = this.texture, 40000, origin)
+    addParticles(gl = this.gl, texture = this.texture, 40000, origin)
   }
 
-  function mousemove() {
+  function emit() {
+    if (elapsed - Date.now() > cooldown) return
+    elapsed = Date.now()
+
     var count = rate * Math.random()
-      , origin = svgToClipSpace(d3.mouse(d3.select('canvas').node())).concat(0)
-    emit(gl, texture, count, origin)
+      , origin = d3.mouse(this).concat(0)
+
+    addParticles(gl, texture, count, origin)
   }
 
-  function emit(gl, tex, count, origin, velocities) {
+  function addParticles(gl, tex, count, origin, velocities) {
     velocities = velocities || { x:0, y:0, z:0 }
     gl.activeTexture( gl.TEXTURE0 + tex.unit)
     gl.bindTexture(gl.TEXTURE_2D, tex)
@@ -118,9 +120,9 @@ pathgl.sim.force = function (size) {
       data = []
       for (j = 0, m = chunk.size; j < m; j++) {
         data.push(
-          origin[0],
-          origin[1],
-          0,
+          origin[0] / -width,
+          origin[1] / -height,
+          origin[2],
           Math.random() * 10,
           velocities.x + force * random(-1.0, 1.0),
           velocities.y + force * random(-1.0, 1.0),
@@ -141,4 +143,3 @@ pathgl.sim.force = function (size) {
 function random (min, max) {
   return Math.random() * ( max - min );
 }
-function svgToClipSpace(pos) { return [2 * (pos[0] / 960) - 1, 1 - (pos[1] / 500 * 2)] }
