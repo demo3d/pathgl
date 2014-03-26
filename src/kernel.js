@@ -3,6 +3,8 @@ pathgl.kernel = kernel
 function kernel () {
   var source = []
     , target = null
+    , blockSize
+  , render
 
   var self = {
       read: read
@@ -16,6 +18,8 @@ function kernel () {
 
   function read() {
     source = [].slice.call(arguments)
+    source.forEach(function (ctx) { ctx.register(self) })
+    blockSize = blockSize || source.width
     return this
   }
 
@@ -23,7 +27,8 @@ function kernel () {
     return this
   }
 
-  function map () {
+  function map (shader) {
+    render = new ShaderTexture(shader, {})
     return this
   }
 

@@ -1,19 +1,27 @@
+var RTT = pathgl.texture().repeat()
 
-var stream = getWebcam()
+var disco = d3.select(RTT)
+.selectAll('circle')
+.data(d3.range(100), function (d) { return d })
+.enter()
+.append('rect')
+.attr('width', 30)
+.attr('height', 30)
+.attr('x', function (d) { return 100 * (d % 10) })
+.attr('y', function (d) { return 60 * ~~(d / 10) })
+.attr('fill', function () { return 'hsl(' + Math.random() * 360 + ',100%, 50%)' })
 
-c = d3.select('canvas').append('circle')
-.attr('cx', 50)
-.attr('cy', 100)
+// d3.timer(function () {
+//   return
+//   disco.filter(function (d, i) { return Math.random() > .99  }).transition()
+//   .attr('fill', function () { return 'hsl(' + Math.random() * 360 + ',100%, 50%)' })
+// })
+
+d3.select('canvas')
+.selectAll("circle")
+.data(d3.range(100), function (d) { return d })
+.enter().append("circle")
 .attr('r', 50)
-.attr('fill', stream)
-
-
-function getWebcam() {
-d3.select('body').append('video')
-  navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia
-
-  var video = document.querySelector('video'), tex = pathgl.texture(video)
-  navigator.getUserMedia({video:1}, stream, function(error) {})
-  function stream(s){video.src=window.URL.createObjectURL(s); tex.repeat() }
-  return tex
-}
+.attr('cx', function (d) { return 100 * (d % 10) })
+.attr('cy', function (d) { return 100 * ~~(d / 10) })
+.attr('fill', RTT)

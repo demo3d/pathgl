@@ -1,13 +1,14 @@
 GPGPU is a technique for offloading heavy computation to the graphics card.
 
 Characteristics of graphics programming. Your task may benefit from gpgpu if it has similar characteristics
-1. large computational requirements
-2. massive paralllelism
+1. high arithmetic intensity
+2. large data sets
 3. long latencies ok
 4. deep, feed forward pipelines. data flows one way
 5. hacks are ok - can tolerate lack of accuracy
 6. decomposes cleanly to map, reduce, filter, scatter, gather, sort, and search operations
 7. has minimal dependency between data elements
+
 
 CPUs address a completely different application space, scalar programming
 with no data parallellism. Most of the sillicon in a cpu is devoted to
@@ -47,3 +48,5 @@ like forking off a child process.
 
 Kernels are meant to look like serial programs, even if they may be running on a
 thousand threads in parallel.
+
+

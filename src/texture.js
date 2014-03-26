@@ -1,7 +1,8 @@
 var Texture = {
   init: initTexture
 , update: function () { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) }
-
+, register: function () {
+  }
 , z: function () {
     var sq = Math.sqrt(this.size)
     return function (d, i) { return -1.0 / sq * ~~ (i % sq) }

@@ -6,9 +6,7 @@ pathgl.context = function () { return gl }
 var inited = 0
 pathgl.texture = function (image, options, target) {
   if (! inited) pathgl.init('canvas')
-  return new (image == null ? RenderTexture :
-          isShader(image) ? ShaderTexture :
-          DataTexture)(image, extend(options || {}, { src: image }), target)
+  return new (image == null ? RenderTexture : DataTexture)(image, extend(options || {}, { src: image }), target)
 }
 
 
