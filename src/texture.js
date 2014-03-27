@@ -137,6 +137,6 @@ function pipeTexture() {
 
 function unwrap() {
   var uv = new Array(this.size), i = this.size || 0
-  while(i--) uv[i] = {x: this.x()(i, i), y: this.y(i, i)(i, i) }
+  while(i--) uv[i] = { x: this.x()(i, i), y: this.y(i, i)(i, i), z: this.z(i, i)(i, i) }
    return uv
 }

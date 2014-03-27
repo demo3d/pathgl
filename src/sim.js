@@ -12,32 +12,23 @@ var particleShader = [
 , 'uniform vec2 resolution;'
 , 'uniform vec2 mouse;'
 , 'uniform vec2 dimensions;'
-, 'vec4 texelAtOffet(vec2 offset) { '
-  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / dimensions); }'
+, 'uniform float gravity;'
 , 'void main() {'
     , 'vec2 TARGET = vec2(mouse / resolution);'
-    , 'int slot = int(mod(gl_FragCoord.x, 2.0));'
-    , 'if (slot == 0) { '
-        , 'vec4 dataA = texelAtOffet(vec2(0, 0));'
-        , 'vec4 dataB = texelAtOffet(vec2(1, 0));'
-        , 'vec2 pos = dataA.xy;'
-        , 'vec2 vel = dataB.xy;'
-        , 'float phase = dataA.w;'
-            , 'pos += vel * 0.005;'
-        , '    phase += 0.1;'
-    , '    gl_FragColor = vec4(pos, 1.0, phase);'
-    , '} else if (slot == 1) { '
-        , 'vec4 dataA = texelAtOffet(vec2(-1, 0));'
-        , 'vec4 dataB = texelAtOffet(vec2(0, 0));'
-        , 'vec2 pos = dataA.xy;'
-        , 'vec2 vel = dataB.xy;'
-        , 'float phase = dataA.w;'
-            , 'vec2 delta = normalize(TARGET - pos);'
-            , 'vel += delta * 0.05;'
-        , '    vel *= 0.991;'
-    , '    gl_FragColor = vec4(vel, 1.0, 1.0);'
-, '    }'
-, '}'
+        , 'vec4 data = texture2D(texture, (gl_FragCoord.xy) / dimensions);'
+        , 'vec2 pos = data.xy;'
+        , 'vec2 vel = data.zw;'
+        , 'if (pos.x > 1.) { vel.x *= -1.; pos.x = 1.; } '
+        , 'if (pos.y > 1.) { vel.y *= -1.; pos.y = 1.; } '
+        , 'if (pos.x < 0.) { vel.x *= -1.; pos.x = 0.; } '
+        , 'if (pos.y < 0.) { vel.y *= -1.; pos.y = 0.; } '
+        , 'pos += vel * 0.005;'
+        , 'vec2 delta = gravity * normalize(TARGET - pos);'
+        , 'vel += delta * 0.05;'
+        , 'vel *= 0.991;'
+        , 'gl_FragColor = vec4(pos, vel);'
+
+     , '}'
 ].join('\n')
 
 var since = Date.now()
@@ -61,7 +52,12 @@ pathgl.sim.particles = function (size) {
   , size: size
   , start: start
   , emit: emit
+  , reverse: reversePolarity
   })
+
+  function reversePolarity () {
+   pathgl.uniform('gravity', pathgl.uniform('gravity') * -1)
+  }
 
   function start () {
     var now = Date.now() - since
@@ -71,6 +67,7 @@ pathgl.sim.particles = function (size) {
                  ]
 
     pathgl.uniform('dimensions', [width, height])
+    pathgl.uniform('gravity', 1)
     addParticles(gl = this.gl, texture = this.texture, 40000, origin)
   }
 

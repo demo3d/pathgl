@@ -11,19 +11,16 @@ function init(c) {
   bindEvents(canvas)
   var main = RenderTarget(canvas)
   tasks.push(main.update)
-  gl.clearColor(0, 0, 0, 0)
-
+  gl.clearColor(.3, .3, .3, 1.)
+  flags(gl)
   startDrawLoop()
   return canvas
 }
 
 function flags(gl) {
-  gl.disable(gl.SCISSOR_TEST)
-  gl.stencilMask(1, 1, 1, 1)
-  gl.clear(gl.COLOR_BUFFER_BIT)
-  gl.colorMask(true, true, true, true)
-  gl.disable(gl.BLEND)
-  gl.enable(gl.CULL_FACE)
+  gl.blendEquation(gl.FUNC_ADD)
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
+  //gl.blendColor(1,1,1,1)
 }
 
 function bindEvents(canvas) {

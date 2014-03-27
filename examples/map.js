@@ -33,7 +33,7 @@ function draw_world(err, world) {
   .attr('d', path)
   .attr('stroke-dasharray', '3 3')
   .attr('fill', 'none')
-  .attr('stroke', '#999')
+  .attr('stroke', 'aliceblue')
 
   svg.append("path")
   .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a == b && a.id !== 10 }))
@@ -98,7 +98,7 @@ function draw_history(err, hist) {
           .attr('transform', 'translate(' + [0, height * .85] +  ')')
 
   b.selectAll("rect")
-  .attr('fill', 'blue')
+  .attr('fill', 'pink')
   .attr('opacity', '.7')
   .attr("height", height * .1)
   .on('mouseover', function () { this.pause = 1 })

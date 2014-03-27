@@ -328,7 +328,7 @@ function build_vs(subst) {
   })
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? 4. - texture2D(texture, abs(pos.xy)).z : (2. * pos.z)'
+    , r: '(pos.z < 0.) ? 1. + ( abs(texture2D(texture, abs(pos.xy)).w) + abs(texture2D(texture, abs(pos.xy)).z))  : (2. * pos.z)'
     , x: '(pos.x < 1.) ? texture2D(texture, abs(pos.xy)).x * resolution.x : pos.x'
     , y: '(pos.y < 1.) ? texture2D(texture, abs(pos.xy)).y * resolution.y: pos.y'
     }, subst)
@@ -354,7 +354,8 @@ function compileShader (gl, type, src) {
 function glslTypedef(type) {
   if (type.match('vec')) return type[type.length - 1]
   return 1
-};function init(c) {
+}
+;function init(c) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
@@ -367,19 +368,16 @@ function glslTypedef(type) {
   bindEvents(canvas)
   var main = RenderTarget(canvas)
   tasks.push(main.update)
-  gl.clearColor(0, 0, 0, 0)
-
+  gl.clearColor(.3, .3, .3, 1.)
+  flags(gl)
   startDrawLoop()
   return canvas
 }
 
 function flags(gl) {
-  gl.disable(gl.SCISSOR_TEST)
-  gl.stencilMask(1, 1, 1, 1)
-  gl.clear(gl.COLOR_BUFFER_BIT)
-  gl.colorMask(true, true, true, true)
-  gl.disable(gl.BLEND)
-  gl.enable(gl.CULL_FACE)
+  gl.blendEquation(gl.FUNC_ADD)
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
+  //gl.blendColor(1,1,1,1)
 }
 
 function bindEvents(canvas) {
@@ -1097,7 +1095,7 @@ function pipeTexture() {
 
 function unwrap() {
   var uv = new Array(this.size), i = this.size || 0
-  while(i--) uv[i] = {x: this.x()(i, i), y: this.y(i, i)(i, i) }
+  while(i--) uv[i] = { x: this.x()(i, i), y: this.y(i, i)(i, i), z: this.z(i, i)(i, i) }
    return uv
 };;var simulation_vs = [
   'precision mediump float;'
@@ -1113,32 +1111,23 @@ var particleShader = [
 , 'uniform vec2 resolution;'
 , 'uniform vec2 mouse;'
 , 'uniform vec2 dimensions;'
-, 'vec4 texelAtOffet(vec2 offset) { '
-  + 'return texture2D(texture, (gl_FragCoord.xy + offset) / dimensions); }'
+, 'uniform float gravity;'
 , 'void main() {'
     , 'vec2 TARGET = vec2(mouse / resolution);'
-    , 'int slot = int(mod(gl_FragCoord.x, 2.0));'
-    , 'if (slot == 0) { '
-        , 'vec4 dataA = texelAtOffet(vec2(0, 0));'
-        , 'vec4 dataB = texelAtOffet(vec2(1, 0));'
-        , 'vec2 pos = dataA.xy;'
-        , 'vec2 vel = dataB.xy;'
-        , 'float phase = dataA.w;'
-            , 'pos += vel * 0.005;'
-        , '    phase += 0.1;'
-    , '    gl_FragColor = vec4(pos, 1.0, phase);'
-    , '} else if (slot == 1) { '
-        , 'vec4 dataA = texelAtOffet(vec2(-1, 0));'
-        , 'vec4 dataB = texelAtOffet(vec2(0, 0));'
-        , 'vec2 pos = dataA.xy;'
-        , 'vec2 vel = dataB.xy;'
-        , 'float phase = dataA.w;'
-            , 'vec2 delta = normalize(TARGET - pos);'
-            , 'vel += delta * 0.05;'
-        , '    vel *= 0.991;'
-    , '    gl_FragColor = vec4(vel, 1.0, 1.0);'
-, '    }'
-, '}'
+        , 'vec4 data = texture2D(texture, (gl_FragCoord.xy) / dimensions);'
+        , 'vec2 pos = data.xy;'
+        , 'vec2 vel = data.zw;'
+        , 'if (pos.x > 1.) { vel.x *= -1.; pos.x = 1.; } '
+        , 'if (pos.y > 1.) { vel.y *= -1.; pos.y = 1.; } '
+        , 'if (pos.x < 0.) { vel.x *= -1.; pos.x = 0.; } '
+        , 'if (pos.y < 0.) { vel.y *= -1.; pos.y = 0.; } '
+        , 'pos += vel * 0.005;'
+        , 'vec2 delta = gravity * normalize(TARGET - pos);'
+        , 'vel += delta * 0.05;'
+        , 'vel *= 0.991;'
+        , 'gl_FragColor = vec4(pos, vel);'
+
+     , '}'
 ].join('\n')
 
 var since = Date.now()
@@ -1162,7 +1151,12 @@ pathgl.sim.particles = function (size) {
   , size: size
   , start: start
   , emit: emit
+  , reverse: reversePolarity
   })
+
+  function reversePolarity () {
+   pathgl.uniform('gravity', pathgl.uniform('gravity') * -1)
+  }
 
   function start () {
     var now = Date.now() - since
@@ -1172,6 +1166,7 @@ pathgl.sim.particles = function (size) {
                  ]
 
     pathgl.uniform('dimensions', [width, height])
+    pathgl.uniform('gravity', 1)
     addParticles(gl = this.gl, texture = this.texture, 40000, origin)
   }
 
