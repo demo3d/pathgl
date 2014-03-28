@@ -13,6 +13,8 @@ var particleShader = [
 , 'uniform vec2 mouse;'
 , 'uniform vec2 dimensions;'
 , 'uniform float gravity;'
+, 'uniform float inertia;'
+, 'uniform float drag;'
 , 'void main() {'
     , 'vec2 TARGET = vec2(mouse / resolution);'
         , 'vec4 data = texture2D(texture, (gl_FragCoord.xy) / dimensions);'
@@ -22,12 +24,10 @@ var particleShader = [
         , 'if (pos.y > 1.) { vel.y *= -1.; pos.y = 1.; } '
         , 'if (pos.x < 0.) { vel.x *= -1.; pos.x = 0.; } '
         , 'if (pos.y < 0.) { vel.y *= -1.; pos.y = 0.; } '
-        , 'pos += vel * 0.005;'
-        , 'vec2 delta = gravity * normalize(TARGET - pos);'
-        , 'vel += delta * 0.05;'
-        , 'vel *= 0.991;'
+        , 'pos += vel * inertia;'
+        , 'vel += gravity * normalize(TARGET - pos) * 0.05;'
+        , 'vel *= drag;'
         , 'gl_FragColor = vec4(pos, vel);'
-
      , '}'
 ].join('\n')
 
@@ -60,29 +60,21 @@ pathgl.sim.particles = function (size) {
   }
 
   function start () {
-    var now = Date.now() - since
-      , origin = [ -1.0 + Math.sin(now * 0.001) * 2.0
-                 , -0.2 + Math.cos(now * 0.004) * 0.5
-                 , Math.sin(now * 0.015) * -0.05
-                 ]
-
     pathgl.uniform('dimensions', [width, height])
-    pathgl.uniform('gravity', 1)
-    addParticles(gl = this.gl, texture = this.texture, 40000, origin)
+    pathgl.uniform('gravity', -1)
+    pathgl.uniform('inertia', 0.005)
+    pathgl.uniform('drag', 0.991)
+    addParticles(gl = this.gl, texture = this.texture, size / 10, [1,2].map(Math.random))
+    addParticles(gl = this.gl, texture = this.texture, size / 10, [1,2].map(Math.random))
+
   }
 
   function emit() {
-    if (elapsed - Date.now() > cooldown) return
-    elapsed = Date.now()
-
-    var count = rate * Math.random()
-      , origin = d3.mouse(this).concat(0)
-
-    addParticles(gl, texture, count, origin)
+    addParticles(gl, texture, rate * Math.random(), [0,0])
   }
 
   function addParticles(gl, tex, count, origin, velocities) {
-    velocities = velocities || { x:0, y:0, z:0 }
+    velocities = velocities || { x:0, y:0 }
     gl.activeTexture( gl.TEXTURE0 + tex.unit)
     gl.bindTexture(gl.TEXTURE_2D, tex)
 
@@ -108,14 +100,10 @@ pathgl.sim.particles = function (size) {
       data = []
       for (j = 0, m = chunk.size; j < m; j++) {
         data.push(
-          origin[0] / -width,
-          origin[1] / -height,
-          origin[2],
-          Math.random() * 10,
+          origin[0] ,
+          origin[1] ,
           velocities.x + force * random(-1.0, 1.0),
-          velocities.y + force * random(-1.0, 1.0),
-          velocities.z + force * random(-1.0, 1.0),
-          0
+          velocities.y + force * random(-1.0, 1.0)
         )
       }
 
