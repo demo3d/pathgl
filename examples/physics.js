@@ -9,5 +9,5 @@ d3.select('canvas').selectAll("circle")
 .attr('fill', function () { return 'hsl(' + (Math.random() * 240 + 120) + ',100%, 50%)' })
 
 d3.select('canvas')
-.on('mousemove', particles.emit)
 .on('click', particles.reverse)
+//.on('mouseover', particles.emit)
