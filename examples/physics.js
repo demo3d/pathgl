@@ -1,4 +1,4 @@
-var particles = pathgl.sim.particles(1e5).repeat()
+var particles = pathgl.sim.particles(2e5).repeat()
 
 d3.select('canvas').selectAll("circle")
 .data(particles.unwrap())
