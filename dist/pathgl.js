@@ -177,7 +177,7 @@ var cssColors = {
 , "tomato": 0xFF6347, "turquoise": 0x40E0D0, "violet": 0xEE82EE, "wheat": 0xF5DEB3, "white": 0xFFFFFF, "whitesmoke": 0xF5F5F5
 , "yellow": 0xFFFF00, "yellowgreen": 0x9ACD32
 }
-;pathgl.kernel = kernel
+;pathgl.shader = kernel
 
 function kernel () {
   var source = []
@@ -207,7 +207,9 @@ function kernel () {
   }
 
   function map (shader) {
-    render = new ShaderTexture(shader, {})
+    render = new ShaderTexture(shader, {
+      texture: source[0].texture
+    })
     return this
   }
 
@@ -218,6 +220,9 @@ function kernel () {
   function exec() {
     return this
   }
+
+  function pipe () {}
+
 }
 ;pathgl.vertexShader = [
   'precision mediump float;'
@@ -324,8 +329,8 @@ function build_vs(subst) {
   each(subst || {}, function (v, k, o) {
     if (k == 'cx') o['x'] = v
     if (k == 'cy') o['y'] = v
-
   })
+
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
     , r: '(pos.z < 0.) ? 1. + ( abs(texture2D(texture, abs(pos.xy)).w) + abs(texture2D(texture, abs(pos.xy)).z))  : (2. * pos.z)'
@@ -959,18 +964,24 @@ var attrDefaults = {
 ;var Texture = {
   init: initTexture
 , update: function () { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) }
+, size: function (w, h) {
+    if (! arguments.length) return this.width * this.height
+    if (! h) this.height = w
+    this.w = w
+    return this
+  }
 , register: function () {
   }
 , z: function () {
-    var sq = Math.sqrt(this.size)
+    var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
   }
 , x: function () {
-    var sq = Math.sqrt(this.size)
+    var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
   }
 , y: function () {
-    var sq = Math.sqrt(this.size)
+    var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
   }
 , forEach: function () {}
@@ -1094,9 +1105,9 @@ function pipeTexture() {
 }
 
 function unwrap() {
-  var uv = new Array(this.size), i = this.size || 0
+  var i = this.size() || 0, uv = new Array(i)
   while(i--) uv[i] = { x: this.x()(i, i), y: this.y(i, i)(i, i), z: this.z(i, i)(i, i) }
-   return uv
+  return uv
 };;var simulation_vs = [
   'precision mediump float;'
 , 'attribute vec2 pos;'
@@ -1136,7 +1147,7 @@ pathgl.sim.particles = function (size) {
 
   var texture = pathgl.texture(size)
 
-  var k = pathgl.kernel()
+  var k = pathgl.shader()
           .read(texture)
           .map(particleShader)
           .write(texture)
@@ -1150,14 +1161,14 @@ pathgl.sim.particles = function (size) {
   return new ShaderTexture(particleShader, {
     width: width
   , height: height
-  , size: size
   , start: start
   , emit: emit
   , reverse: reversePolarity
+  , texture: texture.texture
   })
 
   function reversePolarity () {
-   pathgl.uniform('gravity', pathgl.uniform('gravity') * -1)
+    pathgl.uniform('gravity', pathgl.uniform('gravity') * -1)
   }
 
   function start () {
@@ -1167,7 +1178,6 @@ pathgl.sim.particles = function (size) {
     pathgl.uniform('drag', 0.991)
     addParticles(gl = this.gl, texture = this.texture, size / 2, [1,2].map(Math.random))
     addParticles(gl = this.gl, texture = this.texture, size, [1,2].map(Math.random))
-
   }
 
   function emit() {
@@ -1179,7 +1189,7 @@ pathgl.sim.particles = function (size) {
     gl.activeTexture( gl.TEXTURE0 + tex.unit)
     gl.bindTexture(gl.TEXTURE_2D, tex)
 
-    var x = ~~(( particleIndex) % width)
+    var x = ~~(particleIndex % width)
     var y = ~~(particleIndex / height)
     var chunks = [{ x: x, y: y, size: count }]
 

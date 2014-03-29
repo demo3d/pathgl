@@ -1,4 +1,4 @@
-pathgl.kernel = kernel
+pathgl.shader = kernel
 
 function kernel () {
   var source = []
@@ -28,7 +28,9 @@ function kernel () {
   }
 
   function map (shader) {
-    render = new ShaderTexture(shader, {})
+    render = new ShaderTexture(shader, {
+      texture: source[0].texture
+    })
     return this
   }
 
@@ -39,4 +41,7 @@ function kernel () {
   function exec() {
     return this
   }
+
+  function pipe () {}
+
 }

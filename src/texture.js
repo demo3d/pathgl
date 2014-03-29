@@ -1,18 +1,24 @@
 var Texture = {
   init: initTexture
 , update: function () { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) }
+, size: function (w, h) {
+    if (! arguments.length) return this.width * this.height
+    if (! h) this.height = w
+    this.w = w
+    return this
+  }
 , register: function () {
   }
 , z: function () {
-    var sq = Math.sqrt(this.size)
+    var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
   }
 , x: function () {
-    var sq = Math.sqrt(this.size)
+    var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
   }
 , y: function () {
-    var sq = Math.sqrt(this.size)
+    var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
   }
 , forEach: function () {}
@@ -136,7 +142,7 @@ function pipeTexture() {
 }
 
 function unwrap() {
-  var uv = new Array(this.size), i = this.size || 0
+  var i = this.size() || 0, uv = new Array(i)
   while(i--) uv[i] = { x: this.x()(i, i), y: this.y(i, i)(i, i), z: this.z(i, i)(i, i) }
-   return uv
+  return uv
 }

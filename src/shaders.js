@@ -103,8 +103,8 @@ function build_vs(subst) {
   each(subst || {}, function (v, k, o) {
     if (k == 'cx') o['x'] = v
     if (k == 'cy') o['y'] = v
-
   })
+
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
     , r: '(pos.z < 0.) ? 1. + ( abs(texture2D(texture, abs(pos.xy)).w) + abs(texture2D(texture, abs(pos.xy)).z))  : (2. * pos.z)'

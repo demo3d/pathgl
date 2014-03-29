@@ -37,7 +37,7 @@ pathgl.sim.particles = function (size) {
 
   var texture = pathgl.texture(size)
 
-  var k = pathgl.kernel()
+  var k = pathgl.shader()
           .read(texture)
           .map(particleShader)
           .write(texture)
@@ -51,14 +51,14 @@ pathgl.sim.particles = function (size) {
   return new ShaderTexture(particleShader, {
     width: width
   , height: height
-  , size: size
   , start: start
   , emit: emit
   , reverse: reversePolarity
+  , texture: texture.texture
   })
 
   function reversePolarity () {
-   pathgl.uniform('gravity', pathgl.uniform('gravity') * -1)
+    pathgl.uniform('gravity', pathgl.uniform('gravity') * -1)
   }
 
   function start () {
@@ -68,7 +68,6 @@ pathgl.sim.particles = function (size) {
     pathgl.uniform('drag', 0.991)
     addParticles(gl = this.gl, texture = this.texture, size / 2, [1,2].map(Math.random))
     addParticles(gl = this.gl, texture = this.texture, size, [1,2].map(Math.random))
-
   }
 
   function emit() {
@@ -80,7 +79,7 @@ pathgl.sim.particles = function (size) {
     gl.activeTexture( gl.TEXTURE0 + tex.unit)
     gl.bindTexture(gl.TEXTURE_2D, tex)
 
-    var x = ~~(( particleIndex) % width)
+    var x = ~~(particleIndex % width)
     var y = ~~(particleIndex / height)
     var chunks = [{ x: x, y: y, size: count }]
 
