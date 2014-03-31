@@ -31,7 +31,8 @@ function shader() {
     , match: matchWith
     , pipe: pipe
     , invalidate: function () {
-        render && render.update()
+        render && tasksOnce.push(render.update)
+
         dependents.forEach(function (d) {
           d.invalidate()
         })

@@ -31,9 +31,9 @@ function bindEvents(canvas) {
   }
 
   canvas.addEventListener('click', clicked)
-  canvas.addEventListener('mousemove', mousemoved)
-  canvas.addEventListener('touchmove', touchmoved)
-  canvas.addEventListener('touchstart', touchmoved)
+  canvas.addEventListener('mousemove.pathgl', mousemoved)
+  canvas.addEventListener('touchmove.pathgl', touchmoved)
+  canvas.addEventListener('touchstart.pathgl', touchmoved)
 }
 
 function clicked () {}
@@ -70,7 +70,7 @@ var appendable = {
   , removeChild: removeChild
   , insertBefore: insertBefore
   , __scene__: []
-  , __pos__: []
+
   , __program__: void 0
 }
 
@@ -80,17 +80,14 @@ function initContext(canvas) {
 }
 
 function d3_vAttr(attr, fn) {
-  //check if svg
   this.each(function(d, i) {
     this.colorBuffer[this.indices[0]] = parseColor(fn(d, i))
   })
-
   return this
 }
 
 function d3_shader(attr, name) {
   this.node().mesh.mergeProgram(attr)
-
   return this
 }
 
@@ -100,6 +97,11 @@ var raf = window.requestAnimationFrame
        || function(callback) { window.setTimeout(callback, 1000 / 60) }
 
 function startDrawLoop() {
-  tasks.forEach(function (task) { task() })
+  var l = tasks.length
+  while(l--) tasks[l]()
+
+  l = tasksOnce.length
+  while(l--) tasksOnce.pop()()
+
   raf(startDrawLoop)
 }
