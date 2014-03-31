@@ -34,6 +34,11 @@ var Texture = {
 
     return this
   }
+, subImage: function (x,y, length, data) {
+    gl.texSubImage2D(gl.TEXTURE_2D, 0,
+                   x, y, length, 1,
+                   gl.RGBA, gl.FLOAT, data)
+  }
 , repeat: function () {
     this.task = this.update.bind(this)
     tasks.push(this.task)

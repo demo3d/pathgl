@@ -42,7 +42,7 @@ function noop () {}
 
 function identity(x) { return x }
 
-function push(d) { return this.push(d) }
+function push(d) { return [].push.call(this, d) }
 
 function powerOfTwo(x) { return x && ! (x & (x - 1)) }
 
@@ -61,6 +61,8 @@ function uniq(ar) { return ar.filter(function (d, i) { return ar.indexOf(d) == i
 function flatten(list){ return list.reduce(function( p,n){ return p.concat(n) }, []) }
 
 function svgToClipSpace(pos) { return [2 * (pos[0] / 960) - 1, 1 - (pos[1] / 500 * 2)] }
+
+function append () { [].forEach.call(arguments, push, this) }
 
 function range(a, b) { return Array(Math.abs(b - a)).join().split(',').map(function (d, i) { return i + a }) }
 
@@ -1020,6 +1022,11 @@ var attrDefaults = {
 
     return this
   }
+, subImage: function (x,y, length, data) {
+    gl.texSubImage2D(gl.TEXTURE_2D, 0,
+                   x, y, length, 1,
+                   gl.RGBA, gl.FLOAT, data)
+  }
 , repeat: function () {
     this.task = this.update.bind(this)
     tasks.push(this.task)
@@ -1172,8 +1179,8 @@ pathgl.sim.particles = function (s) {
     pathgl.uniform('gravity', 1)
     pathgl.uniform('inertia', 0.05)
     pathgl.uniform('drag', 0.991)
-    addParticles(gl, texture.texture, size / 2, [1,2].map(Math.random))
-    addParticles(gl, texture.texture, size, [1,2].map(Math.random))
+    addParticles(gl, texture, size / 2, [1,2].map(Math.random))
+    addParticles(gl, texture, size, [1,2].map(Math.random))
   }
 
   function emit(origin, ammount) {
@@ -1187,8 +1194,6 @@ pathgl.sim.particles = function (s) {
       , i, j, chunk, data
 
     vel = vel || { x:0, y:0 }
-    //gl.activeTexture( gl.TEXTURE0 + tex.unit)
-    gl.bindTexture(gl.TEXTURE_2D, tex)
 
     ;(function split(chunk) {
       var boundary = chunk.x + chunk.size
@@ -1209,8 +1214,7 @@ pathgl.sim.particles = function (s) {
                                         vel.y + random(-1.0, 1.0)
                                        )
 
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, chunk.x, chunk.y, chunk.size, 1,
-                       gl.RGBA, gl.FLOAT, new Float32Array(data))
+      texture.subImage(chunk.x, chunk.y, chunk.size, new Float32Array(data))
     }
 
     particleIndex += count

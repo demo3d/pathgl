@@ -3,7 +3,7 @@ function noop () {}
 
 function identity(x) { return x }
 
-function push(d) { return this.push(d) }
+function push(d) { return [].push.call(this, d) }
 
 function powerOfTwo(x) { return x && ! (x & (x - 1)) }
 
@@ -22,6 +22,8 @@ function uniq(ar) { return ar.filter(function (d, i) { return ar.indexOf(d) == i
 function flatten(list){ return list.reduce(function( p,n){ return p.concat(n) }, []) }
 
 function svgToClipSpace(pos) { return [2 * (pos[0] / 960) - 1, 1 - (pos[1] / 500 * 2)] }
+
+function append () { [].forEach.call(arguments, push, this) }
 
 function range(a, b) { return Array(Math.abs(b - a)).join().split(',').map(function (d, i) { return i + a }) }
 
