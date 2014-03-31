@@ -19,7 +19,6 @@ function shader() {
 
   function read(src) {
     dependencies.push(src)
-    src.unit = 0
     this.render.__renderTarget__.bind(src)
 
     return this
@@ -31,8 +30,6 @@ function shader() {
 
   function map (shader, start) {
     self.render = new RenderTexture(createProgram(gl, simulation_vs, shader, ['pos']), {})
-
-
     return this
   }
 

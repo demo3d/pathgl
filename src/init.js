@@ -20,12 +20,11 @@ function init(c) {
 function flags(gl) {
   gl.blendEquation(gl.FUNC_ADD)
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
-  //gl.blendColor(1,1,1,1)
+  gl.blendColor(1,1,1,1)
 }
 
 function bindEvents(canvas) {
   setInterval(resizeCanvas, 100)
-
 
   function resizeCanvas(v) {
     pathgl.uniform('resolution', [canvas.width || 960, canvas.height || 500])

@@ -32,33 +32,29 @@ var particleShader = [
 ].join('\n')
 
 var since = Date.now()
-pathgl.sim.particles = function (size) {
-  size = nextSquare(size)
-  var width = Math.sqrt(size)
+pathgl.sim.particles = function (s) {
+  var size  = nextSquare(s)
+    , width = Math.sqrt(size)
     , height = width
     , particleIndex = 0
 
   var texture = pathgl.texture(size)
 
-  var k = pathgl.shader()
-          .map(particleShader)
-          .read(texture)
+  var k = pathgl.shader().map(particleShader)
 
-  texture.pipe(k)
   k.pipe(texture)
-
+  texture.pipe(k)
   start()
-  return extend(k.render, {
-    emit: emit
-  , reverse: reversePolarity
-  })
+
+  k.render.repeat()
+
+  return extend(texture, { emit: emit, reverse: reversePolarity })
 
   function reversePolarity () {
     pathgl.uniform('gravity', pathgl.uniform('gravity') * -1)
   }
 
   function start () {
-    console.log('start')
     pathgl.uniform('dimensions', [width, height])
     pathgl.uniform('gravity', 1)
     pathgl.uniform('inertia', 0.005)
@@ -71,36 +67,33 @@ pathgl.sim.particles = function (size) {
     addParticles(gl, texture.texture, ammount || size * Math.random(), origin || [0,0])
   }
 
-  function addParticles(gl, tex, count, origin, velocities) {
-    velocities = velocities || { x:0, y:0 }
-    gl.activeTexture( gl.TEXTURE0 + tex.unit)
+  function addParticles(gl, tex, count, origin, vel) {
+    var x = ~~(particleIndex % width)
+      , y = ~~(particleIndex / height)
+      , chunks = [{ x: x, y: y, size: count }]
+      , i, j, chunk, data
+
+    vel = vel || { x:0, y:0 }
+    //gl.activeTexture( gl.TEXTURE0 + tex.unit)
     gl.bindTexture(gl.TEXTURE_2D, tex)
 
-    var x = ~~(particleIndex % width)
-    var y = ~~(particleIndex / height)
-    var chunks = [{ x: x, y: y, size: count }]
-
-    ;(function split( chunk ) {
-      var boundary = chunk.x + chunk.size;
-      if (boundary > width) {
-        var delta = boundary - width
-        chunk.size -= delta;
-        chunk = { x: 0, y: ( chunk.y + 1 ) % height, size: delta }
-        chunks.push(chunk)
-        split(chunk)
-      }
+    ;(function split(chunk) {
+      var boundary = chunk.x + chunk.size
+      if (boundary < width) return
+      var delta = boundary - width
+      chunk.size -= delta
+      chunk = { x: 0, y:(chunk.y + 1) % height, size: delta }
+      chunks.push(chunk)
+      split(chunk)
     })(chunks[0])
 
-    var i, j, chunk, data, force = 1.0;
     for (i = 0; i < chunks.length; i++) {
       chunk = chunks[i]
       data = []
-      for (j = 0; j < chunk.size; j++) {
-        data.push(origin[0], origin[1],
-                  velocities.x + force * random(-1.0, 1.0),
-                  velocities.y + force * random(-1.0, 1.0)
-                 )
-      }
+      for (j = 0; j < chunk.size; j++) data.push(origin[0], origin[1],
+                                                 vel.x + random(-1.0, 1.0),
+                                                 vel.y + random(-1.0, 1.0)
+                                                )
 
       gl.texSubImage2D(gl.TEXTURE_2D, 0, chunk.x, chunk.y, chunk.size, 1,
                        gl.RGBA, gl.FLOAT, new Float32Array(data))
@@ -111,6 +104,6 @@ pathgl.sim.particles = function (size) {
   }
 }
 
-function random (min, max) {
-  return Math.random() * ( max - min );
+function random(min, max) {
+  return Math.random() * (max - min)
 }

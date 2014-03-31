@@ -198,7 +198,6 @@ function shader() {
 
   function read(src) {
     dependencies.push(src)
-    src.unit = 0
     this.render.__renderTarget__.bind(src)
 
     return this
@@ -210,8 +209,6 @@ function shader() {
 
   function map (shader, start) {
     self.render = new RenderTexture(createProgram(gl, simulation_vs, shader, ['pos']), {})
-
-
     return this
   }
 
@@ -384,12 +381,11 @@ function glslTypedef(type) {
 function flags(gl) {
   gl.blendEquation(gl.FUNC_ADD)
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
-  //gl.blendColor(1,1,1,1)
+  gl.blendColor(1,1,1,1)
 }
 
 function bindEvents(canvas) {
   setInterval(resizeCanvas, 100)
-
 
   function resizeCanvas(v) {
     pathgl.uniform('resolution', [canvas.width || 960, canvas.height || 500])
@@ -627,16 +623,15 @@ function RenderTarget(screen) {
 
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 
-  initFbo.call(screen)
+  fbo = initFbo.call(screen)
 
-  return screen.__renderTarget__ =
-    { update: update, append: append, bind: bind }
+  return screen.__renderTarget__ = { update: update, append: append, bind: bind }
 
   function bind (dest) {
     screen.width = dest.width
     screen.height = dest.height
     screen.texture = dest.texture
-    initFbo.call(screen)
+    fbo = initFbo.call(screen)
   }
 
   function append(el) {
@@ -687,12 +682,13 @@ function buildBuffers(gl, types) {
 }
 
 function initFbo() {
-  if (! this.fbo) return
+  if (! this.fbo || ! this.texture) return
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
   this.fbo.width = screen.width
   this.fbo.height = screen.height
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, null)
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+  return this.fbo
 }
 ;//regexes sourced from sizzle
 function querySelectorAll(selector, r) {
@@ -899,7 +895,6 @@ var baseProto = {
   }
 
 , setAttribute: function (name, value) {
-    if (value.ctr == Texture) value = + value
     this.attr[name] = value
     this[name] && this[name](value)
   }
@@ -972,7 +967,6 @@ var attrDefaults = {
 }
 ;var Texture = {
   init: initTexture
-, pipe: pipeTexture
 , update: function () {
     this.data ?
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) :
@@ -1046,12 +1040,16 @@ function RenderTexture(prog, options) {
   }, options)
 
   this.__renderTarget__ = RenderTarget(this)
+  
   this.update = function () {
     this.step && this.step()
     this.__renderTarget__.update()
     this.__renderTarget__.update()
   }
-  Texture.init.call(this)
+
+  if (this.texture)
+    Texture.init.call(this)
+
   this.unwrap = Texture.unwrap
   this.repeat = Texture.repeat
   this.size = Texture.size
@@ -1106,7 +1104,7 @@ function isShader(str) {
 }
 
 function pipeTexture(destination) {
-
+  destination.read(this)
 }
 
 function unwrap() {
@@ -1147,33 +1145,29 @@ var particleShader = [
 ].join('\n')
 
 var since = Date.now()
-pathgl.sim.particles = function (size) {
-  size = nextSquare(size)
-  var width = Math.sqrt(size)
+pathgl.sim.particles = function (s) {
+  var size  = nextSquare(s)
+    , width = Math.sqrt(size)
     , height = width
     , particleIndex = 0
 
   var texture = pathgl.texture(size)
 
-  var k = pathgl.shader()
-          .map(particleShader)
-          .read(texture)
+  var k = pathgl.shader().map(particleShader)
 
-  texture.pipe(k)
   k.pipe(texture)
-
+  texture.pipe(k)
   start()
-  return extend(k.render, {
-    emit: emit
-  , reverse: reversePolarity
-  })
+
+  k.render.repeat()
+
+  return extend(texture, { emit: emit, reverse: reversePolarity })
 
   function reversePolarity () {
     pathgl.uniform('gravity', pathgl.uniform('gravity') * -1)
   }
 
   function start () {
-    console.log('start')
     pathgl.uniform('dimensions', [width, height])
     pathgl.uniform('gravity', 1)
     pathgl.uniform('inertia', 0.005)
@@ -1186,36 +1180,33 @@ pathgl.sim.particles = function (size) {
     addParticles(gl, texture.texture, ammount || size * Math.random(), origin || [0,0])
   }
 
-  function addParticles(gl, tex, count, origin, velocities) {
-    velocities = velocities || { x:0, y:0 }
-    gl.activeTexture( gl.TEXTURE0 + tex.unit)
+  function addParticles(gl, tex, count, origin, vel) {
+    var x = ~~(particleIndex % width)
+      , y = ~~(particleIndex / height)
+      , chunks = [{ x: x, y: y, size: count }]
+      , i, j, chunk, data
+
+    vel = vel || { x:0, y:0 }
+    //gl.activeTexture( gl.TEXTURE0 + tex.unit)
     gl.bindTexture(gl.TEXTURE_2D, tex)
 
-    var x = ~~(particleIndex % width)
-    var y = ~~(particleIndex / height)
-    var chunks = [{ x: x, y: y, size: count }]
-
-    ;(function split( chunk ) {
-      var boundary = chunk.x + chunk.size;
-      if (boundary > width) {
-        var delta = boundary - width
-        chunk.size -= delta;
-        chunk = { x: 0, y: ( chunk.y + 1 ) % height, size: delta }
-        chunks.push(chunk)
-        split(chunk)
-      }
+    ;(function split(chunk) {
+      var boundary = chunk.x + chunk.size
+      if (boundary < width) return
+      var delta = boundary - width
+      chunk.size -= delta
+      chunk = { x: 0, y:(chunk.y + 1) % height, size: delta }
+      chunks.push(chunk)
+      split(chunk)
     })(chunks[0])
 
-    var i, j, chunk, data, force = 1.0;
     for (i = 0; i < chunks.length; i++) {
       chunk = chunks[i]
       data = []
-      for (j = 0; j < chunk.size; j++) {
-        data.push(origin[0], origin[1],
-                  velocities.x + force * random(-1.0, 1.0),
-                  velocities.y + force * random(-1.0, 1.0)
-                 )
-      }
+      for (j = 0; j < chunk.size; j++) data.push(origin[0], origin[1],
+                                                 vel.x + random(-1.0, 1.0),
+                                                 vel.y + random(-1.0, 1.0)
+                                                )
 
       gl.texSubImage2D(gl.TEXTURE_2D, 0, chunk.x, chunk.y, chunk.size, 1,
                        gl.RGBA, gl.FLOAT, new Float32Array(data))
@@ -1226,7 +1217,7 @@ pathgl.sim.particles = function (size) {
   }
 }
 
-function random (min, max) {
-  return Math.random() * ( max - min );
+function random(min, max) {
+  return Math.random() * (max - min)
 }
  }()

@@ -141,7 +141,6 @@ var baseProto = {
   }
 
 , setAttribute: function (name, value) {
-    if (value.ctr == Texture) value = + value
     this.attr[name] = value
     this[name] && this[name](value)
   }

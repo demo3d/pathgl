@@ -90,16 +90,15 @@ function RenderTarget(screen) {
 
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 
-  initFbo.call(screen)
+  fbo = initFbo.call(screen)
 
-  return screen.__renderTarget__ =
-    { update: update, append: append, bind: bind }
+  return screen.__renderTarget__ = { update: update, append: append, bind: bind }
 
   function bind (dest) {
     screen.width = dest.width
     screen.height = dest.height
     screen.texture = dest.texture
-    initFbo.call(screen)
+    fbo = initFbo.call(screen)
   }
 
   function append(el) {
@@ -150,10 +149,11 @@ function buildBuffers(gl, types) {
 }
 
 function initFbo() {
-  if (! this.fbo) return
+  if (! this.fbo || ! this.texture) return
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
   this.fbo.width = screen.width
   this.fbo.height = screen.height
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, null)
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+  return this.fbo
 }

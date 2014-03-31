@@ -1,6 +1,5 @@
 var Texture = {
   init: initTexture
-, pipe: pipeTexture
 , update: function () {
     this.data ?
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) :
@@ -74,12 +73,16 @@ function RenderTexture(prog, options) {
   }, options)
 
   this.__renderTarget__ = RenderTarget(this)
+  
   this.update = function () {
     this.step && this.step()
     this.__renderTarget__.update()
     this.__renderTarget__.update()
   }
-  Texture.init.call(this)
+
+  if (this.texture)
+    Texture.init.call(this)
+
   this.unwrap = Texture.unwrap
   this.repeat = Texture.repeat
   this.size = Texture.size
@@ -134,7 +137,7 @@ function isShader(str) {
 }
 
 function pipeTexture(destination) {
-
+  destination.read(this)
 }
 
 function unwrap() {
