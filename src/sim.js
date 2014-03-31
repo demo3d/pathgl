@@ -68,7 +68,6 @@ pathgl.sim.particles = function (s) {
     var x = ~~(particleIndex % width)
       , y = ~~(particleIndex / height)
       , chunks = [{ x: x, y: y, size: count }]
-      , i, j, chunk, data
 
     ;(function recur(chunk) {
       var boundary = chunk.x + chunk.size
@@ -79,16 +78,13 @@ pathgl.sim.particles = function (s) {
       recur(chunk)
     })(chunks[0])
 
-    for (i = 0; i < chunks.length; i++) {
-      chunk = chunks[i]
-      data = []
-      j = -1
-
+    chunks.forEach(function (chunk) {
+      var data = [], j = -1
       while(++j < chunk.size)
         data.push(origin[0], origin[1], random(-1.0, 1.0), random(-1.0, 1.0))
 
       texture.subImage(chunk.x, chunk.y, chunk.size, data)
-    }
+    })
 
     particleIndex += count
     particleIndex %= size

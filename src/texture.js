@@ -61,7 +61,7 @@ Texture.prototype = {
                    gl.RGBA, gl.FLOAT, new Float32Array(data))
   }
 , repeat: function () {
-    this.task = this.update.bind(this)
+    this.task = function () { this.update() }.bind(this)
     tasks.push(this.task)
     return this
   }
@@ -71,6 +71,7 @@ Texture.prototype = {
     delete this.task
   }
 , appendChild: function (el) {
+    if (! this.__renderTarget__) renderable.call(this)
     return this.__scene__[this.__scene__.length] = this.__renderTarget__.append(el.tagName || el)
   }
 , valueOf: function () {
@@ -129,5 +130,9 @@ function unwrap() {
 function renderable() {
   this.fbo =  gl.createFramebuffer()
   this.__renderTarget__ = RenderTarget(this)
-  this.update = this.__renderTarget__.update
+  var save  = this.update
+  this.update = function () {
+    save.call(this)
+     this.__renderTarget__.update()
+  }
 }

@@ -8,7 +8,7 @@ var inited = 0
 var tasksOnce = []
 pathgl.texture = function (image) {
   if (! inited) pathgl.init('canvas')
-  return new Texture(image)
+  return new Texture(image || false)
 }
 
 pathgl.uniform = function (attr, value) {
@@ -1062,7 +1062,7 @@ Texture.prototype = {
                    gl.RGBA, gl.FLOAT, new Float32Array(data))
   }
 , repeat: function () {
-    this.task = this.update.bind(this)
+    this.task = function () { this.update() }.bind(this)
     tasks.push(this.task)
     return this
   }
@@ -1072,6 +1072,7 @@ Texture.prototype = {
     delete this.task
   }
 , appendChild: function (el) {
+    if (! this.__renderTarget__) renderable.call(this)
     return this.__scene__[this.__scene__.length] = this.__renderTarget__.append(el.tagName || el)
   }
 , valueOf: function () {
@@ -1130,7 +1131,11 @@ function unwrap() {
 function renderable() {
   this.fbo =  gl.createFramebuffer()
   this.__renderTarget__ = RenderTarget(this)
-  this.update = this.__renderTarget__.update
+  var save  = this.update
+  this.update = function () {
+    save.call(this)
+     this.__renderTarget__.update()
+  }
 };;var simulation_vs = [
   'precision mediump float;'
 , 'attribute vec2 pos;'
@@ -1201,7 +1206,6 @@ pathgl.sim.particles = function (s) {
     var x = ~~(particleIndex % width)
       , y = ~~(particleIndex / height)
       , chunks = [{ x: x, y: y, size: count }]
-      , i, j, chunk, data
 
     ;(function recur(chunk) {
       var boundary = chunk.x + chunk.size
@@ -1212,16 +1216,13 @@ pathgl.sim.particles = function (s) {
       recur(chunk)
     })(chunks[0])
 
-    for (i = 0; i < chunks.length; i++) {
-      chunk = chunks[i]
-      data = []
-      j = -1
-
+    chunks.forEach(function (chunk) {
+      var data = [], j = -1
       while(++j < chunk.size)
         data.push(origin[0], origin[1], random(-1.0, 1.0), random(-1.0, 1.0))
 
       texture.subImage(chunk.x, chunk.y, chunk.size, data)
-    }
+    })
 
     particleIndex += count
     particleIndex %= size

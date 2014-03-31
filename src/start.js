@@ -7,7 +7,7 @@ var inited = 0
 var tasksOnce = []
 pathgl.texture = function (image) {
   if (! inited) pathgl.init('canvas')
-  return new Texture(image)
+  return new Texture(image || false)
 }
 
 pathgl.uniform = function (attr, value) {
