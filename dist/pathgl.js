@@ -177,13 +177,13 @@ var cssColors = {
 , "tomato": 0xFF6347, "turquoise": 0x40E0D0, "violet": 0xEE82EE, "wheat": 0xF5DEB3, "white": 0xFFFFFF, "whitesmoke": 0xF5F5F5
 , "yellow": 0xFFFF00, "yellowgreen": 0x9ACD32
 }
-;pathgl.shader = kernel
+;pathgl.shader = shader
 
-function kernel () {
-  var source = []
+function shader() {
+  var dependencies = []
     , target = null
     , blockSize
-  , render
+    , render
 
   var self = {
       read: read
@@ -191,14 +191,16 @@ function kernel () {
     , map: map
     , match: matchWith
     , exec: exec
+    , pipe: pipe
   }
 
   return self
 
-  function read() {
-    source = [].slice.call(arguments)
-    source.forEach(function (ctx) { ctx.register(self) })
-    blockSize = blockSize || source.width
+  function read(src) {
+    dependencies.push(src)
+    src.unit = 0
+    this.render.__renderTarget__.bind(src)
+
     return this
   }
 
@@ -207,10 +209,7 @@ function kernel () {
   }
 
   function map (shader, start) {
-    self.render = new ShaderTexture(shader, {
-      width: source[0].width, height: source[0].height
-    , texture: source[0].texture
-    })
+    self.render = new RenderTexture(createProgram(gl, simulation_vs, shader, ['pos']), {})
 
 
     return this
@@ -631,7 +630,14 @@ function RenderTarget(screen) {
   initFbo.call(screen)
 
   return screen.__renderTarget__ =
-    { update: update, append: append }
+    { update: update, append: append, bind: bind }
+
+  function bind (dest) {
+    screen.width = dest.width
+    screen.height = dest.height
+    screen.texture = dest.texture
+    initFbo.call(screen)
+  }
 
   function append(el) {
     return (types[el.toLowerCase()] || console.log.bind(console, 'oops'))(el)
@@ -680,7 +686,7 @@ function buildBuffers(gl, types) {
   return [pointMesh, lineMesh]
 }
 
-function initFbo(width, height) {
+function initFbo() {
   if (! this.fbo) return
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
   this.fbo.width = screen.width
@@ -1025,11 +1031,6 @@ var attrDefaults = {
 , unwrap: unwrap
 }
 
-extend(RenderTexture.prototype, appendable, Texture, {
-  update: function () {
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, this.data || null)
-  }
-})
 extend(DataTexture.prototype, Texture, {})
 
 function RenderTexture(prog, options) {
@@ -1037,9 +1038,6 @@ function RenderTexture(prog, options) {
     fbo: gl.createFramebuffer()
   , program: prog || program
   , gl: gl
-  , texture: gl.createTexture()
-  , width: 512
-  , height: 512
   , mesh: Mesh(gl, { pos: { array: Quad(), size: 2 }
                    , attrList: ['pos']
                    , count: 4
@@ -1047,23 +1045,19 @@ function RenderTexture(prog, options) {
                    })
   }, options)
 
-  this.texture.unit = 0
-
-  this.init()
   this.__renderTarget__ = RenderTarget(this)
-  console.log('beforestart')
-
   this.update = function () {
     this.step && this.step()
     this.__renderTarget__.update()
     this.__renderTarget__.update()
   }
-}
-
-function ShaderTexture (shader, options) {
-  var prog = createProgram(gl, simulation_vs, shader, ['pos'])
-  extend(options, {})
-  return new RenderTexture(prog, options)
+  Texture.init.call(this)
+  this.unwrap = Texture.unwrap
+  this.repeat = Texture.repeat
+  this.size = Texture.size
+  this.x = Texture.x
+  this.y = Texture.y
+  this.z = Texture.z
 }
 
 function DataTexture (image, options, target) {
@@ -1076,6 +1070,7 @@ function DataTexture (image, options, target) {
   , texture: gl.createTexture()
   , width: image.width || 512
   , height: image.height || 512
+  , unit: 0
   }, options)
 
   this.load()
@@ -1161,8 +1156,11 @@ pathgl.sim.particles = function (size) {
   var texture = pathgl.texture(size)
 
   var k = pathgl.shader()
-          .read(texture)
           .map(particleShader)
+          .read(texture)
+
+  texture.pipe(k)
+  k.pipe(texture)
 
   start()
   return extend(k.render, {

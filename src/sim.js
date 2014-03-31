@@ -41,8 +41,11 @@ pathgl.sim.particles = function (size) {
   var texture = pathgl.texture(size)
 
   var k = pathgl.shader()
-          .read(texture)
           .map(particleShader)
+          .read(texture)
+
+  texture.pipe(k)
+  k.pipe(texture)
 
   start()
   return extend(k.render, {

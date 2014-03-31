@@ -93,7 +93,14 @@ function RenderTarget(screen) {
   initFbo.call(screen)
 
   return screen.__renderTarget__ =
-    { update: update, append: append }
+    { update: update, append: append, bind: bind }
+
+  function bind (dest) {
+    screen.width = dest.width
+    screen.height = dest.height
+    screen.texture = dest.texture
+    initFbo.call(screen)
+  }
 
   function append(el) {
     return (types[el.toLowerCase()] || console.log.bind(console, 'oops'))(el)
@@ -142,7 +149,7 @@ function buildBuffers(gl, types) {
   return [pointMesh, lineMesh]
 }
 
-function initFbo(width, height) {
+function initFbo() {
   if (! this.fbo) return
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
   this.fbo.width = screen.width

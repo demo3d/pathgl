@@ -59,11 +59,6 @@ var Texture = {
 , unwrap: unwrap
 }
 
-extend(RenderTexture.prototype, appendable, Texture, {
-  update: function () {
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, this.data || null)
-  }
-})
 extend(DataTexture.prototype, Texture, {})
 
 function RenderTexture(prog, options) {
@@ -71,9 +66,6 @@ function RenderTexture(prog, options) {
     fbo: gl.createFramebuffer()
   , program: prog || program
   , gl: gl
-  , texture: gl.createTexture()
-  , width: 512
-  , height: 512
   , mesh: Mesh(gl, { pos: { array: Quad(), size: 2 }
                    , attrList: ['pos']
                    , count: 4
@@ -81,23 +73,19 @@ function RenderTexture(prog, options) {
                    })
   }, options)
 
-  this.texture.unit = 0
-
-  this.init()
   this.__renderTarget__ = RenderTarget(this)
-  console.log('beforestart')
-
   this.update = function () {
     this.step && this.step()
     this.__renderTarget__.update()
     this.__renderTarget__.update()
   }
-}
-
-function ShaderTexture (shader, options) {
-  var prog = createProgram(gl, simulation_vs, shader, ['pos'])
-  extend(options, {})
-  return new RenderTexture(prog, options)
+  Texture.init.call(this)
+  this.unwrap = Texture.unwrap
+  this.repeat = Texture.repeat
+  this.size = Texture.size
+  this.x = Texture.x
+  this.y = Texture.y
+  this.z = Texture.z
 }
 
 function DataTexture (image, options, target) {
@@ -110,6 +98,7 @@ function DataTexture (image, options, target) {
   , texture: gl.createTexture()
   , width: image.width || 512
   , height: image.height || 512
+  , unit: 0
   }, options)
 
   this.load()

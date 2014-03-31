@@ -1,10 +1,10 @@
-pathgl.shader = kernel
+pathgl.shader = shader
 
-function kernel () {
-  var source = []
+function shader() {
+  var dependencies = []
     , target = null
     , blockSize
-  , render
+    , render
 
   var self = {
       read: read
@@ -12,14 +12,16 @@ function kernel () {
     , map: map
     , match: matchWith
     , exec: exec
+    , pipe: pipe
   }
 
   return self
 
-  function read() {
-    source = [].slice.call(arguments)
-    source.forEach(function (ctx) { ctx.register(self) })
-    blockSize = blockSize || source.width
+  function read(src) {
+    dependencies.push(src)
+    src.unit = 0
+    this.render.__renderTarget__.bind(src)
+
     return this
   }
 
@@ -28,10 +30,7 @@ function kernel () {
   }
 
   function map (shader, start) {
-    self.render = new ShaderTexture(shader, {
-      width: source[0].width, height: source[0].height
-    , texture: source[0].texture
-    })
+    self.render = new RenderTexture(createProgram(gl, simulation_vs, shader, ['pos']), {})
 
 
     return this
