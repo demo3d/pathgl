@@ -24,8 +24,8 @@ var particleShader = [
         , 'if (pos.y > 1.) { vel.y *= -1.; pos.y = 1.; } '
         , 'if (pos.x < 0.) { vel.x *= -1.; pos.x = 0.; } '
         , 'if (pos.y < 0.) { vel.y *= -1.; pos.y = 0.; } '
-        , 'pos += vel * inertia;'
-        , 'vel += gravity * normalize(TARGET - pos) * 0.05;'
+        , 'pos += vel  * .005 / sqrt(distance(pos, TARGET));'
+        , 'vel += gravity * normalize(TARGET - pos) * inertia;'
         , 'vel *= drag;'
         , 'gl_FragColor = vec4(pos, vel);'
      , '}'
@@ -40,13 +40,13 @@ pathgl.sim.particles = function (s) {
 
   var texture = pathgl.texture(size)
 
-  var k = pathgl.shader().map(particleShader)
+  var shader = pathgl.shader().map(particleShader)
 
-  k.pipe(texture)
-  texture.pipe(k)
+  shader.pipe(texture)
+  texture.pipe(shader)
   start()
-
-  k.render.repeat()
+  setInterval(shader.render.update, 16)
+  //shader.invalidate()
 
   return extend(texture, { emit: emit, reverse: reversePolarity })
 
@@ -57,7 +57,7 @@ pathgl.sim.particles = function (s) {
   function start () {
     pathgl.uniform('dimensions', [width, height])
     pathgl.uniform('gravity', 1)
-    pathgl.uniform('inertia', 0.005)
+    pathgl.uniform('inertia', 0.05)
     pathgl.uniform('drag', 0.991)
     addParticles(gl, texture.texture, size / 2, [1,2].map(Math.random))
     addParticles(gl, texture.texture, size, [1,2].map(Math.random))
@@ -90,10 +90,11 @@ pathgl.sim.particles = function (s) {
     for (i = 0; i < chunks.length; i++) {
       chunk = chunks[i]
       data = []
-      for (j = 0; j < chunk.size; j++) data.push(origin[0], origin[1],
-                                                 vel.x + random(-1.0, 1.0),
-                                                 vel.y + random(-1.0, 1.0)
-                                                )
+      j = -1
+      while(++j < chunk.size) data.push(origin[0], origin[1],
+                                        vel.x + random(-1.0, 1.0),
+                                        vel.y + random(-1.0, 1.0)
+                                       )
 
       gl.texSubImage2D(gl.TEXTURE_2D, 0, chunk.x, chunk.y, chunk.size, 1,
                        gl.RGBA, gl.FLOAT, new Float32Array(data))

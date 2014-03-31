@@ -179,36 +179,56 @@ var cssColors = {
 }
 ;pathgl.shader = shader
 
+function RenderTexture(prog, options) {
+  extend(this, {
+    fbo: gl.createFramebuffer()
+  , program: prog || program
+  , gl: gl
+  , mesh: Mesh(gl, { pos: { array: Quad(), size: 2 }
+                   , attrList: ['pos']
+                   , count: 4
+                   , primitive: 'triangle_strip'
+                   })
+  }, options)
+
+  this.__renderTarget__ = RenderTarget(this)
+  this.update = function () {
+                  console.log('hi')
+                  this.__renderTarget__.update()
+                }.bind(this)
+
+  this.repeat = Texture.repeat
+}
+
+
 function shader() {
-  var dependencies = []
+  var dependents = []
     , target = null
     , blockSize
     , render
 
   var self = {
       read: read
-    , write: write
     , map: map
     , match: matchWith
-    , exec: exec
     , pipe: pipe
+    , invalidate: function () {
+        this.render.update()
+        dependents.forEach(function (d) {
+          d.invalidate()
+        })
+      }
   }
 
   return self
 
-  function read(src) {
-    dependencies.push(src)
-    this.render.__renderTarget__.bind(src)
-
-    return this
-  }
-
-  function write() {
-    return this
+  function read(tex) {
+    this.render.__renderTarget__.drawTo(tex)
   }
 
   function map (shader, start) {
-    self.render = new RenderTexture(createProgram(gl, simulation_vs, shader, ['pos']), {})
+    self.render =
+      new RenderTexture(createProgram(gl, simulation_vs, shader, ['pos']), {})
     return this
   }
 
@@ -216,12 +236,9 @@ function shader() {
     return this
   }
 
-  function exec() {
-    return this
+  function pipe (ctx) {
+    dependents.push(ctx)
   }
-
-  function pipe () {}
-
 }
 ;pathgl.vertexShader = [
   'precision mediump float;'
@@ -332,7 +349,7 @@ function build_vs(subst) {
 
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? 1. + ( abs(texture2D(texture, abs(pos.xy)).w) + abs(texture2D(texture, abs(pos.xy)).z))  : (2. * pos.z)'
+    , r: '(pos.z < 0.) ? 2. + ( abs(texture2D(texture, abs(pos.xy)).w) + abs(texture2D(texture, abs(pos.xy)).z)) / 2.  : (2. * pos.z)'
     , x: '(pos.x < 1.) ? texture2D(texture, abs(pos.xy)).x * resolution.x : pos.x'
     , y: '(pos.y < 1.) ? texture2D(texture, abs(pos.xy)).y * resolution.y: pos.y'
     }, subst)
@@ -625,9 +642,9 @@ function RenderTarget(screen) {
 
   fbo = initFbo.call(screen)
 
-  return screen.__renderTarget__ = { update: update, append: append, bind: bind }
+  return screen.__renderTarget__ = { update: update, append: append, drawTo: drawTo }
 
-  function bind (dest) {
+  function drawTo(dest) {
     screen.width = dest.width
     screen.height = dest.height
     screen.texture = dest.texture
@@ -682,12 +699,14 @@ function buildBuffers(gl, types) {
 }
 
 function initFbo() {
+
   if (! this.fbo || ! this.texture) return
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
   this.fbo.width = screen.width
   this.fbo.height = screen.height
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, null)
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+
   return this.fbo
 }
 ;//regexes sourced from sizzle
@@ -1027,38 +1046,7 @@ var attrDefaults = {
 
 extend(DataTexture.prototype, Texture, {})
 
-function RenderTexture(prog, options) {
-  extend(this, {
-    fbo: gl.createFramebuffer()
-  , program: prog || program
-  , gl: gl
-  , mesh: Mesh(gl, { pos: { array: Quad(), size: 2 }
-                   , attrList: ['pos']
-                   , count: 4
-                   , primitive: 'triangle_strip'
-                   })
-  }, options)
-
-  this.__renderTarget__ = RenderTarget(this)
-  
-  this.update = function () {
-    this.step && this.step()
-    this.__renderTarget__.update()
-    this.__renderTarget__.update()
-  }
-
-  if (this.texture)
-    Texture.init.call(this)
-
-  this.unwrap = Texture.unwrap
-  this.repeat = Texture.repeat
-  this.size = Texture.size
-  this.x = Texture.x
-  this.y = Texture.y
-  this.z = Texture.z
-}
-
-function DataTexture (image, options, target) {
+function DataTexture (image, options) {
   if ('string' == typeof image) image = parseImage(image)
   if ('number' == typeof image) options.width = options.height = Math.sqrt(image), image = false
 
@@ -1069,6 +1057,11 @@ function DataTexture (image, options, target) {
   , width: image.width || 512
   , height: image.height || 512
   , unit: 0
+  , dependents: []
+  , invalidate: function () {
+      var deps = this.dependents
+      setTimeout(function () { deps.forEach(function (d) { d.invalidate() }) }, 16)
+    }
   }, options)
 
   this.load()
@@ -1103,14 +1096,21 @@ function isShader(str) {
   return str.length > 50
 }
 
-function pipeTexture(destination) {
-  destination.read(this)
+function pipeTexture(ctx) {
+  this.dependents.push(ctx)
+  ctx.read(this)
 }
 
 function unwrap() {
   var i = this.size() || 0, uv = new Array(i)
   while(i--) uv[i] = { x: this.x()(i, i), y: this.y(i, i)(i, i), z: this.z(i, i)(i, i) }
   return uv
+}
+
+function renderable() {
+  this.fbo =  gl.createFramebuffer()
+  this.__renderTarget__ = RenderTarget(this)
+  this.update = this.__renderTarget__.update
 };;var simulation_vs = [
   'precision mediump float;'
 , 'attribute vec2 pos;'
@@ -1137,8 +1137,8 @@ var particleShader = [
         , 'if (pos.y > 1.) { vel.y *= -1.; pos.y = 1.; } '
         , 'if (pos.x < 0.) { vel.x *= -1.; pos.x = 0.; } '
         , 'if (pos.y < 0.) { vel.y *= -1.; pos.y = 0.; } '
-        , 'pos += vel * inertia;'
-        , 'vel += gravity * normalize(TARGET - pos) * 0.05;'
+        , 'pos += vel  * .005 / sqrt(distance(pos, TARGET));'
+        , 'vel += gravity * normalize(TARGET - pos) * inertia;'
         , 'vel *= drag;'
         , 'gl_FragColor = vec4(pos, vel);'
      , '}'
@@ -1153,13 +1153,13 @@ pathgl.sim.particles = function (s) {
 
   var texture = pathgl.texture(size)
 
-  var k = pathgl.shader().map(particleShader)
+  var shader = pathgl.shader().map(particleShader)
 
-  k.pipe(texture)
-  texture.pipe(k)
+  shader.pipe(texture)
+  texture.pipe(shader)
   start()
-
-  k.render.repeat()
+  setInterval(shader.render.update, 16)
+  //shader.invalidate()
 
   return extend(texture, { emit: emit, reverse: reversePolarity })
 
@@ -1170,7 +1170,7 @@ pathgl.sim.particles = function (s) {
   function start () {
     pathgl.uniform('dimensions', [width, height])
     pathgl.uniform('gravity', 1)
-    pathgl.uniform('inertia', 0.005)
+    pathgl.uniform('inertia', 0.05)
     pathgl.uniform('drag', 0.991)
     addParticles(gl, texture.texture, size / 2, [1,2].map(Math.random))
     addParticles(gl, texture.texture, size, [1,2].map(Math.random))
@@ -1203,10 +1203,11 @@ pathgl.sim.particles = function (s) {
     for (i = 0; i < chunks.length; i++) {
       chunk = chunks[i]
       data = []
-      for (j = 0; j < chunk.size; j++) data.push(origin[0], origin[1],
-                                                 vel.x + random(-1.0, 1.0),
-                                                 vel.y + random(-1.0, 1.0)
-                                                )
+      j = -1
+      while(++j < chunk.size) data.push(origin[0], origin[1],
+                                        vel.x + random(-1.0, 1.0),
+                                        vel.y + random(-1.0, 1.0)
+                                       )
 
       gl.texSubImage2D(gl.TEXTURE_2D, 0, chunk.x, chunk.y, chunk.size, 1,
                        gl.RGBA, gl.FLOAT, new Float32Array(data))

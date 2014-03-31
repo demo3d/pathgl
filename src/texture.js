@@ -60,38 +60,7 @@ var Texture = {
 
 extend(DataTexture.prototype, Texture, {})
 
-function RenderTexture(prog, options) {
-  extend(this, {
-    fbo: gl.createFramebuffer()
-  , program: prog || program
-  , gl: gl
-  , mesh: Mesh(gl, { pos: { array: Quad(), size: 2 }
-                   , attrList: ['pos']
-                   , count: 4
-                   , primitive: 'triangle_strip'
-                   })
-  }, options)
-
-  this.__renderTarget__ = RenderTarget(this)
-  
-  this.update = function () {
-    this.step && this.step()
-    this.__renderTarget__.update()
-    this.__renderTarget__.update()
-  }
-
-  if (this.texture)
-    Texture.init.call(this)
-
-  this.unwrap = Texture.unwrap
-  this.repeat = Texture.repeat
-  this.size = Texture.size
-  this.x = Texture.x
-  this.y = Texture.y
-  this.z = Texture.z
-}
-
-function DataTexture (image, options, target) {
+function DataTexture (image, options) {
   if ('string' == typeof image) image = parseImage(image)
   if ('number' == typeof image) options.width = options.height = Math.sqrt(image), image = false
 
@@ -102,6 +71,11 @@ function DataTexture (image, options, target) {
   , width: image.width || 512
   , height: image.height || 512
   , unit: 0
+  , dependents: []
+  , invalidate: function () {
+      var deps = this.dependents
+      setTimeout(function () { deps.forEach(function (d) { d.invalidate() }) }, 16)
+    }
   }, options)
 
   this.load()
@@ -136,12 +110,19 @@ function isShader(str) {
   return str.length > 50
 }
 
-function pipeTexture(destination) {
-  destination.read(this)
+function pipeTexture(ctx) {
+  this.dependents.push(ctx)
+  ctx.read(this)
 }
 
 function unwrap() {
   var i = this.size() || 0, uv = new Array(i)
   while(i--) uv[i] = { x: this.x()(i, i), y: this.y(i, i)(i, i), z: this.z(i, i)(i, i) }
   return uv
+}
+
+function renderable() {
+  this.fbo =  gl.createFramebuffer()
+  this.__renderTarget__ = RenderTarget(this)
+  this.update = this.__renderTarget__.update
 }
