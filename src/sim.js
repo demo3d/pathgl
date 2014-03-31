@@ -39,15 +39,13 @@ pathgl.sim.particles = function (s) {
     , particleIndex = 0
 
   var texture = pathgl.texture(size)
-
   var shader = pathgl.shader().map(particleShader)
 
   shader.pipe(texture)
   texture.pipe(shader)
   start()
-  setInterval(shader.render.update, 16)
-  //shader.invalidate()
 
+  setTimeout(shader.invalidate)
   return extend(texture, { emit: emit, reverse: reversePolarity })
 
   function reversePolarity () {
@@ -73,14 +71,13 @@ pathgl.sim.particles = function (s) {
       , chunks = [{ x: x, y: y, size: count }]
       , i, j, chunk, data
 
-    ;(function split(chunk) {
+    ;(function recur(chunk) {
       var boundary = chunk.x + chunk.size
+        , delta = boundary - width
       if (boundary < width) return
-      var delta = boundary - width
       chunk.size -= delta
-      chunk = { x: 0, y:(chunk.y + 1) % height, size: delta }
-      chunks.push(chunk)
-      split(chunk)
+      chunks.push(chunk = { x: 0, y:(chunk.y + 1) % height, size: delta })
+      recur(chunk)
     })(chunks[0])
 
     for (i = 0; i < chunks.length; i++) {

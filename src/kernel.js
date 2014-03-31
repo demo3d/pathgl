@@ -16,8 +16,6 @@ function RenderTexture(prog, options) {
   this.update = function () {
                   for(var i = -1; ++i < stepRate;) this.__renderTarget__.update()
                 }.bind(this)
-
-  this.repeat = Texture.repeat
 }
 
 
@@ -33,7 +31,7 @@ function shader() {
     , match: matchWith
     , pipe: pipe
     , invalidate: function () {
-        this.render.update()
+        render && render.update()
         dependents.forEach(function (d) {
           d.invalidate()
         })
@@ -43,12 +41,11 @@ function shader() {
   return self
 
   function read(tex) {
-    this.render.__renderTarget__.drawTo(tex)
+    render.__renderTarget__.drawTo(tex)
   }
 
   function map (shader, start) {
-    self.render =
-      new RenderTexture(createProgram(gl, simulation_vs, shader, ['pos']), {})
+    render = new RenderTexture(createProgram(gl, simulation_vs, shader, ['pos']), {})
     return this
   }
 

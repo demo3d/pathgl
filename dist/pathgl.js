@@ -197,8 +197,6 @@ function RenderTexture(prog, options) {
   this.update = function () {
                   for(var i = -1; ++i < stepRate;) this.__renderTarget__.update()
                 }.bind(this)
-
-  this.repeat = Texture.repeat
 }
 
 
@@ -214,7 +212,7 @@ function shader() {
     , match: matchWith
     , pipe: pipe
     , invalidate: function () {
-        this.render.update()
+        render && render.update()
         dependents.forEach(function (d) {
           d.invalidate()
         })
@@ -224,12 +222,11 @@ function shader() {
   return self
 
   function read(tex) {
-    this.render.__renderTarget__.drawTo(tex)
+    render.__renderTarget__.drawTo(tex)
   }
 
   function map (shader, start) {
-    self.render =
-      new RenderTexture(createProgram(gl, simulation_vs, shader, ['pos']), {})
+    render = new RenderTexture(createProgram(gl, simulation_vs, shader, ['pos']), {})
     return this
   }
 
@@ -1158,15 +1155,13 @@ pathgl.sim.particles = function (s) {
     , particleIndex = 0
 
   var texture = pathgl.texture(size)
-
   var shader = pathgl.shader().map(particleShader)
 
   shader.pipe(texture)
   texture.pipe(shader)
   start()
-  setInterval(shader.render.update, 16)
-  //shader.invalidate()
 
+  setTimeout(shader.invalidate)
   return extend(texture, { emit: emit, reverse: reversePolarity })
 
   function reversePolarity () {
@@ -1192,14 +1187,13 @@ pathgl.sim.particles = function (s) {
       , chunks = [{ x: x, y: y, size: count }]
       , i, j, chunk, data
 
-    ;(function split(chunk) {
+    ;(function recur(chunk) {
       var boundary = chunk.x + chunk.size
+        , delta = boundary - width
       if (boundary < width) return
-      var delta = boundary - width
       chunk.size -= delta
-      chunk = { x: 0, y:(chunk.y + 1) % height, size: delta }
-      chunks.push(chunk)
-      split(chunk)
+      chunks.push(chunk = { x: 0, y:(chunk.y + 1) % height, size: delta })
+      recur(chunk)
     })(chunks[0])
 
     for (i = 0; i < chunks.length; i++) {
