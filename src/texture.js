@@ -118,6 +118,7 @@ function isShader(str) {
 function pipeTexture(ctx) {
   this.dependents.push(ctx)
   ctx.read(this)
+  return this
 }
 
 function unwrap() {

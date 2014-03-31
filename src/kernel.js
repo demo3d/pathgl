@@ -1,29 +1,11 @@
 pathgl.shader = shader
 
-function RenderTexture(prog, options) {
-  extend(this, {
-    fbo: gl.createFramebuffer()
-  , program: prog || program
-  , gl: gl
-  , mesh: Mesh(gl, { pos: { array: Quad(), size: 2 }
-                   , attrList: ['pos']
-                   , count: 4
-                   , primitive: 'triangle_strip'
-                   })
-  }, options)
-  var stepRate = 3
-  this.__renderTarget__ = RenderTarget(this)
-  this.update = function () {
-                  for(var i = -1; ++i < stepRate;) this.__renderTarget__.update()
-                }.bind(this)
-}
-
-
 function shader() {
   var dependents = []
     , target = null
     , blockSize
     , render
+    , stepRate = 2
 
   var self = {
       read: read
@@ -31,23 +13,44 @@ function shader() {
     , match: matchWith
     , pipe: pipe
     , invalidate: function () {
-        render && tasksOnce.push(render.update)
-
+        tasksOnce.push(step)
         dependents.forEach(function (d) {
           d.invalidate()
         })
       }
   }
 
+  var ctx = RenderTarget({
+    fbo: gl.createFramebuffer()
+  , program: createProgram(gl, simulation_vs, particleShader)
+  , gl: gl
+  , mesh: Mesh(gl, { pos: { array: Quad(), size: 2 }
+                   , attrList: ['pos']
+                   , count: 4
+                   , primitive: 'triangle_strip'
+                   })
+  })
+
+  function step() {
+    for(var i = -1; ++i < stepRate;) ctx.update()
+  }
+
   return self
 
   function read(tex) {
-    render.__renderTarget__.drawTo(tex)
+    ctx.drawTo(tex)
   }
 
-  function map (shader, start) {
-    render = new RenderTexture(createProgram(gl, simulation_vs, shader, ['pos']), {})
+  function map (shader) {
+    ctx.mergeProgram(simulation_vs, particleShader)
+    // render = new meow(
+    //   createProgram(gl, simulation_vs, shader),
+    //   {})
     return this
+  }
+
+
+  function draw () {
   }
 
   function matchWith() {
@@ -56,5 +59,6 @@ function shader() {
 
   function pipe (ctx) {
     dependents.push(ctx)
+    return self
   }
 }

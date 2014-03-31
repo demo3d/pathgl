@@ -60,12 +60,12 @@ pathgl.fragmentShader = [
 , '}'
 ].join('\n')
 
-function createProgram(gl, vs, fs, attributes) {
-  var src = vs + '\n' + fs
+function createProgram(gl, vs_src, fs_src, attributes) {
+  var src = vs_src + '\n' + fs_src
   program = gl.createProgram()
 
-  vs = compileShader(gl, gl.VERTEX_SHADER, vs)
-  fs = compileShader(gl, gl.FRAGMENT_SHADER, fs)
+  var vs = compileShader(gl, gl.VERTEX_SHADER, vs_src)
+    , fs = compileShader(gl, gl.FRAGMENT_SHADER, fs_src)
 
   gl.attachShader(program, vs)
   gl.attachShader(program, fs)
@@ -84,6 +84,9 @@ function createProgram(gl, vs, fs, attributes) {
   var re = /uniform\s+(\S+)\s+(\S+)\s*;/g, match = null
   while ((match = re.exec(src)) != null) bindUniform(match[2], match[1])
 
+  program.merge = mergify(vs, fs)
+  program.gl = gl
+
   return program
 
   function bindUniform(key, type) {
@@ -92,30 +95,32 @@ function createProgram(gl, vs, fs, attributes) {
       , keep
     program[key] = function (data) {
       if (keep == data || ! arguments.length) return
+
       gl[method](loc, Array.isArray(data) ? data : [data])
       keep = data
     }
   }
 }
 
-function build_vs(subst) {
-  var vertex = pathgl.vertexShader
+function build_vs(src, subst) {
   each(subst || {}, function (v, k, o) {
     if (k == 'cx') o['x'] = v
     if (k == 'cy') o['y'] = v
   })
 
+    console.log(arguments)
+
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? 2. + ( abs(texture2D(texture, abs(pos.xy)).w) + abs(texture2D(texture, abs(pos.xy)).z)) / 2.  : (2. * pos.z)'
+    , r: '(pos.z < 0.) ? 1. + ( abs(texture2D(texture, abs(pos.xy)).w) + abs(texture2D(texture, abs(pos.xy)).z)) : (2. * pos.z)'
     , x: '(pos.x < 1.) ? texture2D(texture, abs(pos.xy)).x * resolution.x : pos.x'
     , y: '(pos.y < 1.) ? texture2D(texture, abs(pos.xy)).y * resolution.y: pos.y'
     }, subst)
 
   for(var attr in defaults)
-    vertex = vertex.replace('replace_'+attr, defaults[attr])
+    src = src.replace('replace_'+attr, defaults[attr])
 
-  return vertex
+  return src
 }
 
 function compileShader (gl, type, src) {
@@ -133,4 +138,12 @@ function compileShader (gl, type, src) {
 function glslTypedef(type) {
   if (type.match('vec')) return type[type.length - 1]
   return 1
+}
+
+function mergify(vs1, fs1, subst1) {
+  return function (vs2, fs2, subst2) {
+    fs2 = fs2 || pathgl.fragmentShader
+    vs2 = build_vs(vs2, subst2)
+    return createProgram(this.gl, vs2, fs2)
+  }
 }

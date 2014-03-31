@@ -5,7 +5,7 @@ function init(c) {
   if (! gl.getExtension('OES_texture_float'))
     console.warn('does not support floating point textures')
 
-  program = createProgram(gl, build_vs(), pathgl.fragmentShader)
+  program = createProgram(gl, build_vs(pathgl.vertexShader), pathgl.fragmentShader)
   canvas.program = program
   monkeyPatch(canvas)
   bindEvents(canvas)
@@ -31,9 +31,9 @@ function bindEvents(canvas) {
   }
 
   canvas.addEventListener('click', clicked)
-  canvas.addEventListener('mousemove.pathgl', mousemoved)
-  canvas.addEventListener('touchmove.pathgl', touchmoved)
-  canvas.addEventListener('touchstart.pathgl', touchmoved)
+  canvas.addEventListener('mousemove', mousemoved)
+  canvas.addEventListener('touchmove', touchmoved)
+  canvas.addEventListener('touchstart', touchmoved)
 }
 
 function clicked () {}
@@ -87,7 +87,7 @@ function d3_vAttr(attr, fn) {
 }
 
 function d3_shader(attr, name) {
-  this.node().mesh.mergeProgram(attr)
+  this.node().mesh.mergeProgram(pathgl.vertexShader, pathgl.fragmentShader, attr)
   return this
 }
 

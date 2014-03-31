@@ -78,11 +78,11 @@ function Mesh (gl, options, attr) {
 
 function RenderTarget(screen) {
   var gl = screen.gl
-    , i = 0
     , fbo = screen.fbo || null
     , prog = screen.program
     , types = screen.types = SVGProxy()
     , meshes = buildBuffers(gl, screen.types)
+    , i = 0
 
   var bound_textures = false
 
@@ -92,7 +92,11 @@ function RenderTarget(screen) {
 
   fbo = initFbo.call(screen)
 
-  return screen.__renderTarget__ = { update: update, append: append, drawTo: drawTo }
+  return screen.__renderTarget__ = { update: update
+                                   , append: append
+                                   , drawTo: drawTo
+                                   , mergeProgram: mergeProgram
+                                   }
 
   function drawTo(dest) {
     screen.width = dest.width
@@ -105,8 +109,8 @@ function RenderTarget(screen) {
     return (types[el.toLowerCase()] || console.log.bind(console, 'oops'))(el)
   }
 
-  function mergeProgram(d) {
-    prog = createProgram(gl, build_vs(d), pathgl.fragmentShader)
+  function mergeProgram(vs, fs, subst) {
+    prog = prog.merge(vs, fs, subst)
   }
 
   function update () {
@@ -129,7 +133,7 @@ function RenderTarget(screen) {
   function bindTextures () {
     if (screen.texture) gl.bindTexture(gl.TEXTURE_2D, screen.texture)
     // if ((textures[fbo] || []).length && bound_textures)
-    //   gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].texture)
+    // gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].texture)
   }
 
   function beforeRender(gl) {
@@ -149,7 +153,6 @@ function buildBuffers(gl, types) {
 }
 
 function initFbo() {
-
   if (! this.fbo || ! this.texture) return
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
   this.fbo.width = screen.width

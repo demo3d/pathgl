@@ -182,30 +182,12 @@ var cssColors = {
 }
 ;pathgl.shader = shader
 
-function RenderTexture(prog, options) {
-  extend(this, {
-    fbo: gl.createFramebuffer()
-  , program: prog || program
-  , gl: gl
-  , mesh: Mesh(gl, { pos: { array: Quad(), size: 2 }
-                   , attrList: ['pos']
-                   , count: 4
-                   , primitive: 'triangle_strip'
-                   })
-  }, options)
-  var stepRate = 3
-  this.__renderTarget__ = RenderTarget(this)
-  this.update = function () {
-                  for(var i = -1; ++i < stepRate;) this.__renderTarget__.update()
-                }.bind(this)
-}
-
-
 function shader() {
   var dependents = []
     , target = null
     , blockSize
     , render
+    , stepRate = 2
 
   var self = {
       read: read
@@ -213,23 +195,44 @@ function shader() {
     , match: matchWith
     , pipe: pipe
     , invalidate: function () {
-        render && tasksOnce.push(render.update)
-
+        tasksOnce.push(step)
         dependents.forEach(function (d) {
           d.invalidate()
         })
       }
   }
 
+  var ctx = RenderTarget({
+    fbo: gl.createFramebuffer()
+  , program: createProgram(gl, simulation_vs, particleShader)
+  , gl: gl
+  , mesh: Mesh(gl, { pos: { array: Quad(), size: 2 }
+                   , attrList: ['pos']
+                   , count: 4
+                   , primitive: 'triangle_strip'
+                   })
+  })
+
+  function step() {
+    for(var i = -1; ++i < stepRate;) ctx.update()
+  }
+
   return self
 
   function read(tex) {
-    render.__renderTarget__.drawTo(tex)
+    ctx.drawTo(tex)
   }
 
-  function map (shader, start) {
-    render = new RenderTexture(createProgram(gl, simulation_vs, shader, ['pos']), {})
+  function map (shader) {
+    ctx.mergeProgram(simulation_vs, particleShader)
+    // render = new meow(
+    //   createProgram(gl, simulation_vs, shader),
+    //   {})
     return this
+  }
+
+
+  function draw () {
   }
 
   function matchWith() {
@@ -238,6 +241,7 @@ function shader() {
 
   function pipe (ctx) {
     dependents.push(ctx)
+    return self
   }
 }
 ;pathgl.vertexShader = [
@@ -302,12 +306,12 @@ pathgl.fragmentShader = [
 , '}'
 ].join('\n')
 
-function createProgram(gl, vs, fs, attributes) {
-  var src = vs + '\n' + fs
+function createProgram(gl, vs_src, fs_src, attributes) {
+  var src = vs_src + '\n' + fs_src
   program = gl.createProgram()
 
-  vs = compileShader(gl, gl.VERTEX_SHADER, vs)
-  fs = compileShader(gl, gl.FRAGMENT_SHADER, fs)
+  var vs = compileShader(gl, gl.VERTEX_SHADER, vs_src)
+    , fs = compileShader(gl, gl.FRAGMENT_SHADER, fs_src)
 
   gl.attachShader(program, vs)
   gl.attachShader(program, fs)
@@ -326,6 +330,9 @@ function createProgram(gl, vs, fs, attributes) {
   var re = /uniform\s+(\S+)\s+(\S+)\s*;/g, match = null
   while ((match = re.exec(src)) != null) bindUniform(match[2], match[1])
 
+  program.merge = mergify(vs, fs)
+  program.gl = gl
+
   return program
 
   function bindUniform(key, type) {
@@ -334,30 +341,32 @@ function createProgram(gl, vs, fs, attributes) {
       , keep
     program[key] = function (data) {
       if (keep == data || ! arguments.length) return
+
       gl[method](loc, Array.isArray(data) ? data : [data])
       keep = data
     }
   }
 }
 
-function build_vs(subst) {
-  var vertex = pathgl.vertexShader
+function build_vs(src, subst) {
   each(subst || {}, function (v, k, o) {
     if (k == 'cx') o['x'] = v
     if (k == 'cy') o['y'] = v
   })
 
+    console.log(arguments)
+
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? 2. + ( abs(texture2D(texture, abs(pos.xy)).w) + abs(texture2D(texture, abs(pos.xy)).z)) / 2.  : (2. * pos.z)'
+    , r: '(pos.z < 0.) ? 1. + ( abs(texture2D(texture, abs(pos.xy)).w) + abs(texture2D(texture, abs(pos.xy)).z)) : (2. * pos.z)'
     , x: '(pos.x < 1.) ? texture2D(texture, abs(pos.xy)).x * resolution.x : pos.x'
     , y: '(pos.y < 1.) ? texture2D(texture, abs(pos.xy)).y * resolution.y: pos.y'
     }, subst)
 
   for(var attr in defaults)
-    vertex = vertex.replace('replace_'+attr, defaults[attr])
+    src = src.replace('replace_'+attr, defaults[attr])
 
-  return vertex
+  return src
 }
 
 function compileShader (gl, type, src) {
@@ -376,14 +385,21 @@ function glslTypedef(type) {
   if (type.match('vec')) return type[type.length - 1]
   return 1
 }
-;function init(c) {
+
+function mergify(vs1, fs1, subst1) {
+  return function (vs2, fs2, subst2) {
+    fs2 = fs2 || pathgl.fragmentShader
+    vs2 = build_vs(vs2, subst2)
+    return createProgram(this.gl, vs2, fs2)
+  }
+};function init(c) {
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
   if (! gl.getExtension('OES_texture_float'))
     console.warn('does not support floating point textures')
 
-  program = createProgram(gl, build_vs(), pathgl.fragmentShader)
+  program = createProgram(gl, build_vs(pathgl.vertexShader), pathgl.fragmentShader)
   canvas.program = program
   monkeyPatch(canvas)
   bindEvents(canvas)
@@ -409,9 +425,9 @@ function bindEvents(canvas) {
   }
 
   canvas.addEventListener('click', clicked)
-  canvas.addEventListener('mousemove.pathgl', mousemoved)
-  canvas.addEventListener('touchmove.pathgl', touchmoved)
-  canvas.addEventListener('touchstart.pathgl', touchmoved)
+  canvas.addEventListener('mousemove', mousemoved)
+  canvas.addEventListener('touchmove', touchmoved)
+  canvas.addEventListener('touchstart', touchmoved)
 }
 
 function clicked () {}
@@ -465,7 +481,7 @@ function d3_vAttr(attr, fn) {
 }
 
 function d3_shader(attr, name) {
-  this.node().mesh.mergeProgram(attr)
+  this.node().mesh.mergeProgram(pathgl.vertexShader, pathgl.fragmentShader, attr)
   return this
 }
 
@@ -630,11 +646,11 @@ function addEvenLtistener (evt, listener, capture) {
 
 function RenderTarget(screen) {
   var gl = screen.gl
-    , i = 0
     , fbo = screen.fbo || null
     , prog = screen.program
     , types = screen.types = SVGProxy()
     , meshes = buildBuffers(gl, screen.types)
+    , i = 0
 
   var bound_textures = false
 
@@ -644,7 +660,11 @@ function RenderTarget(screen) {
 
   fbo = initFbo.call(screen)
 
-  return screen.__renderTarget__ = { update: update, append: append, drawTo: drawTo }
+  return screen.__renderTarget__ = { update: update
+                                   , append: append
+                                   , drawTo: drawTo
+                                   , mergeProgram: mergeProgram
+                                   }
 
   function drawTo(dest) {
     screen.width = dest.width
@@ -657,8 +677,8 @@ function RenderTarget(screen) {
     return (types[el.toLowerCase()] || console.log.bind(console, 'oops'))(el)
   }
 
-  function mergeProgram(d) {
-    prog = createProgram(gl, build_vs(d), pathgl.fragmentShader)
+  function mergeProgram(vs, fs, subst) {
+    prog = prog.merge(vs, fs, subst)
   }
 
   function update () {
@@ -681,7 +701,7 @@ function RenderTarget(screen) {
   function bindTextures () {
     if (screen.texture) gl.bindTexture(gl.TEXTURE_2D, screen.texture)
     // if ((textures[fbo] || []).length && bound_textures)
-    //   gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].texture)
+    // gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].texture)
   }
 
   function beforeRender(gl) {
@@ -701,7 +721,6 @@ function buildBuffers(gl, types) {
 }
 
 function initFbo() {
-
   if (! this.fbo || ! this.texture) return
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
   this.fbo.width = screen.width
@@ -1106,6 +1125,7 @@ function isShader(str) {
 function pipeTexture(ctx) {
   this.dependents.push(ctx)
   ctx.read(this)
+  return this
 }
 
 function unwrap() {
@@ -1161,11 +1181,10 @@ pathgl.sim.particles = function (s) {
   var texture = pathgl.texture(size)
   var shader = pathgl.shader().map(particleShader)
 
-  shader.pipe(texture)
   texture.pipe(shader)
+  shader.pipe(texture).invalidate()
   start()
 
-  setTimeout(shader.invalidate)
   return extend(texture, { emit: emit, reverse: reversePolarity })
 
   function reversePolarity () {

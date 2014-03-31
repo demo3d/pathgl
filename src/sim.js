@@ -41,11 +41,10 @@ pathgl.sim.particles = function (s) {
   var texture = pathgl.texture(size)
   var shader = pathgl.shader().map(particleShader)
 
-  shader.pipe(texture)
   texture.pipe(shader)
+  shader.pipe(texture).invalidate()
   start()
 
-  setTimeout(shader.invalidate)
   return extend(texture, { emit: emit, reverse: reversePolarity })
 
   function reversePolarity () {
