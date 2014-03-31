@@ -59,21 +59,19 @@ pathgl.sim.particles = function (s) {
     pathgl.uniform('gravity', 1)
     pathgl.uniform('inertia', 0.05)
     pathgl.uniform('drag', 0.991)
-    addParticles(gl, texture, size / 2, [1,2].map(Math.random))
-    addParticles(gl, texture, size, [1,2].map(Math.random))
+    for(var i = -1; ++i < 10;)
+      addParticles(size / 10, [1,2].map(Math.random))
   }
 
   function emit(origin, ammount) {
-    addParticles(gl, texture.texture, ammount || size * Math.random(), origin || [0,0])
+    addParticles(ammount || size * Math.random(), origin || [0,0])
   }
 
-  function addParticles(gl, tex, count, origin, vel) {
+  function addParticles(count, origin) {
     var x = ~~(particleIndex % width)
       , y = ~~(particleIndex / height)
       , chunks = [{ x: x, y: y, size: count }]
       , i, j, chunk, data
-
-    vel = vel || { x:0, y:0 }
 
     ;(function split(chunk) {
       var boundary = chunk.x + chunk.size
@@ -89,12 +87,11 @@ pathgl.sim.particles = function (s) {
       chunk = chunks[i]
       data = []
       j = -1
-      while(++j < chunk.size) data.push(origin[0], origin[1],
-                                        vel.x + random(-1.0, 1.0),
-                                        vel.y + random(-1.0, 1.0)
-                                       )
 
-      texture.subImage(chunk.x, chunk.y, chunk.size, new Float32Array(data))
+      while(++j < chunk.size)
+        data.push(origin[0], origin[1], random(-1.0, 1.0), random(-1.0, 1.0))
+
+      texture.subImage(chunk.x, chunk.y, chunk.size, data)
     }
 
     particleIndex += count

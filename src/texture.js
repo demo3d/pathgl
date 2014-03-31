@@ -37,7 +37,7 @@ var Texture = {
 , subImage: function (x,y, length, data) {
     gl.texSubImage2D(gl.TEXTURE_2D, 0,
                    x, y, length, 1,
-                   gl.RGBA, gl.FLOAT, data)
+                   gl.RGBA, gl.FLOAT, new Float32Array(data))
   }
 , repeat: function () {
     this.task = this.update.bind(this)

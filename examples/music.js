@@ -7,7 +7,7 @@ d3.select('.blurb')
 var size = { width: 960, height: 500 }
 
 var Audio = window.AudioContext || window.webkitAudioContext
-  , numLines = 1024 * 2
+  , numLines = 2e3
   , midX = size.width / 2
   , midY = size.height / 2
   , analyzer

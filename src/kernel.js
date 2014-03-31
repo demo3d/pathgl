@@ -11,11 +11,10 @@ function RenderTexture(prog, options) {
                    , primitive: 'triangle_strip'
                    })
   }, options)
-
+  var stepRate = 3
   this.__renderTarget__ = RenderTarget(this)
   this.update = function () {
-                  console.log('hi')
-                  this.__renderTarget__.update()
+                  for(var i = -1; ++i < stepRate;) this.__renderTarget__.update()
                 }.bind(this)
 
   this.repeat = Texture.repeat
