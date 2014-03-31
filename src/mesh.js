@@ -79,14 +79,14 @@ function Mesh (gl, options, attr) {
 function RenderTarget(screen) {
   var gl = screen.gl
     , fbo = screen.fbo || null
-    , prog = screen.program
+    , prog = screen.program || program
     , types = screen.types = SVGProxy()
-    , meshes = buildBuffers(gl, screen.types)
+    , meshes = screen.mesh ? [screen.mesh] : buildBuffers(gl, screen.types)
     , i = 0
 
   var bound_textures = false
 
-  screen.mesh && meshes.push(screen.mesh)
+
 
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 

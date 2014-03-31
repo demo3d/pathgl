@@ -204,13 +204,8 @@ function shader() {
 
   var ctx = RenderTarget({
     fbo: gl.createFramebuffer()
-  , program: createProgram(gl, simulation_vs, particleShader)
   , gl: gl
-  , mesh: Mesh(gl, { pos: { array: Quad(), size: 2 }
-                   , attrList: ['pos']
-                   , count: 4
-                   , primitive: 'triangle_strip'
-                   })
+  , mesh: simMesh()
   })
 
   function step() {
@@ -225,9 +220,6 @@ function shader() {
 
   function map (shader) {
     ctx.mergeProgram(simulation_vs, particleShader)
-    // render = new meow(
-    //   createProgram(gl, simulation_vs, shader),
-    //   {})
     return this
   }
 
@@ -244,7 +236,14 @@ function shader() {
     return self
   }
 }
-;pathgl.vertexShader = [
+
+function simMesh() {
+  return Mesh(gl, { pos: { array: Quad(), size: 2 }
+                  , attrList: ['pos']
+                  , count: 4
+                  , primitive: 'triangle_strip'
+                  })
+};pathgl.vertexShader = [
   'precision mediump float;'
 , 'uniform float clock;'
 , 'uniform vec2 mouse;'
@@ -353,8 +352,6 @@ function build_vs(src, subst) {
     if (k == 'cx') o['x'] = v
     if (k == 'cy') o['y'] = v
   })
-
-    console.log(arguments)
 
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
@@ -647,14 +644,14 @@ function addEvenLtistener (evt, listener, capture) {
 function RenderTarget(screen) {
   var gl = screen.gl
     , fbo = screen.fbo || null
-    , prog = screen.program
+    , prog = screen.program || program
     , types = screen.types = SVGProxy()
-    , meshes = buildBuffers(gl, screen.types)
+    , meshes = screen.mesh ? [screen.mesh] : buildBuffers(gl, screen.types)
     , i = 0
 
   var bound_textures = false
 
-  screen.mesh && meshes.push(screen.mesh)
+
 
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 

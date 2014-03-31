@@ -22,13 +22,8 @@ function shader() {
 
   var ctx = RenderTarget({
     fbo: gl.createFramebuffer()
-  , program: createProgram(gl, simulation_vs, particleShader)
   , gl: gl
-  , mesh: Mesh(gl, { pos: { array: Quad(), size: 2 }
-                   , attrList: ['pos']
-                   , count: 4
-                   , primitive: 'triangle_strip'
-                   })
+  , mesh: simMesh()
   })
 
   function step() {
@@ -43,9 +38,6 @@ function shader() {
 
   function map (shader) {
     ctx.mergeProgram(simulation_vs, particleShader)
-    // render = new meow(
-    //   createProgram(gl, simulation_vs, shader),
-    //   {})
     return this
   }
 
@@ -61,4 +53,12 @@ function shader() {
     dependents.push(ctx)
     return self
   }
+}
+
+function simMesh() {
+  return Mesh(gl, { pos: { array: Quad(), size: 2 }
+                  , attrList: ['pos']
+                  , count: 4
+                  , primitive: 'triangle_strip'
+                  })
 }
