@@ -206,10 +206,13 @@ function kernel () {
     return this
   }
 
-  function map (shader) {
-    render = new ShaderTexture(shader, {
-      texture: source[0].texture
+  function map (shader, start) {
+    self.render = new ShaderTexture(shader, {
+      width: source[0].width, height: source[0].height
+    , texture: source[0].texture
     })
+
+
     return this
   }
 
@@ -963,7 +966,12 @@ var attrDefaults = {
 }
 ;var Texture = {
   init: initTexture
-, update: function () { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) }
+, pipe: pipeTexture
+, update: function () {
+    this.data ?
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) :
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, null)
+  }
 , size: function (w, h) {
     if (! arguments.length) return this.width * this.height
     if (! h) this.height = w
@@ -988,7 +996,7 @@ var attrDefaults = {
 , load: function ()  {
     var image = this.data
 
-    if (image.complete || image.readyState == 4) this.init()
+    if (! image || image.complete || image.readyState == 4) this.init()
     else image.addEventListener && image.addEventListener('load', this.init.bind(this))
 
     return this
@@ -1043,8 +1051,7 @@ function RenderTexture(prog, options) {
 
   this.init()
   this.__renderTarget__ = RenderTarget(this)
-
-  this.start && this.start()
+  console.log('beforestart')
 
   this.update = function () {
     this.step && this.step()
@@ -1061,6 +1068,8 @@ function ShaderTexture (shader, options) {
 
 function DataTexture (image, options, target) {
   if ('string' == typeof image) image = parseImage(image)
+  if ('number' == typeof image) options.width = options.height = Math.sqrt(image), image = false
+
   extend(this, {
     gl: gl
   , data: image
@@ -1101,7 +1110,8 @@ function isShader(str) {
   return str.length > 50
 }
 
-function pipeTexture() {
+function pipeTexture(destination) {
+
 }
 
 function unwrap() {
@@ -1144,27 +1154,20 @@ var particleShader = [
 var since = Date.now()
 pathgl.sim.particles = function (size) {
   size = nextSquare(size)
+  var width = Math.sqrt(size)
+    , height = width
+    , particleIndex = 0
 
   var texture = pathgl.texture(size)
 
   var k = pathgl.shader()
           .read(texture)
           .map(particleShader)
-          .write(texture)
 
-  var width = Math.sqrt(size)
-  var height = Math.sqrt(size)
-  var elapsed = 0, cooldown = 16
-  var rate = 100
-  var particleIndex = 0
-
-  return new ShaderTexture(particleShader, {
-    width: width
-  , height: height
-  , start: start
-  , emit: emit
+  start()
+  return extend(k.render, {
+    emit: emit
   , reverse: reversePolarity
-  , texture: texture.texture
   })
 
   function reversePolarity () {
@@ -1172,16 +1175,17 @@ pathgl.sim.particles = function (size) {
   }
 
   function start () {
+    console.log('start')
     pathgl.uniform('dimensions', [width, height])
     pathgl.uniform('gravity', 1)
     pathgl.uniform('inertia', 0.005)
     pathgl.uniform('drag', 0.991)
-    addParticles(gl = this.gl, texture = this.texture, size / 2, [1,2].map(Math.random))
-    addParticles(gl = this.gl, texture = this.texture, size, [1,2].map(Math.random))
+    addParticles(gl, texture.texture, size / 2, [1,2].map(Math.random))
+    addParticles(gl, texture.texture, size, [1,2].map(Math.random))
   }
 
-  function emit() {
-    addParticles(gl, texture, rate * Math.random(), [0,0])
+  function emit(origin, ammount) {
+    addParticles(gl, texture.texture, ammount || size * Math.random(), origin || [0,0])
   }
 
   function addParticles(gl, tex, count, origin, velocities) {

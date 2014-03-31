@@ -27,10 +27,13 @@ function kernel () {
     return this
   }
 
-  function map (shader) {
-    render = new ShaderTexture(shader, {
-      texture: source[0].texture
+  function map (shader, start) {
+    self.render = new ShaderTexture(shader, {
+      width: source[0].width, height: source[0].height
+    , texture: source[0].texture
     })
+
+
     return this
   }
 

@@ -1,6 +1,11 @@
 var Texture = {
   init: initTexture
-, update: function () { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) }
+, pipe: pipeTexture
+, update: function () {
+    this.data ?
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) :
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, null)
+  }
 , size: function (w, h) {
     if (! arguments.length) return this.width * this.height
     if (! h) this.height = w
@@ -25,7 +30,7 @@ var Texture = {
 , load: function ()  {
     var image = this.data
 
-    if (image.complete || image.readyState == 4) this.init()
+    if (! image || image.complete || image.readyState == 4) this.init()
     else image.addEventListener && image.addEventListener('load', this.init.bind(this))
 
     return this
@@ -80,8 +85,7 @@ function RenderTexture(prog, options) {
 
   this.init()
   this.__renderTarget__ = RenderTarget(this)
-
-  this.start && this.start()
+  console.log('beforestart')
 
   this.update = function () {
     this.step && this.step()
@@ -98,6 +102,8 @@ function ShaderTexture (shader, options) {
 
 function DataTexture (image, options, target) {
   if ('string' == typeof image) image = parseImage(image)
+  if ('number' == typeof image) options.width = options.height = Math.sqrt(image), image = false
+
   extend(this, {
     gl: gl
   , data: image
@@ -138,7 +144,8 @@ function isShader(str) {
   return str.length > 50
 }
 
-function pipeTexture() {
+function pipeTexture(destination) {
+
 }
 
 function unwrap() {

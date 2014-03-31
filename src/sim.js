@@ -34,27 +34,20 @@ var particleShader = [
 var since = Date.now()
 pathgl.sim.particles = function (size) {
   size = nextSquare(size)
+  var width = Math.sqrt(size)
+    , height = width
+    , particleIndex = 0
 
   var texture = pathgl.texture(size)
 
   var k = pathgl.shader()
           .read(texture)
           .map(particleShader)
-          .write(texture)
 
-  var width = Math.sqrt(size)
-  var height = Math.sqrt(size)
-  var elapsed = 0, cooldown = 16
-  var rate = 100
-  var particleIndex = 0
-
-  return new ShaderTexture(particleShader, {
-    width: width
-  , height: height
-  , start: start
-  , emit: emit
+  start()
+  return extend(k.render, {
+    emit: emit
   , reverse: reversePolarity
-  , texture: texture.texture
   })
 
   function reversePolarity () {
@@ -62,16 +55,17 @@ pathgl.sim.particles = function (size) {
   }
 
   function start () {
+    console.log('start')
     pathgl.uniform('dimensions', [width, height])
     pathgl.uniform('gravity', 1)
     pathgl.uniform('inertia', 0.005)
     pathgl.uniform('drag', 0.991)
-    addParticles(gl = this.gl, texture = this.texture, size / 2, [1,2].map(Math.random))
-    addParticles(gl = this.gl, texture = this.texture, size, [1,2].map(Math.random))
+    addParticles(gl, texture.texture, size / 2, [1,2].map(Math.random))
+    addParticles(gl, texture.texture, size, [1,2].map(Math.random))
   }
 
-  function emit() {
-    addParticles(gl, texture, rate * Math.random(), [0,0])
+  function emit(origin, ammount) {
+    addParticles(gl, texture.texture, ammount || size * Math.random(), origin || [0,0])
   }
 
   function addParticles(gl, tex, count, origin, velocities) {
