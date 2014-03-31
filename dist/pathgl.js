@@ -6,11 +6,10 @@ pathgl.context = function () { return gl }
 
 var inited = 0
 var tasksOnce = []
-pathgl.texture = function (image, options, target) {
+pathgl.texture = function (image) {
   if (! inited) pathgl.init('canvas')
-  return new (image == null ? RenderTexture : DataTexture)(image, extend(options || {}, { src: image }), target)
+  return new Texture(image)
 }
-
 
 pathgl.uniform = function (attr, value) {
   return arguments.length == 1 ? uniforms[attr] : uniforms[attr] = value
@@ -194,12 +193,7 @@ function shader() {
     , map: map
     , match: matchWith
     , pipe: pipe
-    , invalidate: function () {
-        tasksOnce.push(step)
-        dependents.forEach(function (d) {
-          d.invalidate()
-        })
-      }
+    , invalidate: invalidate
   }
 
   var ctx = RenderTarget({
@@ -223,6 +217,12 @@ function shader() {
     return this
   }
 
+  function invalidate() {
+    tasksOnce.push(step)
+    dependents.forEach(function (d) {
+      d.invalidate()
+    })
+  }
 
   function draw () {
   }
@@ -271,18 +271,15 @@ function simMesh() {
 , '}'
 , 'void main() {'
 , '    float time = clock / 1000.;'
-
 , '    float x = replace_x;'
 , '    float y = replace_y;'
 , '    float fill = color.x;'
 , '    float stroke = color.x;'
-
-, '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
-
 , '    type = fugue.x;'
 , '    gl_PointSize =  replace_r;'
 , '    v_fill = unpack_color(fill);'
 , '    v_stroke = replace_stroke;'
+, '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
 , '}'
 ].join('\n\n')
 
@@ -487,13 +484,15 @@ var raf = window.requestAnimationFrame
        || window.mozRequestAnimationFrame
        || function(callback) { window.setTimeout(callback, 1000 / 60) }
 
+var backTasks = []
 function startDrawLoop() {
-  var l = tasks.length
-  while(l--) tasks[l]()
+  var i = tasks.length, swap
+  while(i--) tasks[i]()
 
-  l = tasksOnce.length
-  while(l--) tasksOnce.pop()()
-
+  swap = tasksOnce
+  tasksOnce = [] //backTasks
+  backTasks = swap
+  while(backTasks.length) backTasks.pop()()
   raf(startDrawLoop)
 }
 ;function parse (str, stroke) {
@@ -650,8 +649,6 @@ function RenderTarget(screen) {
     , i = 0
 
   var bound_textures = false
-
-
 
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 
@@ -1002,7 +999,28 @@ var attrDefaults = {
 , y: 0
 , opacity: .999
 }
-;var Texture = {
+;function Texture(image) {
+  this.width =  image.width || 512
+  this.height =  image.height || 512
+
+  if ('string' == typeof image) image = parseImage(image)
+  if ('number' == typeof image) this.width = this.height = Math.sqrt(image), image = false
+
+  extend(this, {
+    gl: gl
+  , data: image
+  , texture: gl.createTexture()
+  , unit: 0
+  , dependents: []
+  , invalidate: function () {
+      tasksOnce.push(function () { this.forEach(function (d) { d.invalidate() }) }.bind(this.dependents))
+    }
+  })
+
+  this.load()
+}
+
+Texture.prototype = {
   init: initTexture
 , update: function () {
     this.data ?
@@ -1067,28 +1085,6 @@ var attrDefaults = {
 , unwrap: unwrap
 }
 
-extend(DataTexture.prototype, Texture, {})
-
-function DataTexture (image, options) {
-  if ('string' == typeof image) image = parseImage(image)
-  if ('number' == typeof image) options.width = options.height = Math.sqrt(image), image = false
-
-  extend(this, {
-    gl: gl
-  , data: image
-  , texture: gl.createTexture()
-  , width: image.width || 512
-  , height: image.height || 512
-  , unit: 0
-  , dependents: []
-  , invalidate: function () {
-      var deps = this.dependents
-      setTimeout(function () { deps.forEach(function (d) { d.invalidate() }) }, 16)
-    }
-  }, options)
-
-  this.load()
-}
 
 function initTexture() {
   gl.bindTexture(gl.TEXTURE_2D, this.texture)

@@ -16,19 +16,15 @@ var col = 20
   , row = Math.round(size.height / s)
 
 function launch() {
-  pathgl.kernel(avgShader)
-  .read(webcam)
-  .matchWith(mosaic)
-  .write(texture)
+  var mozify = pathgl.shader()
+               .blockSize(50)
+               .matchWith(avgShader)
+               .pipe(mosaic)
 
-  pathgl.kernel()
-  .read(webcam, mosaic)
-  .matchWith(avgShader)
-  .write(texture)
-
-  pathgl.texture(avgShader)
-  .read(webcam)
-  .matchWith(mosaic)
+  var webcam = pathgl.texture('.video').repeat().pipe(mozify)
+  var tiles = pathgl.texture('.tiles').pipe(mozify)
+  var mosaic = pathgl.texture()
+  return mosaic
 }
 
 var textures = pathgl.texture('img')

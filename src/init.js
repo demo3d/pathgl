@@ -96,12 +96,14 @@ var raf = window.requestAnimationFrame
        || window.mozRequestAnimationFrame
        || function(callback) { window.setTimeout(callback, 1000 / 60) }
 
+var backTasks = []
 function startDrawLoop() {
-  var l = tasks.length
-  while(l--) tasks[l]()
+  var i = tasks.length, swap
+  while(i--) tasks[i]()
 
-  l = tasksOnce.length
-  while(l--) tasksOnce.pop()()
-
+  swap = tasksOnce
+  tasksOnce = [] //backTasks
+  backTasks = swap
+  while(backTasks.length) backTasks.pop()()
   raf(startDrawLoop)
 }

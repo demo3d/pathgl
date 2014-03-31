@@ -12,12 +12,7 @@ function shader() {
     , map: map
     , match: matchWith
     , pipe: pipe
-    , invalidate: function () {
-        tasksOnce.push(step)
-        dependents.forEach(function (d) {
-          d.invalidate()
-        })
-      }
+    , invalidate: invalidate
   }
 
   var ctx = RenderTarget({
@@ -41,6 +36,12 @@ function shader() {
     return this
   }
 
+  function invalidate() {
+    tasksOnce.push(step)
+    dependents.forEach(function (d) {
+      d.invalidate()
+    })
+  }
 
   function draw () {
   }

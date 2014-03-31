@@ -1,4 +1,25 @@
-var Texture = {
+function Texture(image) {
+  this.width =  image.width || 512
+  this.height =  image.height || 512
+
+  if ('string' == typeof image) image = parseImage(image)
+  if ('number' == typeof image) this.width = this.height = Math.sqrt(image), image = false
+
+  extend(this, {
+    gl: gl
+  , data: image
+  , texture: gl.createTexture()
+  , unit: 0
+  , dependents: []
+  , invalidate: function () {
+      tasksOnce.push(function () { this.forEach(function (d) { d.invalidate() }) }.bind(this.dependents))
+    }
+  })
+
+  this.load()
+}
+
+Texture.prototype = {
   init: initTexture
 , update: function () {
     this.data ?
@@ -63,28 +84,6 @@ var Texture = {
 , unwrap: unwrap
 }
 
-extend(DataTexture.prototype, Texture, {})
-
-function DataTexture (image, options) {
-  if ('string' == typeof image) image = parseImage(image)
-  if ('number' == typeof image) options.width = options.height = Math.sqrt(image), image = false
-
-  extend(this, {
-    gl: gl
-  , data: image
-  , texture: gl.createTexture()
-  , width: image.width || 512
-  , height: image.height || 512
-  , unit: 0
-  , dependents: []
-  , invalidate: function () {
-      var deps = this.dependents
-      setTimeout(function () { deps.forEach(function (d) { d.invalidate() }) }, 16)
-    }
-  }, options)
-
-  this.load()
-}
 
 function initTexture() {
   gl.bindTexture(gl.TEXTURE_2D, this.texture)

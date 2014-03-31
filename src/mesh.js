@@ -86,8 +86,6 @@ function RenderTarget(screen) {
 
   var bound_textures = false
 
-
-
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 
   fbo = initFbo.call(screen)

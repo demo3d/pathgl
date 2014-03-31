@@ -26,18 +26,15 @@ pathgl.vertexShader = [
 , '}'
 , 'void main() {'
 , '    float time = clock / 1000.;'
-
 , '    float x = replace_x;'
 , '    float y = replace_y;'
 , '    float fill = color.x;'
 , '    float stroke = color.x;'
-
-, '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
-
 , '    type = fugue.x;'
 , '    gl_PointSize =  replace_r;'
 , '    v_fill = unpack_color(fill);'
 , '    v_stroke = replace_stroke;'
+, '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
 , '}'
 ].join('\n\n')
 

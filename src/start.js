@@ -5,11 +5,10 @@ pathgl.context = function () { return gl }
 
 var inited = 0
 var tasksOnce = []
-pathgl.texture = function (image, options, target) {
+pathgl.texture = function (image) {
   if (! inited) pathgl.init('canvas')
-  return new (image == null ? RenderTexture : DataTexture)(image, extend(options || {}, { src: image }), target)
+  return new Texture(image)
 }
-
 
 pathgl.uniform = function (attr, value) {
   return arguments.length == 1 ? uniforms[attr] : uniforms[attr] = value
