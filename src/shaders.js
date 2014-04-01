@@ -12,10 +12,15 @@ pathgl.vertexShader = [
 , 'varying float type;'
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
+
 , 'uniform sampler2D texture;'
+
+, 'uniform mat4 textureHello;'
 
 , 'const mat4 modelViewMatrix = mat4(1.);'
 , 'const mat4 projectionMatrix = mat4(1.);'
+
+, 'vec4 texel(vec2 get) { return texture2D(texture, abs(get)); }'
 
 , 'vec4 unpack_color(float col) {'
 , '    return vec4(mod(col / 256. / 256., 256.),'
@@ -107,9 +112,9 @@ function build_vs(src, subst) {
 
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? 1. + ( abs(texture2D(texture, abs(pos.xy)).w) + abs(texture2D(texture, abs(pos.xy)).z)) : (2. * pos.z)'
-    , x: '(pos.x < 1.) ? texture2D(texture, abs(pos.xy)).x * resolution.x : pos.x'
-    , y: '(pos.y < 1.) ? texture2D(texture, abs(pos.xy)).y * resolution.y: pos.y'
+    , r: '(pos.z < 0.) ? 1. + texel(pos.xy).w + texel(pos.xy).z : (2. * pos.z)'
+    , x: '(pos.x < 1.) ? texel(pos.xy).x * resolution.x : pos.x'
+    , y: '(pos.y < 1.) ? texel(pos.xy).y * resolution.y : pos.y'
     }, subst)
 
   for(var attr in defaults)

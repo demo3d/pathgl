@@ -27,15 +27,13 @@ function launch() {
   return mosaic
 }
 
-var textures = pathgl.texture('img')
+var textures = [].map.call(document.querySelectorAll('img'), pathgl.texture)
 
-r = c.selectAll('rect').data(d3.range(col * row )).enter().append('rect')
+c.selectAll('rect').data(d3.range(col * row )).enter().append('rect')
 .attr('x', function (d) { return s/2 + s * (d % col) })
 .attr('y', function (d) { return s/2 + s * ~~(d / col) })
 .attr('width', s / 2)
-.attr('fill', function (d, i) {
-      return textures
-    })
+.attr('fill', function (d, i) { return textures[i % 2] })
 
 // d3.timer(function () {
 //   r.filter(function (d) { return Math.random() > .9 })

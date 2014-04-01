@@ -3,6 +3,7 @@ var pathgl = this.pathgl = {}
 pathgl.sim = {}
 pathgl.stop = function () {}
 pathgl.context = function () { return gl }
+var id = (function id (i) { return function () { return i++ }})(1)
 
 var inited = 0
 var tasksOnce = []
@@ -37,8 +38,13 @@ pathgl.init = function (canvas) {
 
   if (! canvas.getContext) return console.log(canvas, 'is not a valid canvas')
   return !! init(canvas)
-};
-function noop () {}
+}
+
+function mock (obj, meth) {
+  var save = obj[meth]
+  obj[meth] = function () { (obj[meth] = save).call(this, arguments) }
+}
+;function noop () {}
 
 function identity(x) { return x }
 
@@ -257,10 +263,15 @@ function simMesh() {
 , 'varying float type;'
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
+
 , 'uniform sampler2D texture;'
+
+, 'uniform mat4 textureHello;'
 
 , 'const mat4 modelViewMatrix = mat4(1.);'
 , 'const mat4 projectionMatrix = mat4(1.);'
+
+, 'vec4 texel(vec2 get) { return texture2D(texture, abs(get)); }'
 
 , 'vec4 unpack_color(float col) {'
 , '    return vec4(mod(col / 256. / 256., 256.),'
@@ -352,9 +363,9 @@ function build_vs(src, subst) {
 
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? 1. + ( abs(texture2D(texture, abs(pos.xy)).w) + abs(texture2D(texture, abs(pos.xy)).z)) : (2. * pos.z)'
-    , x: '(pos.x < 1.) ? texture2D(texture, abs(pos.xy)).x * resolution.x : pos.x'
-    , y: '(pos.y < 1.) ? texture2D(texture, abs(pos.xy)).y * resolution.y: pos.y'
+    , r: '(pos.z < 0.) ? 1. + texel(pos.xy).w + texel(pos.xy).z : (2. * pos.z)'
+    , x: '(pos.x < 1.) ? texel(pos.xy).x * resolution.x : pos.x'
+    , y: '(pos.y < 1.) ? texel(pos.xy).y * resolution.y : pos.y'
     }, subst)
 
   for(var attr in defaults)
@@ -567,6 +578,7 @@ function addEvenLtistener (evt, listener, capture) {
     , count = options.count || 0
     , attrList = options.attrList || ['pos', 'color', 'fugue']
     , primitive = gl[options.primitive.toUpperCase()]
+    , material = []
 
   init()
   return {
@@ -575,6 +587,8 @@ function addEvenLtistener (evt, listener, capture) {
   , alloc: alloc
   , draw: draw
   , bind: bind
+  , addTexture: addTexture
+  , bindMaterial: bindMaterial
   , attributes: attributes
   , set: set
   , addAttr: addAttr
@@ -631,13 +645,27 @@ function addEvenLtistener (evt, listener, capture) {
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
-
+    bindMaterial()
     gl.drawArrays(primitive, offset || 0, count)
   }
+
   function set () {}
   function addAttr () {}
   function removeAttr () {}
   function boundingBox() {}
+
+  function bindMaterial() {
+    for (var i = -1; ++i < material.length;) {
+      //gl.activeTexture(gl.TEXTURE0 + i)
+      gl.bindTexture(gl.TEXTURE_2D, material[i].texture)
+    }
+  }
+
+  function addTexture(attr, tex) {
+    if (!~ material.indexOf(tex))
+      material.push(tex)
+    //mapping
+  }
 }
 
 function RenderTarget(screen) {
@@ -646,19 +674,17 @@ function RenderTarget(screen) {
     , prog = screen.program || program
     , types = screen.types = SVGProxy()
     , meshes = screen.mesh ? [screen.mesh] : buildBuffers(gl, screen.types)
-    , i = 0
-
-  var bound_textures = false
 
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 
   fbo = initFbo.call(screen)
 
-  return screen.__renderTarget__ = { update: update
-                                   , append: append
-                                   , drawTo: drawTo
-                                   , mergeProgram: mergeProgram
-                                   }
+  return screen.__renderTarget__ = {
+    update: update
+  , append: append
+  , drawTo: drawTo
+  , mergeProgram: mergeProgram
+  }
 
   function drawTo(dest) {
     screen.width = dest.width
@@ -678,24 +704,17 @@ function RenderTarget(screen) {
   function update () {
     if (program != prog) gl.useProgram(program = prog)
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
-    bindTextures()
     setUniforms()
     beforeRender(gl)
 
     pathgl.uniform('clock', new Date - start)
 
-    for(i = -1; ++i < meshes.length;) meshes[i].draw()
+    for(var i = -1; ++i < meshes.length;) meshes[i].draw()
   }
 
   function setUniforms () {
     for (var k in uniforms)
       program[k] && program[k](uniforms[k])
-  }
-
-  function bindTextures () {
-    if (screen.texture) gl.bindTexture(gl.TEXTURE_2D, screen.texture)
-    // if ((textures[fbo] || []).length && bound_textures)
-    // gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].texture)
   }
 
   function beforeRender(gl) {
@@ -931,6 +950,7 @@ var baseProto = {
 , setAttribute: function (name, value) {
     this.attr[name] = value
     this[name] && this[name](value)
+    if (value && value.adnan) this.mesh.addTexture(name, value)
   }
 
 , style: { setProperty: noop }
@@ -1009,8 +1029,8 @@ var attrDefaults = {
   extend(this, {
     gl: gl
   , data: image
+  , id: id()
   , texture: gl.createTexture()
-  , unit: 0
   , dependents: []
   , invalidate: function () {
       tasksOnce.push(function () { this.forEach(function (d) { d.invalidate() }) }.bind(this.dependents))
@@ -1033,8 +1053,6 @@ Texture.prototype = {
     this.w = w
     return this
   }
-, register: function () {
-  }
 , z: function () {
     var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
@@ -1047,7 +1065,6 @@ Texture.prototype = {
     var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
   }
-, forEach: function () {}
 , load: function ()  {
     var image = this.data
 
@@ -1076,7 +1093,7 @@ Texture.prototype = {
     return this.__scene__[this.__scene__.length] = this.__renderTarget__.append(el.tagName || el)
   }
 , valueOf: function () {
-    return - 1
+    return - this.id
   }
 , copy: function () { return pathgl.texture(this.src) }
 , pipe: pipeTexture
@@ -1084,8 +1101,8 @@ Texture.prototype = {
 , __scene__: []
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 , unwrap: unwrap
+, adnan: true
 }
-
 
 function initTexture() {
   gl.bindTexture(gl.TEXTURE_2D, this.texture)
@@ -1112,10 +1129,6 @@ function parseImage (image) {
   return extend(isVideoUrl ? new Image : document.createElement('video'), { src: image })
 }
 
-function isShader(str) {
-  return str.length > 50
-}
-
 function pipeTexture(ctx) {
   this.dependents.push(ctx)
   ctx.read(this)
@@ -1136,7 +1149,8 @@ function renderable() {
     save.call(this)
      this.__renderTarget__.update()
   }
-};;var simulation_vs = [
+}
+;;var simulation_vs = [
   'precision mediump float;'
 , 'attribute vec2 pos;'
 , '  void main() {'

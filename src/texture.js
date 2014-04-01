@@ -8,8 +8,8 @@ function Texture(image) {
   extend(this, {
     gl: gl
   , data: image
+  , id: id()
   , texture: gl.createTexture()
-  , unit: 0
   , dependents: []
   , invalidate: function () {
       tasksOnce.push(function () { this.forEach(function (d) { d.invalidate() }) }.bind(this.dependents))
@@ -32,8 +32,6 @@ Texture.prototype = {
     this.w = w
     return this
   }
-, register: function () {
-  }
 , z: function () {
     var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
@@ -46,7 +44,6 @@ Texture.prototype = {
     var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
   }
-, forEach: function () {}
 , load: function ()  {
     var image = this.data
 
@@ -75,7 +72,7 @@ Texture.prototype = {
     return this.__scene__[this.__scene__.length] = this.__renderTarget__.append(el.tagName || el)
   }
 , valueOf: function () {
-    return - 1
+    return - this.id
   }
 , copy: function () { return pathgl.texture(this.src) }
 , pipe: pipeTexture
@@ -83,8 +80,8 @@ Texture.prototype = {
 , __scene__: []
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 , unwrap: unwrap
+, adnan: true
 }
-
 
 function initTexture() {
   gl.bindTexture(gl.TEXTURE_2D, this.texture)
@@ -109,10 +106,6 @@ function parseImage (image) {
   if (query) return query
 
   return extend(isVideoUrl ? new Image : document.createElement('video'), { src: image })
-}
-
-function isShader(str) {
-  return str.length > 50
 }
 
 function pipeTexture(ctx) {

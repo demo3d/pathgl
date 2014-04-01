@@ -3,6 +3,7 @@ function Mesh (gl, options, attr) {
     , count = options.count || 0
     , attrList = options.attrList || ['pos', 'color', 'fugue']
     , primitive = gl[options.primitive.toUpperCase()]
+    , material = []
 
   init()
   return {
@@ -11,6 +12,8 @@ function Mesh (gl, options, attr) {
   , alloc: alloc
   , draw: draw
   , bind: bind
+  , addTexture: addTexture
+  , bindMaterial: bindMaterial
   , attributes: attributes
   , set: set
   , addAttr: addAttr
@@ -67,13 +70,27 @@ function Mesh (gl, options, attr) {
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
-
+    bindMaterial()
     gl.drawArrays(primitive, offset || 0, count)
   }
+
   function set () {}
   function addAttr () {}
   function removeAttr () {}
   function boundingBox() {}
+
+  function bindMaterial() {
+    for (var i = -1; ++i < material.length;) {
+      //gl.activeTexture(gl.TEXTURE0 + i)
+      gl.bindTexture(gl.TEXTURE_2D, material[i].texture)
+    }
+  }
+
+  function addTexture(attr, tex) {
+    if (!~ material.indexOf(tex))
+      material.push(tex)
+    //mapping
+  }
 }
 
 function RenderTarget(screen) {
@@ -82,19 +99,17 @@ function RenderTarget(screen) {
     , prog = screen.program || program
     , types = screen.types = SVGProxy()
     , meshes = screen.mesh ? [screen.mesh] : buildBuffers(gl, screen.types)
-    , i = 0
-
-  var bound_textures = false
 
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 
   fbo = initFbo.call(screen)
 
-  return screen.__renderTarget__ = { update: update
-                                   , append: append
-                                   , drawTo: drawTo
-                                   , mergeProgram: mergeProgram
-                                   }
+  return screen.__renderTarget__ = {
+    update: update
+  , append: append
+  , drawTo: drawTo
+  , mergeProgram: mergeProgram
+  }
 
   function drawTo(dest) {
     screen.width = dest.width
@@ -114,24 +129,17 @@ function RenderTarget(screen) {
   function update () {
     if (program != prog) gl.useProgram(program = prog)
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
-    bindTextures()
     setUniforms()
     beforeRender(gl)
 
     pathgl.uniform('clock', new Date - start)
 
-    for(i = -1; ++i < meshes.length;) meshes[i].draw()
+    for(var i = -1; ++i < meshes.length;) meshes[i].draw()
   }
 
   function setUniforms () {
     for (var k in uniforms)
       program[k] && program[k](uniforms[k])
-  }
-
-  function bindTextures () {
-    if (screen.texture) gl.bindTexture(gl.TEXTURE_2D, screen.texture)
-    // if ((textures[fbo] || []).length && bound_textures)
-    // gl.bindTexture(gl.TEXTURE_2D, textures[fbo][0].texture)
   }
 
   function beforeRender(gl) {

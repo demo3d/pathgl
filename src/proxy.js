@@ -143,6 +143,7 @@ var baseProto = {
 , setAttribute: function (name, value) {
     this.attr[name] = value
     this[name] && this[name](value)
+    if (value && value.adnan) this.mesh.addTexture(name, value)
   }
 
 , style: { setProperty: noop }

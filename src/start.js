@@ -2,6 +2,7 @@ var pathgl = this.pathgl = {}
 pathgl.sim = {}
 pathgl.stop = function () {}
 pathgl.context = function () { return gl }
+var id = (function id (i) { return function () { return i++ }})(1)
 
 var inited = 0
 var tasksOnce = []
@@ -36,4 +37,9 @@ pathgl.init = function (canvas) {
 
   if (! canvas.getContext) return console.log(canvas, 'is not a valid canvas')
   return !! init(canvas)
+}
+
+function mock (obj, meth) {
+  var save = obj[meth]
+  obj[meth] = function () { (obj[meth] = save).call(this, arguments) }
 }
