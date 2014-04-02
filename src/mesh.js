@@ -70,7 +70,8 @@ function Mesh (gl, options, attr) {
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
-    bindMaterial()
+    //bindMaterial()
+
     gl.drawArrays(primitive, offset || 0, count)
   }
 

@@ -74,25 +74,30 @@ function range(a, b) { return Array(Math.abs(b - a)).join().split(',').map(funct
 
 function hash(str) { return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0) }
 
+function mipmappable() {
+  return (powerOfTwo(this.height) && powerOfTwo(this.width))
+}
+
 function extend (a, b) {
   if (arguments.length > 2) [].forEach.call(arguments, function (b) { extend(a, b) })
   else for (var k in b) a[k] = b[k]
   return a
 }
 
-function onload (image, cb, self) {
-  if (! image || image.complete || image.readyState == 4) cb.call(self)
-  else image.addEventListener && image.addEventListener('load', cb.bind(self))
+function onLoad (image, cb) {
+  if (! image || image.complete || image.readyState == 4) cb()
+  else image.addEventListener && image.addEventListener('load', cb)
 }
 
 function pointInPolygon(x, y, shape) {}
 
 var checkerboard = (function() {
-  var c = document.createElement('canvas').getContext('2d'), y, x
-  c.canvas.width = c.canvas.height = 128
-  for (y = 0; y < c.canvas.height; y += 16)
-    for (x = 0; x < c.canvas.width; x += 16)
-      (c.fillStyle = (x ^ y) & 16 ? '#FFF' : '#DDD'), c.fillRect(x, y, 16, 16)
+  var c = document.createElement('canvas').getContext('2d')
+    , s = c.canvas.width = c.canvas.height = 128, y, x
+  for (y = 0; y < s; y += 16)
+    for (x = 0; x < s; x += 16)
+      c.fillStyle = (x ^ y) & 16 ? '#FFF' : '#DDD',
+      c.fillRect(x, y, 16, 16)
   return c.canvas
 })();function parseColor(v) {
   var a = setStyle(v)
@@ -209,6 +214,9 @@ function shader() {
 
   var self = {
       read: read
+    , scatter: scatter
+    , reduce: reduce
+    , scan: scan
     , map: map
     , match: matchWith
     , pipe: pipe
@@ -226,6 +234,18 @@ function shader() {
   }
 
   return self
+
+  function scatter(lambda) {
+
+  }
+
+  function scan(lambda) {
+
+  }
+
+  function reduce(lambda) {
+
+  }
 
   function read(tex) {
     ctx.drawTo(tex)
@@ -275,10 +295,11 @@ function simMesh() {
 , 'varying float type;'
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
+, 'varying vec4 dim;'
 
 , 'uniform sampler2D texture;'
 
-, 'uniform mat4 textureHello;'
+, 'uniform mat4 activeTexture;'
 
 , 'const mat4 modelViewMatrix = mat4(1.);'
 , 'const mat4 projectionMatrix = mat4(1.);'
@@ -292,17 +313,21 @@ function simMesh() {
 , '                256.)'
 , '                / 256.;'
 , '}'
+
+, 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - 1., 1. - ((pos.y / resolution.y) * 2.)); }'
 , 'void main() {'
 , '    float time = clock / 1000.;'
 , '    float x = replace_x;'
 , '    float y = replace_y;'
+, '    float r = replace_r;'
 , '    float fill = color.x;'
 , '    float stroke = color.x;'
 , '    type = fugue.x;'
-, '    gl_PointSize =  replace_r;'
+, '    gl_PointSize =  r;'
 , '    v_fill = unpack_color(fill);'
+, '    dim = vec4(x, y, r, -r);'
 , '    v_stroke = replace_stroke;'
-, '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
+, '    gl_Position = vec4(clipspace(pos.xy),  1., 1.);'
 , '}'
 ].join('\n\n')
 
@@ -315,11 +340,13 @@ pathgl.fragmentShader = [
 
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
+, 'varying vec4 dim;'
 
+, 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - .5, 1. - ((pos.y / resolution.y))); }'
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture, gl_PointCoord) : v_stroke;'
+, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture, clipspace(dim.xy + (dim.zw * (gl_PointCoord - .5)))) : v_stroke;'
 , '}'
 ].join('\n')
 
@@ -656,7 +683,8 @@ function addEvenLtistener (evt, listener, capture) {
       if (attr.changed)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
-    bindMaterial()
+    //bindMaterial()
+
     gl.drawArrays(primitive, offset || 0, count)
   }
 
@@ -1048,22 +1076,23 @@ var attrDefaults = {
     }
   })
 
-  if (Array.isArray(image))
-    batchTexture.call(this, image), image = checkerboard
+  if (Array.isArray(image)) this.data = batchTexture.call(this)
+  //if (image.constructor == Object) image = parseJSON(image)
+
   this.load()
 }
 
 Texture.prototype = {
   init: initTexture
 , update: function (data) {
-    this.data ?
+     this.data ?
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data || this.data) :
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, null)
   }
 , size: function (w, h) {
     if (! arguments.length) return this.width * this.height
-    if (! h) this.height = w
-    this.w = w
+    this.width = w
+    this.height = h || w
     return this
   }
 , z: function () {
@@ -1084,14 +1113,13 @@ Texture.prototype = {
     this.init()
     this.update(checkerboard)
 
-    onload(image, this.update, this)
+    onLoad(image, this.update.bind(this))
 
     return this
   }
 , subImage: function (x, y, data) {
-    gl.texSubImage2D(gl.TEXTURE_2D, 0,
-                     x, y, data.length / 4, 1,
-                     gl.RGBA, gl.FLOAT, data)
+    //gl.bindTexture(gl.TEXTURE_2D, this.texture)
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, data.length / 4, 1, gl.RGBA, gl.FLOAT, new Float32Array(data))
   }
 , repeat: function () {
     this.task = function () { this.update() }.bind(this)
@@ -1129,18 +1157,13 @@ function initTexture() {
   this.update()
 }
 
-function parseImage (image) {
-  // string
-  //   selector
-  //   url
-  // object
-  //   video / image / canvas
-  //   imageData
-  //   typedarray
-  var query = document.querySelector(image)
-  if (query) return query
+function parseImage(image) {
+  try {
+    var query = document.querySelector(image)
+    if (query) return query
+  } catch (e) {}
 
-  return extend(isVideoUrl ? new Image : document.createElement('video'), { src: image })
+  return extend(isVideoUrl ? new Image : document.createElement('video'), { crossOrigin: 'anonymous', src: image})
 }
 
 function pipeTexture(ctx) {
@@ -1165,14 +1188,41 @@ function renderable() {
   }
 }
 
+function batchTexture () {
+  var data = this.data
+    , rows = data.rows
+    , size = data.width
+    , update = this.update.bind(this)
+    , c = document.createElement('canvas').getContext('2d')
+    , tile = size / rows
+    , count = 0
 
-function batchTexture (data, size) {
-  size = size || 4096
+  c.canvas.width = c.canvas.height = size
   data.forEach(function (d, i) {
-    data[i] = parseImage(data[i])
-    data[i].o
-  })
-};;var simulation_vs = [
+    var img = parseImage(data[i]),
+        sx = tile * (i % rows),
+        sy = tile * ~~(i / rows)
+
+    onLoad(img, function () {
+      c.drawImage(img, sx, sy, tile, tile)
+      update()
+    })
+  }, this)
+
+  return c.canvas
+}
+
+function parseJSON(json) {
+  var buff = new Float32Array(1024), row = 0, count = 0
+  for(var key in json) {
+    for(var pixel in json[key])
+      buff[count++] = json[key][pixel]
+
+    if (count > 1020) this.subImage(0, count, buff)
+                    , buff = new Float32Array(1024)
+  }
+}
+;;var simulation_vs = [
   'attribute vec2 pos;'
 , '  void main() {'
 , '  gl_Position = vec4(pos.xy, 1.0 , 1.0);'
@@ -1255,7 +1305,7 @@ pathgl.sim.particles = function (s) {
       while(++j < chunk.size)
         data.push(origin[0], origin[1], random(-1.0, 1.0), random(-1.0, 1.0))
 
-      texture.subImage(chunk.x, chunk.y, new Float32Array(data))
+      texture.subImage(chunk.x, chunk.y, data)
     })
 
     particleIndex += count

@@ -16,22 +16,23 @@ function Texture(image) {
     }
   })
 
-  if (Array.isArray(image))
-    batchTexture.call(this, image), image = checkerboard
+  if (Array.isArray(image)) this.data = batchTexture.call(this)
+  //if (image.constructor == Object) image = parseJSON(image)
+
   this.load()
 }
 
 Texture.prototype = {
   init: initTexture
 , update: function (data) {
-    this.data ?
+     this.data ?
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data || this.data) :
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, null)
   }
 , size: function (w, h) {
     if (! arguments.length) return this.width * this.height
-    if (! h) this.height = w
-    this.w = w
+    this.width = w
+    this.height = h || w
     return this
   }
 , z: function () {
@@ -52,14 +53,13 @@ Texture.prototype = {
     this.init()
     this.update(checkerboard)
 
-    onload(image, this.update, this)
+    onLoad(image, this.update.bind(this))
 
     return this
   }
 , subImage: function (x, y, data) {
-    gl.texSubImage2D(gl.TEXTURE_2D, 0,
-                     x, y, data.length / 4, 1,
-                     gl.RGBA, gl.FLOAT, data)
+    //gl.bindTexture(gl.TEXTURE_2D, this.texture)
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, data.length / 4, 1, gl.RGBA, gl.FLOAT, new Float32Array(data))
   }
 , repeat: function () {
     this.task = function () { this.update() }.bind(this)
@@ -97,18 +97,13 @@ function initTexture() {
   this.update()
 }
 
-function parseImage (image) {
-  // string
-  //   selector
-  //   url
-  // object
-  //   video / image / canvas
-  //   imageData
-  //   typedarray
-  var query = document.querySelector(image)
-  if (query) return query
+function parseImage(image) {
+  try {
+    var query = document.querySelector(image)
+    if (query) return query
+  } catch (e) {}
 
-  return extend(isVideoUrl ? new Image : document.createElement('video'), { src: image })
+  return extend(isVideoUrl ? new Image : document.createElement('video'), { crossOrigin: 'anonymous', src: image})
 }
 
 function pipeTexture(ctx) {
@@ -133,11 +128,37 @@ function renderable() {
   }
 }
 
+function batchTexture () {
+  var data = this.data
+    , rows = data.rows
+    , size = data.width
+    , update = this.update.bind(this)
+    , c = document.createElement('canvas').getContext('2d')
+    , tile = size / rows
+    , count = 0
 
-function batchTexture (data, size) {
-  size = size || 4096
+  c.canvas.width = c.canvas.height = size
   data.forEach(function (d, i) {
-    data[i] = parseImage(data[i])
-    data[i].o
-  })
+    var img = parseImage(data[i]),
+        sx = tile * (i % rows),
+        sy = tile * ~~(i / rows)
+
+    onLoad(img, function () {
+      c.drawImage(img, sx, sy, tile, tile)
+      update()
+    })
+  }, this)
+
+  return c.canvas
+}
+
+function parseJSON(json) {
+  var buff = new Float32Array(1024), row = 0, count = 0
+  for(var key in json) {
+    for(var pixel in json[key])
+      buff[count++] = json[key][pixel]
+
+    if (count > 1020) this.subImage(0, count, buff)
+                    , buff = new Float32Array(1024)
+  }
 }

@@ -9,6 +9,9 @@ function shader() {
 
   var self = {
       read: read
+    , scatter: scatter
+    , reduce: reduce
+    , scan: scan
     , map: map
     , match: matchWith
     , pipe: pipe
@@ -26,6 +29,18 @@ function shader() {
   }
 
   return self
+
+  function scatter(lambda) {
+
+  }
+
+  function scan(lambda) {
+
+  }
+
+  function reduce(lambda) {
+
+  }
 
   function read(tex) {
     ctx.drawTo(tex)

@@ -11,10 +11,11 @@ pathgl.vertexShader = [
 , 'varying float type;'
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
+, 'varying vec4 dim;'
 
 , 'uniform sampler2D texture;'
 
-, 'uniform mat4 textureHello;'
+, 'uniform mat4 activeTexture;'
 
 , 'const mat4 modelViewMatrix = mat4(1.);'
 , 'const mat4 projectionMatrix = mat4(1.);'
@@ -28,17 +29,21 @@ pathgl.vertexShader = [
 , '                256.)'
 , '                / 256.;'
 , '}'
+
+, 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - 1., 1. - ((pos.y / resolution.y) * 2.)); }'
 , 'void main() {'
 , '    float time = clock / 1000.;'
 , '    float x = replace_x;'
 , '    float y = replace_y;'
+, '    float r = replace_r;'
 , '    float fill = color.x;'
 , '    float stroke = color.x;'
 , '    type = fugue.x;'
-, '    gl_PointSize =  replace_r;'
+, '    gl_PointSize =  r;'
 , '    v_fill = unpack_color(fill);'
+, '    dim = vec4(x, y, r, -r);'
 , '    v_stroke = replace_stroke;'
-, '    gl_Position = vec4(2. * (x / resolution.x) - 1., 1. - ((y / resolution.y) * 2.),  1., 1.);'
+, '    gl_Position = vec4(clipspace(pos.xy),  1., 1.);'
 , '}'
 ].join('\n\n')
 
@@ -51,11 +56,13 @@ pathgl.fragmentShader = [
 
 , 'varying vec4 v_stroke;'
 , 'varying vec4 v_fill;'
+, 'varying vec4 dim;'
 
+, 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - .5, 1. - ((pos.y / resolution.y))); }'
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture, gl_PointCoord) : v_stroke;'
+, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture, clipspace(dim.xy + (dim.zw * (gl_PointCoord - .5)))) : v_stroke;'
 , '}'
 ].join('\n')
 

@@ -28,24 +28,29 @@ function range(a, b) { return Array(Math.abs(b - a)).join().split(',').map(funct
 
 function hash(str) { return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0) }
 
+function mipmappable() {
+  return (powerOfTwo(this.height) && powerOfTwo(this.width))
+}
+
 function extend (a, b) {
   if (arguments.length > 2) [].forEach.call(arguments, function (b) { extend(a, b) })
   else for (var k in b) a[k] = b[k]
   return a
 }
 
-function onload (image, cb, self) {
-  if (! image || image.complete || image.readyState == 4) cb.call(self)
-  else image.addEventListener && image.addEventListener('load', cb.bind(self))
+function onLoad (image, cb) {
+  if (! image || image.complete || image.readyState == 4) cb()
+  else image.addEventListener && image.addEventListener('load', cb)
 }
 
 function pointInPolygon(x, y, shape) {}
 
 var checkerboard = (function() {
-  var c = document.createElement('canvas').getContext('2d'), y, x
-  c.canvas.width = c.canvas.height = 128
-  for (y = 0; y < c.canvas.height; y += 16)
-    for (x = 0; x < c.canvas.width; x += 16)
-      (c.fillStyle = (x ^ y) & 16 ? '#FFF' : '#DDD'), c.fillRect(x, y, 16, 16)
+  var c = document.createElement('canvas').getContext('2d')
+    , s = c.canvas.width = c.canvas.height = 128, y, x
+  for (y = 0; y < s; y += 16)
+    for (x = 0; x < s; x += 16)
+      c.fillStyle = (x ^ y) & 16 ? '#FFF' : '#DDD',
+      c.fillRect(x, y, 16, 16)
   return c.canvas
 })()

@@ -81,7 +81,7 @@ pathgl.sim.particles = function (s) {
       while(++j < chunk.size)
         data.push(origin[0], origin[1], random(-1.0, 1.0), random(-1.0, 1.0))
 
-      texture.subImage(chunk.x, chunk.y, new Float32Array(data))
+      texture.subImage(chunk.x, chunk.y, data)
     })
 
     particleIndex += count
