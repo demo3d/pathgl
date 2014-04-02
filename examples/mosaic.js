@@ -27,33 +27,25 @@ function launch() {
   return mosaic
 }
 
-var textures = [].map.call(document.querySelectorAll('img'), pathgl.texture)
-
-c.selectAll('rect').data(d3.range(col * row )).enter().append('rect')
+//var textures = [].map.call(document.querySelectorAll('img'), pathgl.texture)
+var webcam = pathgl.texture(getWebcam()).repeat()
+r = c.selectAll('rect').data(d3.range(col * row ))
+.enter().append('rect')
 .attr('x', function (d) { return s/2 + s * (d % col) })
 .attr('y', function (d) { return s/2 + s * ~~(d / col) })
 .attr('width', s / 2)
-.attr('fill', function (d, i) { return textures[i % 2] })
+.attr('fill',  webcam)
 
-// d3.timer(function () {
-//   r.filter(function (d) { return Math.random() > .9 })
-//   .attr('fill', function () { return "hsl(" + Math.random() * 360 + ",100%, 50%)" })
-// })
-
-function getVideo () {
+function getWebcam() {
   navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia
-
-  var video = document.createElement('video')
-  video.height = size.height
-  video.height = size.width
-  video.autoplay = true
-  video.loop = true
+  var video = d3.select('body').append('video')
+  .attr('height', 1000).attr('width', 1000)
+  .attr('autoplay', true).attr('loopo', true)
+  .node()
 
   navigator.getUserMedia({ video: true }, function(stream) {
     video.src = window.URL.createObjectURL(stream)
   }, function(error) {})
 
-  //videoTexture = pathgl.texture(video)
-  document.body.appendChild(video)
-  pathgl.texture('video').repeat()
+  return video
 }

@@ -81,7 +81,15 @@ function extend (a, b) {
 }
 
 function pointInPolygon(x, y, shape) {}
-;function parseColor(v) {
+
+var checkerboard = (function() {
+  var c = document.createElement('canvas').getContext('2d'), y, x
+  c.canvas.width = c.canvas.height = 128;
+  for (y = 0; y < c.canvas.height; y += 16)
+    for (x = 0; x < c.canvas.width; x += 16)
+      (c.fillStyle = (x ^ y) & 16 ? '#FFF' : '#DDD'), c.fillRect(x, y, 16, 16)
+  return c.canvas
+})();function parseColor(v) {
   var a = setStyle(v)
   return + ( a[0] * 255 ) << 16 ^ ( a[1] * 255 ) << 8 ^ ( a[2] * 255 ) << 0
 }
@@ -277,7 +285,7 @@ function simMesh() {
 , '    return vec4(mod(col / 256. / 256., 256.),'
 , '                mod(col / 256. , 256.),'
 , '                mod(col, 256.),'
-, '                200.)'
+, '                256.)'
 , '                / 256.;'
 , '}'
 , 'void main() {'
@@ -1023,15 +1031,16 @@ var attrDefaults = {
   this.width =  image.width || 512
   this.height =  image.height || 512
 
+  if (Array.isArray(image)) image = parseImage(image)
   if ('string' == typeof image) image = parseImage(image)
   if ('number' == typeof image) this.width = this.height = Math.sqrt(image), image = false
 
   extend(this, {
     gl: gl
-  , data: image
   , id: id()
-  , texture: gl.createTexture()
+  , data: image
   , dependents: []
+  , texture: gl.createTexture()
   , invalidate: function () {
       tasksOnce.push(function () { this.forEach(function (d) { d.invalidate() }) }.bind(this.dependents))
     }
@@ -1042,9 +1051,9 @@ var attrDefaults = {
 
 Texture.prototype = {
   init: initTexture
-, update: function () {
+, update: function (data) {
     this.data ?
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data) :
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data || this.data) :
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, null)
   }
 , size: function (w, h) {
@@ -1068,8 +1077,11 @@ Texture.prototype = {
 , load: function ()  {
     var image = this.data
 
-    if (! image || image.complete || image.readyState == 4) this.init()
-    else image.addEventListener && image.addEventListener('load', this.init.bind(this))
+    this.init()
+    this.update(checkerboard)
+
+    if (! image || image.complete || image.readyState == 4) this.update()
+    else image.addEventListener && image.addEventListener('load', this.update.bind(this))
 
     return this
   }

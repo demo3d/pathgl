@@ -162,7 +162,7 @@ function draw_history(err, hist) {
     .enter()
     .append('circle').call(tip)
     .attr({ class:'event'
-          , stroke: function(d){ return d3.hsl(Math.random()*120 + 120, .9, 0.5) }
+          , stroke: function(d){ return d3.hsl(Math.random()*120 + 120, .8, 0.5) }
           , cx: function(d){ return d.location[0] }
           , cy: function(d){ return d.location[1] }
           , cz: function(d){ return + d.year }

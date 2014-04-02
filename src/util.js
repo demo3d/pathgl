@@ -35,3 +35,12 @@ function extend (a, b) {
 }
 
 function pointInPolygon(x, y, shape) {}
+
+var checkerboard = (function() {
+  var c = document.createElement('canvas').getContext('2d'), y, x
+  c.canvas.width = c.canvas.height = 128;
+  for (y = 0; y < c.canvas.height; y += 16)
+    for (x = 0; x < c.canvas.width; x += 16)
+      (c.fillStyle = (x ^ y) & 16 ? '#FFF' : '#DDD'), c.fillRect(x, y, 16, 16)
+  return c.canvas
+})()

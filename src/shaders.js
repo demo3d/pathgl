@@ -26,7 +26,7 @@ pathgl.vertexShader = [
 , '    return vec4(mod(col / 256. / 256., 256.),'
 , '                mod(col / 256. , 256.),'
 , '                mod(col, 256.),'
-, '                200.)'
+, '                256.)'
 , '                / 256.;'
 , '}'
 , 'void main() {'
