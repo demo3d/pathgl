@@ -2,7 +2,6 @@ function Texture(image) {
   this.width =  image.width || 512
   this.height =  image.height || 512
 
-  if (Array.isArray(image)) image = parseImage(image)
   if ('string' == typeof image) image = parseImage(image)
   if ('number' == typeof image) this.width = this.height = Math.sqrt(image), image = false
 
@@ -17,6 +16,8 @@ function Texture(image) {
     }
   })
 
+  if (Array.isArray(image))
+    batchTexture.call(this, image), image = checkerboard
   this.load()
 }
 
@@ -51,15 +52,14 @@ Texture.prototype = {
     this.init()
     this.update(checkerboard)
 
-    if (! image || image.complete || image.readyState == 4) this.update()
-    else image.addEventListener && image.addEventListener('load', this.update.bind(this))
+    onload(image, this.update, this)
 
     return this
   }
-, subImage: function (x,y, length, data) {
+, subImage: function (x, y, data) {
     gl.texSubImage2D(gl.TEXTURE_2D, 0,
-                   x, y, length, 1,
-                   gl.RGBA, gl.FLOAT, new Float32Array(data))
+                     x, y, data.length / 4, 1,
+                     gl.RGBA, gl.FLOAT, data)
   }
 , repeat: function () {
     this.task = function () { this.update() }.bind(this)
@@ -105,7 +105,6 @@ function parseImage (image) {
   //   video / image / canvas
   //   imageData
   //   typedarray
-  //   array / nodelist
   var query = document.querySelector(image)
   if (query) return query
 
@@ -132,4 +131,13 @@ function renderable() {
     save.call(this)
      this.__renderTarget__.update()
   }
+}
+
+
+function batchTexture (data, size) {
+  size = size || 4096
+  data.forEach(function (d, i) {
+    data[i] = parseImage(data[i])
+    data[i].o
+  })
 }

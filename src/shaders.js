@@ -1,6 +1,5 @@
 pathgl.vertexShader = [
-  'precision mediump float;'
-, 'uniform float clock;'
+  'uniform float clock;'
 , 'uniform vec2 mouse;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
@@ -44,9 +43,7 @@ pathgl.vertexShader = [
 ].join('\n\n')
 
 pathgl.fragmentShader = [
-  'precision mediump float;'
-
-, 'uniform sampler2D texture;'
+  'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
 
@@ -124,8 +121,9 @@ function build_vs(src, subst) {
 }
 
 function compileShader (gl, type, src) {
+  var header = 'precision mediump float;\n'
   var shader = gl.createShader(type)
-  gl.shaderSource(shader, src)
+  gl.shaderSource(shader, header + src)
   gl.compileShader(shader)
   if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     var log = (gl.getShaderInfoLog(shader) || '')

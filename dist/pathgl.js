@@ -80,11 +80,16 @@ function extend (a, b) {
   return a
 }
 
+function onload (image, cb, self) {
+  if (! image || image.complete || image.readyState == 4) cb.call(self)
+  else image.addEventListener && image.addEventListener('load', cb.bind(self))
+}
+
 function pointInPolygon(x, y, shape) {}
 
 var checkerboard = (function() {
   var c = document.createElement('canvas').getContext('2d'), y, x
-  c.canvas.width = c.canvas.height = 128;
+  c.canvas.width = c.canvas.height = 128
   for (y = 0; y < c.canvas.height; y += 16)
     for (x = 0; x < c.canvas.width; x += 16)
       (c.fillStyle = (x ^ y) & 16 ? '#FFF' : '#DDD'), c.fillRect(x, y, 16, 16)
@@ -258,8 +263,7 @@ function simMesh() {
                   , primitive: 'triangle_strip'
                   })
 };pathgl.vertexShader = [
-  'precision mediump float;'
-, 'uniform float clock;'
+  'uniform float clock;'
 , 'uniform vec2 mouse;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
@@ -303,9 +307,7 @@ function simMesh() {
 ].join('\n\n')
 
 pathgl.fragmentShader = [
-  'precision mediump float;'
-
-, 'uniform sampler2D texture;'
+  'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
 
@@ -383,8 +385,9 @@ function build_vs(src, subst) {
 }
 
 function compileShader (gl, type, src) {
+  var header = 'precision mediump float;\n'
   var shader = gl.createShader(type)
-  gl.shaderSource(shader, src)
+  gl.shaderSource(shader, header + src)
   gl.compileShader(shader)
   if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     var log = (gl.getShaderInfoLog(shader) || '')
@@ -1031,7 +1034,6 @@ var attrDefaults = {
   this.width =  image.width || 512
   this.height =  image.height || 512
 
-  if (Array.isArray(image)) image = parseImage(image)
   if ('string' == typeof image) image = parseImage(image)
   if ('number' == typeof image) this.width = this.height = Math.sqrt(image), image = false
 
@@ -1046,6 +1048,8 @@ var attrDefaults = {
     }
   })
 
+  if (Array.isArray(image))
+    batchTexture.call(this, image), image = checkerboard
   this.load()
 }
 
@@ -1080,15 +1084,14 @@ Texture.prototype = {
     this.init()
     this.update(checkerboard)
 
-    if (! image || image.complete || image.readyState == 4) this.update()
-    else image.addEventListener && image.addEventListener('load', this.update.bind(this))
+    onload(image, this.update, this)
 
     return this
   }
-, subImage: function (x,y, length, data) {
+, subImage: function (x, y, data) {
     gl.texSubImage2D(gl.TEXTURE_2D, 0,
-                   x, y, length, 1,
-                   gl.RGBA, gl.FLOAT, new Float32Array(data))
+                     x, y, data.length / 4, 1,
+                     gl.RGBA, gl.FLOAT, data)
   }
 , repeat: function () {
     this.task = function () { this.update() }.bind(this)
@@ -1134,7 +1137,6 @@ function parseImage (image) {
   //   video / image / canvas
   //   imageData
   //   typedarray
-  //   array / nodelist
   var query = document.querySelector(image)
   if (query) return query
 
@@ -1162,17 +1164,23 @@ function renderable() {
      this.__renderTarget__.update()
   }
 }
-;;var simulation_vs = [
-  'precision mediump float;'
-, 'attribute vec2 pos;'
+
+
+function batchTexture (data, size) {
+  size = size || 4096
+  data.forEach(function (d, i) {
+    data[i] = parseImage(data[i])
+    data[i].o
+  })
+};;var simulation_vs = [
+  'attribute vec2 pos;'
 , '  void main() {'
 , '  gl_Position = vec4(pos.xy, 1.0 , 1.0);'
 , '  }'
 ].join('\n')
 
 var particleShader = [
-, 'precision mediump float;'
-, 'uniform sampler2D texture;'
+  'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 mouse;'
 , 'uniform vec2 dimensions;'
@@ -1247,7 +1255,7 @@ pathgl.sim.particles = function (s) {
       while(++j < chunk.size)
         data.push(origin[0], origin[1], random(-1.0, 1.0), random(-1.0, 1.0))
 
-      texture.subImage(chunk.x, chunk.y, chunk.size, data)
+      texture.subImage(chunk.x, chunk.y, new Float32Array(data))
     })
 
     particleIndex += count

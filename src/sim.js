@@ -1,14 +1,12 @@
 var simulation_vs = [
-  'precision mediump float;'
-, 'attribute vec2 pos;'
+  'attribute vec2 pos;'
 , '  void main() {'
 , '  gl_Position = vec4(pos.xy, 1.0 , 1.0);'
 , '  }'
 ].join('\n')
 
 var particleShader = [
-, 'precision mediump float;'
-, 'uniform sampler2D texture;'
+  'uniform sampler2D texture;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 mouse;'
 , 'uniform vec2 dimensions;'
@@ -83,7 +81,7 @@ pathgl.sim.particles = function (s) {
       while(++j < chunk.size)
         data.push(origin[0], origin[1], random(-1.0, 1.0), random(-1.0, 1.0))
 
-      texture.subImage(chunk.x, chunk.y, chunk.size, data)
+      texture.subImage(chunk.x, chunk.y, new Float32Array(data))
     })
 
     particleIndex += count

@@ -34,11 +34,16 @@ function extend (a, b) {
   return a
 }
 
+function onload (image, cb, self) {
+  if (! image || image.complete || image.readyState == 4) cb.call(self)
+  else image.addEventListener && image.addEventListener('load', cb.bind(self))
+}
+
 function pointInPolygon(x, y, shape) {}
 
 var checkerboard = (function() {
   var c = document.createElement('canvas').getContext('2d'), y, x
-  c.canvas.width = c.canvas.height = 128;
+  c.canvas.width = c.canvas.height = 128
   for (y = 0; y < c.canvas.height; y += 16)
     for (x = 0; x < c.canvas.width; x += 16)
       (c.fillStyle = (x ^ y) & 16 ? '#FFF' : '#DDD'), c.fillRect(x, y, 16, 16)
