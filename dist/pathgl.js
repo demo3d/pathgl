@@ -212,6 +212,7 @@ function shader() {
   var  target = null
     , blockSize
     , stepRate = 2
+    , dependents = []
 
   var self = {
     scatter: scatter
@@ -221,13 +222,14 @@ function shader() {
     , match: matchWith
     , pipe: pipe
     , invalidate: invalidate
-    , dependents: []
   }
 
   var render = RenderTarget({
     gl: gl
   , mesh: simMesh()
   })
+
+  var children = []
 
   function step() {
     for(var i = -1; ++i < stepRate;) render.update()
@@ -254,7 +256,7 @@ function shader() {
 
   function invalidate() {
     tasksOnce.push(step)
-    this.dependents.forEach(function (d) {
+    dependents.forEach(function (d) {
       d.invalidate()
     })
   }
@@ -262,13 +264,51 @@ function shader() {
   function draw () {
   }
 
-  function matchWith() {
+  function matchWith(shader) {
+    var replace = shader()//takes 64 matched averages and tiles
+                  .shared('uv', 'tex1.xy') //varyings
+                  .map('gl_fragcolor = texel(uv);') //recolor square
+                  .pipe(dependents)
+
+    var search = shader() //takes 2 list of averages
+                 .sort('float comparator(vec2 a, vec2 b) { return a > b ? a : b }')
+                 .search('float comparator(vec2 a, vec2 b) { return a > b ? a : b }')
+                 .pipe(replace)
+
+    var hsl2RGB =
+         'void main (){'
+         + 'float a = texel(uv);'
+         + 'float maxC = max(a.r, a.g, a.b)'
+         + 'float minC = min(a.r, a.g, a.b)'
+         + 'float lightness = (maxC + minC) * .5'
+         + 'float  delta = maxC - minC'
+         + 'float saturation = lightness <= 0.5 ? delta / ( maxC + minC ) : delta / ( 2 - maxC - minC )'
+         + 'float hue = maxC == a.r ?  (a.g - a.b ) / delta + ( a.g < a.b ? 6 : 0 )'
+                   + ': maxC == a.g  ? ( a.b - a.r ) / delta + 2'
+                   + ': ( a.r - a.g ) / delta + 4;'
+         + 'hue /= 6'
+         + 'return vec3(hue, saturation, lightness);'
+         + '}'
+
+    dependencies.map(function (d) {
+      var averages = shader()
+      .blocksize(64, 64)
+      .gridsize(8, 8)
+      .reduce(shader)
+      .pipe(search)
+
+      d.pipe(averages)
+      d[1].pipe(replace)
+
+    })
+
+    //this.children.push(subKernels, matchKernel)
     return this
   }
 
   function pipe (ctx) {
     render.drawTo(ctx)
-    ctx && this.dependents.push(ctx)
+    ctx && dependents.push(ctx)
     return self
   }
 }
