@@ -75,7 +75,10 @@ function range(a, b) { return Array(Math.abs(b - a)).join().split(',').map(funct
 function hash(str) { return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0) }
 
 function mipmappable() {
-  return (powerOfTwo(this.height) && powerOfTwo(this.width))
+  return  powerOfTwo(this.height)
+      && powerOfTwo(this.width)
+      && (this.data || {}).constructor !== HTMLVideoElement
+      && this.data
 }
 
 function extend (a, b) {
@@ -206,20 +209,19 @@ var cssColors = {
 ;pathgl.shader = shader
 
 function shader() {
-  var dependents = []
-    , target = null
+  var  target = null
     , blockSize
     , stepRate = 2
 
   var self = {
-      read: read
-    , scatter: scatter
+    scatter: scatter
     , reduce: reduce
     , scan: scan
     , map: map
     , match: matchWith
     , pipe: pipe
     , invalidate: invalidate
+    , dependents: []
   }
 
   var render = RenderTarget({
@@ -245,10 +247,6 @@ function shader() {
 
   }
 
-  function read(ctx) {
-    dependents.push(ctx)
-  }
-
   function map (shader) {
     render.mergeProgram(simulation_vs, particleShader)
     return this
@@ -256,7 +254,7 @@ function shader() {
 
   function invalidate() {
     tasksOnce.push(step)
-    dependents.forEach(function (d) {
+    this.dependents.forEach(function (d) {
       d.invalidate()
     })
   }
@@ -268,9 +266,9 @@ function shader() {
     return this
   }
 
-  function pipe (dest) {
-    render.drawTo(dest)
-    dest && dest.readFrom(self)
+  function pipe (ctx) {
+    render.drawTo(ctx)
+    ctx && this.dependents.push(ctx)
     return self
   }
 }
@@ -297,8 +295,6 @@ function simMesh() {
 , 'varying vec4 dim;'
 
 , 'uniform sampler2D texture;'
-
-, 'uniform mat4 activeTexture;'
 
 , 'const mat4 modelViewMatrix = mat4(1.);'
 , 'const mat4 projectionMatrix = mat4(1.);'
@@ -1060,8 +1056,8 @@ var attrDefaults = {
 , opacity: .999
 }
 ;function Texture(image) {
-  this.width =  image.width || 512
-  this.height =  image.height || 512
+  this.width = image.width || 512
+  this.height = image.height || 512
 
   if ('string' == typeof image) image = parseImage(image)
   if ('number' == typeof image) this.width = this.height = Math.sqrt(image), image = false
@@ -1078,15 +1074,13 @@ var attrDefaults = {
   })
 
   if (Array.isArray(image)) this.data = batchTexture.call(this)
-  //if (image.constructor == Object) image = parseJSON(image)
-
+  if (image.constructor == Object) image = parseJSON(image)
   this.load()
 }
 
 Texture.prototype = {
-  init: initTexture
-, update: function (data) {
-     this.data ?
+update: function (data) {
+    this.data ?
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data || this.data) :
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, null)
   }
@@ -1108,13 +1102,10 @@ Texture.prototype = {
     var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
   }
-, readFrom: function (ctx) {
-    this.dependents.push(ctx)
-  }
 , load: function ()  {
     var image = this.data
 
-    this.init()
+    initTexture.call(this)
     this.update(checkerboard)
 
     onLoad(image, this.update.bind(this))
@@ -1125,6 +1116,7 @@ Texture.prototype = {
     gl.bindTexture(gl.TEXTURE_2D, this.texture)
     gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, data.length / 4, 1, gl.RGBA, gl.FLOAT, new Float32Array(data))
   }
+
 , repeat: function () {
     this.task = function () { this.update() }.bind(this)
     tasks.push(this.task)
@@ -1135,29 +1127,36 @@ Texture.prototype = {
     this.task && tasks.splice(tasks.indexOf(this.task))
     delete this.task
   }
+
 , appendChild: function (el) {
     if (! this.__renderTarget__) renderable.call(this)
     return this.__scene__[this.__scene__.length] = this.__renderTarget__.append(el.tagName || el)
   }
+
 , valueOf: function () {
     return - this.id
   }
+
 , copy: function () { return pathgl.texture(this.src) }
 , pipe: pipeTexture
 , querySelectorAll: querySelectorAll
-, __scene__: []
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 , unwrap: unwrap
 , adnan: true
 }
 
 function initTexture() {
+  var mipmap = mipmappable.call(this)
+    , wrap = gl[mipmap ? 'REPEAT' : 'CLAMP_TO_EDGE']
+    , filter = gl[mipmap ? 'LINEAR' : 'NEAREST']
+
   gl.bindTexture(gl.TEXTURE_2D, this.texture)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap)
+  //if (this.height == this.width && mipmap) gl.generateMipmap(gl.TEXTURE_2D)
   this.update()
 }
 
@@ -1170,9 +1169,8 @@ function parseImage(image) {
   return extend(isVideoUrl ? new Image : document.createElement('video'), { crossOrigin: 'anonymous', src: image})
 }
 
-
 function pipeTexture(ctx) {
-  ctx.read(this)
+  this.dependents.push(ctx)
   return this
 }
 
@@ -1187,8 +1185,9 @@ function unwrap() {
 }
 
 function renderable() {
-  this.fbo =  gl.createFramebuffer()
-  this.__renderTarget__ = RenderTarget(this)
+  extend(this, { __scene__: [] })
+  (this.__renderTarget__ = RenderTarget(this))
+  .drawTo(this)
   var save  = this.update
   this.update = function () {
     save.call(this)
@@ -1218,6 +1217,10 @@ function batchTexture () {
   }, this)
 
   return c.canvas
+}
+
+function readFrom(ctx) {
+  this.dependents.push(ctx)
 }
 
 function parseJSON(json) {

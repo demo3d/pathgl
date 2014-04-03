@@ -1,20 +1,19 @@
 pathgl.shader = shader
 
 function shader() {
-  var dependents = []
-    , target = null
+  var  target = null
     , blockSize
     , stepRate = 2
 
   var self = {
-      read: read
-    , scatter: scatter
+    scatter: scatter
     , reduce: reduce
     , scan: scan
     , map: map
     , match: matchWith
     , pipe: pipe
     , invalidate: invalidate
+    , dependents: []
   }
 
   var render = RenderTarget({
@@ -40,10 +39,6 @@ function shader() {
 
   }
 
-  function read(ctx) {
-    dependents.push(ctx)
-  }
-
   function map (shader) {
     render.mergeProgram(simulation_vs, particleShader)
     return this
@@ -51,7 +46,7 @@ function shader() {
 
   function invalidate() {
     tasksOnce.push(step)
-    dependents.forEach(function (d) {
+    this.dependents.forEach(function (d) {
       d.invalidate()
     })
   }
@@ -63,9 +58,9 @@ function shader() {
     return this
   }
 
-  function pipe (dest) {
-    render.drawTo(dest)
-    dest && dest.readFrom(self)
+  function pipe (ctx) {
+    render.drawTo(ctx)
+    ctx && this.dependents.push(ctx)
     return self
   }
 }

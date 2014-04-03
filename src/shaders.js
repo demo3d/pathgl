@@ -15,8 +15,6 @@ pathgl.vertexShader = [
 
 , 'uniform sampler2D texture;'
 
-, 'uniform mat4 activeTexture;'
-
 , 'const mat4 modelViewMatrix = mat4(1.);'
 , 'const mat4 projectionMatrix = mat4(1.);'
 

@@ -29,7 +29,10 @@ function range(a, b) { return Array(Math.abs(b - a)).join().split(',').map(funct
 function hash(str) { return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0) }
 
 function mipmappable() {
-  return (powerOfTwo(this.height) && powerOfTwo(this.width))
+  return  powerOfTwo(this.height)
+      && powerOfTwo(this.width)
+      && (this.data || {}).constructor !== HTMLVideoElement
+      && this.data
 }
 
 function extend (a, b) {
