@@ -13,6 +13,7 @@ var particleShader = [
 , 'uniform float gravity;'
 , 'uniform float inertia;'
 , 'uniform float drag;'
+, 'uniform float clock;'
 , 'void main() {'
     , 'vec2 TARGET = vec2(mouse / resolution);'
         , 'vec4 data = texture2D(texture, (gl_FragCoord.xy) / dimensions);'
@@ -22,8 +23,8 @@ var particleShader = [
         , 'if (pos.y > 1.) { vel.y *= -1.; pos.y = 1.; } '
         , 'if (pos.x < 0.) { vel.x *= -1.; pos.x = 0.; } '
         , 'if (pos.y < 0.) { vel.y *= -1.; pos.y = 0.; } '
-        , 'pos += vel  * .005 / sqrt(distance(pos, TARGET));'
-        , 'vel += gravity * normalize(TARGET - pos) * inertia;'
+        , 'pos += inertia  * vel;'
+        , 'vel += gravity * normalize(TARGET - pos);'
         , 'vel *= drag;'
         , 'gl_FragColor = vec4(pos, vel);'
      , '}'
@@ -40,7 +41,9 @@ pathgl.sim.particles = function (s) {
   var shader = pathgl.shader().map(particleShader)
 
   texture.pipe(shader)
-  shader.pipe(texture).invalidate()
+  shader.pipe(texture)
+  //shader.pipe(null)
+  shader.invalidate()
   start()
 
   return extend(texture, { emit: emit, reverse: reversePolarity })
@@ -51,8 +54,8 @@ pathgl.sim.particles = function (s) {
 
   function start () {
     pathgl.uniform('dimensions', [width, height])
-    pathgl.uniform('gravity', 1)
-    pathgl.uniform('inertia', 0.05)
+    pathgl.uniform('gravity', .1)
+    pathgl.uniform('inertia', 0.005)
     pathgl.uniform('drag', 0.991)
     for(var i = -1; ++i < 10;)
       addParticles(size / 10, [1,2].map(Math.random))

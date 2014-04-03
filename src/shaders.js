@@ -43,7 +43,7 @@ pathgl.vertexShader = [
 , '    v_fill = unpack_color(fill);'
 , '    dim = vec4(x, y, r, -r);'
 , '    v_stroke = replace_stroke;'
-, '    gl_Position = vec4(clipspace(pos.xy),  1., 1.);'
+, '    gl_Position = vec4(clipspace(vec2(x, y)),  1., 1.);'
 , '}'
 ].join('\n\n')
 
@@ -69,6 +69,7 @@ pathgl.fragmentShader = [
 function createProgram(gl, vs_src, fs_src, attributes) {
   var src = vs_src + '\n' + fs_src
   program = gl.createProgram()
+  program.shit = Math.random(0)
 
   var vs = compileShader(gl, gl.VERTEX_SHADER, vs_src)
     , fs = compileShader(gl, gl.FRAGMENT_SHADER, fs_src)

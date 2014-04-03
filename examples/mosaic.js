@@ -31,16 +31,16 @@ var findAverageHue = 'uniform vec2 blockSize;'
 function init(arr) {
   arr.width = 1024
   arr.rows = 8
-  tiles = pathgl.texture(getWebcam()).repeat()
-  //tiles = pathgl.texture(arr)//.pipe(mozify)
+  //tiles = pathgl.texture(getWebcam()).repeat()
+  tiles = pathgl.texture(arr)//.pipe(mozify)
   c.selectAll('rect').data(d3.range(col * row ))
-    .enter().append('rect')
-    .attr('x', function (d) { return s/2 + s * (d % col) })
-    .attr('y', function (d) { return s/2 + s * ~~(d / col) })
-    .attr('width', s / 2)
-    .attr('fill',  function (d, i) {
-    return (d % 30) < 15 ? tiles : 'pink'
-  })
+  .enter().append('rect')
+  .attr('x', function (d) { return s/2 + s * (d % col) })
+  .attr('y', function (d) { return s/2 + s * ~~(d / col) })
+  .attr('width', s / 2)
+  .filter(function (d, i) { return (d % 30) < 15 })
+  .attr('fill', tiles)
+
   return
   var mozify = pathgl.shader().matchWith(findAverageHue)
   var webcam = pathgl.texture(getWebcam()).repeat().pipe(mozify)

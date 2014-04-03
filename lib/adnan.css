@@ -319,3 +319,7 @@ ul li {
 .blurb {
     height: 5%;
 }
+
+.documentation svg, .documentation canvas{
+    display: none;
+}

@@ -96,14 +96,11 @@ function Mesh (gl, options, attr) {
 
 function RenderTarget(screen) {
   var gl = screen.gl
-    , fbo = screen.fbo || null
+    , targets = []
     , prog = screen.program || program
     , types = screen.types = SVGProxy()
     , meshes = screen.mesh ? [screen.mesh] : buildBuffers(gl, screen.types)
-
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
-
-  fbo = initFbo.call(screen)
 
   return screen.__renderTarget__ = {
     update: update
@@ -112,11 +109,9 @@ function RenderTarget(screen) {
   , mergeProgram: mergeProgram
   }
 
-  function drawTo(dest) {
-    screen.width = dest.width
-    screen.height = dest.height
-    screen.texture = dest.texture
-    fbo = initFbo.call(screen)
+  function drawTo(texture) {
+    if (! texture) return targets.push(null)
+    targets.push(initFbo(texture))
   }
 
   function append(el) {
@@ -129,13 +124,12 @@ function RenderTarget(screen) {
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
-    setUniforms()
-    beforeRender(gl)
-
-    pathgl.uniform('clock', new Date - start)
-
-    for(var i = -1; ++i < meshes.length;) meshes[i].draw()
+    for(var i = -1; ++i < targets.length;) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, targets[i])
+      setUniforms()
+      beforeRender(gl, targets[i])
+      for(var j = -1; ++j < meshes.length;) meshes[j].draw()
+    }
   }
 
   function setUniforms () {
@@ -143,7 +137,7 @@ function RenderTarget(screen) {
       program[k] && program[k](uniforms[k])
   }
 
-  function beforeRender(gl) {
+  function beforeRender(gl, fbo) {
     if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
@@ -159,13 +153,13 @@ function buildBuffers(gl, types) {
   return [pointMesh, lineMesh]
 }
 
-function initFbo() {
-  if (! this.fbo || ! this.texture) return
-  gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
-  this.fbo.width = screen.width
-  this.fbo.height = screen.height
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, null)
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 
-  return this.fbo
+function initFbo(texture) {
+  var fbo = gl.createFramebuffer()
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+  fbo.width = texture.width
+  fbo.height = texture.height
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture.texture, null)
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+  return fbo
 }

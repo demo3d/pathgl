@@ -10,10 +10,14 @@ function init(c) {
   monkeyPatch(canvas)
   bindEvents(canvas)
   var main = RenderTarget(canvas)
+  main.drawTo(null)
   tasks.push(main.update)
   gl.clearColor(.3, .3, .3, 1.)
   flags(gl)
   startDrawLoop()
+  tasks.push(function () {
+    pathgl.uniform('clock', new Date - start)
+  })
   return canvas
 }
 

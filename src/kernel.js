@@ -4,7 +4,6 @@ function shader() {
   var dependents = []
     , target = null
     , blockSize
-    , render
     , stepRate = 2
 
   var self = {
@@ -18,14 +17,13 @@ function shader() {
     , invalidate: invalidate
   }
 
-  var ctx = RenderTarget({
-    fbo: gl.createFramebuffer()
-  , gl: gl
+  var render = RenderTarget({
+    gl: gl
   , mesh: simMesh()
   })
 
   function step() {
-    for(var i = -1; ++i < stepRate;) ctx.update()
+    for(var i = -1; ++i < stepRate;) render.update()
   }
 
   return self
@@ -42,12 +40,12 @@ function shader() {
 
   }
 
-  function read(tex) {
-    ctx.drawTo(tex)
+  function read(ctx) {
+    dependents.push(ctx)
   }
 
   function map (shader) {
-    ctx.mergeProgram(simulation_vs, particleShader)
+    render.mergeProgram(simulation_vs, particleShader)
     return this
   }
 
@@ -65,8 +63,9 @@ function shader() {
     return this
   }
 
-  function pipe (ctx) {
-    dependents.push(ctx)
+  function pipe (dest) {
+    render.drawTo(dest)
+    dest && dest.readFrom(self)
     return self
   }
 }

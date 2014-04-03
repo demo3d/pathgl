@@ -47,6 +47,9 @@ Texture.prototype = {
     var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
   }
+, readFrom: function (ctx) {
+    this.dependents.push(ctx)
+  }
 , load: function ()  {
     var image = this.data
 
@@ -58,7 +61,7 @@ Texture.prototype = {
     return this
   }
 , subImage: function (x, y, data) {
-    //gl.bindTexture(gl.TEXTURE_2D, this.texture)
+    gl.bindTexture(gl.TEXTURE_2D, this.texture)
     gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, data.length / 4, 1, gl.RGBA, gl.FLOAT, new Float32Array(data))
   }
 , repeat: function () {
@@ -106,15 +109,19 @@ function parseImage(image) {
   return extend(isVideoUrl ? new Image : document.createElement('video'), { crossOrigin: 'anonymous', src: image})
 }
 
+
 function pipeTexture(ctx) {
-  this.dependents.push(ctx)
   ctx.read(this)
   return this
 }
 
+function readFrom(ctx) {
+  this.dependents.push(ctx)
+}
+
 function unwrap() {
   var i = this.size() || 0, uv = new Array(i)
-  while(i--) uv[i] = { x: this.x()(i, i), y: this.y(i, i)(i, i), z: this.z(i, i)(i, i) }
+  while(i--) uv[i] = { x: this.x()(i, i), y: this.y()(i, i), z: this.z()(i, i) }
   return uv
 }
 

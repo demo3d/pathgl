@@ -209,7 +209,6 @@ function shader() {
   var dependents = []
     , target = null
     , blockSize
-    , render
     , stepRate = 2
 
   var self = {
@@ -223,14 +222,13 @@ function shader() {
     , invalidate: invalidate
   }
 
-  var ctx = RenderTarget({
-    fbo: gl.createFramebuffer()
-  , gl: gl
+  var render = RenderTarget({
+    gl: gl
   , mesh: simMesh()
   })
 
   function step() {
-    for(var i = -1; ++i < stepRate;) ctx.update()
+    for(var i = -1; ++i < stepRate;) render.update()
   }
 
   return self
@@ -247,12 +245,12 @@ function shader() {
 
   }
 
-  function read(tex) {
-    ctx.drawTo(tex)
+  function read(ctx) {
+    dependents.push(ctx)
   }
 
   function map (shader) {
-    ctx.mergeProgram(simulation_vs, particleShader)
+    render.mergeProgram(simulation_vs, particleShader)
     return this
   }
 
@@ -270,8 +268,9 @@ function shader() {
     return this
   }
 
-  function pipe (ctx) {
-    dependents.push(ctx)
+  function pipe (dest) {
+    render.drawTo(dest)
+    dest && dest.readFrom(self)
     return self
   }
 }
@@ -327,7 +326,7 @@ function simMesh() {
 , '    v_fill = unpack_color(fill);'
 , '    dim = vec4(x, y, r, -r);'
 , '    v_stroke = replace_stroke;'
-, '    gl_Position = vec4(clipspace(pos.xy),  1., 1.);'
+, '    gl_Position = vec4(clipspace(vec2(x, y)),  1., 1.);'
 , '}'
 ].join('\n\n')
 
@@ -353,6 +352,7 @@ pathgl.fragmentShader = [
 function createProgram(gl, vs_src, fs_src, attributes) {
   var src = vs_src + '\n' + fs_src
   program = gl.createProgram()
+  program.shit = Math.random(0)
 
   var vs = compileShader(gl, gl.VERTEX_SHADER, vs_src)
     , fs = compileShader(gl, gl.FRAGMENT_SHADER, fs_src)
@@ -447,10 +447,14 @@ function mergify(vs1, fs1, subst1) {
   monkeyPatch(canvas)
   bindEvents(canvas)
   var main = RenderTarget(canvas)
+  main.drawTo(null)
   tasks.push(main.update)
   gl.clearColor(.3, .3, .3, 1.)
   flags(gl)
   startDrawLoop()
+  tasks.push(function () {
+    pathgl.uniform('clock', new Date - start)
+  })
   return canvas
 }
 
@@ -709,14 +713,11 @@ function addEvenLtistener (evt, listener, capture) {
 
 function RenderTarget(screen) {
   var gl = screen.gl
-    , fbo = screen.fbo || null
+    , targets = []
     , prog = screen.program || program
     , types = screen.types = SVGProxy()
     , meshes = screen.mesh ? [screen.mesh] : buildBuffers(gl, screen.types)
-
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
-
-  fbo = initFbo.call(screen)
 
   return screen.__renderTarget__ = {
     update: update
@@ -725,11 +726,9 @@ function RenderTarget(screen) {
   , mergeProgram: mergeProgram
   }
 
-  function drawTo(dest) {
-    screen.width = dest.width
-    screen.height = dest.height
-    screen.texture = dest.texture
-    fbo = initFbo.call(screen)
+  function drawTo(texture) {
+    if (! texture) return targets.push(null)
+    targets.push(initFbo(texture))
   }
 
   function append(el) {
@@ -742,13 +741,12 @@ function RenderTarget(screen) {
 
   function update () {
     if (program != prog) gl.useProgram(program = prog)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
-    setUniforms()
-    beforeRender(gl)
-
-    pathgl.uniform('clock', new Date - start)
-
-    for(var i = -1; ++i < meshes.length;) meshes[i].draw()
+    for(var i = -1; ++i < targets.length;) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, targets[i])
+      setUniforms()
+      beforeRender(gl, targets[i])
+      for(var j = -1; ++j < meshes.length;) meshes[j].draw()
+    }
   }
 
   function setUniforms () {
@@ -756,7 +754,7 @@ function RenderTarget(screen) {
       program[k] && program[k](uniforms[k])
   }
 
-  function beforeRender(gl) {
+  function beforeRender(gl, fbo) {
     if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
@@ -772,15 +770,15 @@ function buildBuffers(gl, types) {
   return [pointMesh, lineMesh]
 }
 
-function initFbo() {
-  if (! this.fbo || ! this.texture) return
-  gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo)
-  this.fbo.width = screen.width
-  this.fbo.height = screen.height
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.texture, null)
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
 
-  return this.fbo
+function initFbo(texture) {
+  var fbo = gl.createFramebuffer()
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+  fbo.width = texture.width
+  fbo.height = texture.height
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture.texture, null)
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+  return fbo
 }
 ;//regexes sourced from sizzle
 function querySelectorAll(selector, r) {
@@ -1107,6 +1105,9 @@ Texture.prototype = {
     var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
   }
+, readFrom: function (ctx) {
+    this.dependents.push(ctx)
+  }
 , load: function ()  {
     var image = this.data
 
@@ -1118,7 +1119,7 @@ Texture.prototype = {
     return this
   }
 , subImage: function (x, y, data) {
-    //gl.bindTexture(gl.TEXTURE_2D, this.texture)
+    gl.bindTexture(gl.TEXTURE_2D, this.texture)
     gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, data.length / 4, 1, gl.RGBA, gl.FLOAT, new Float32Array(data))
   }
 , repeat: function () {
@@ -1166,15 +1167,19 @@ function parseImage(image) {
   return extend(isVideoUrl ? new Image : document.createElement('video'), { crossOrigin: 'anonymous', src: image})
 }
 
+
 function pipeTexture(ctx) {
-  this.dependents.push(ctx)
   ctx.read(this)
   return this
 }
 
+function readFrom(ctx) {
+  this.dependents.push(ctx)
+}
+
 function unwrap() {
   var i = this.size() || 0, uv = new Array(i)
-  while(i--) uv[i] = { x: this.x()(i, i), y: this.y(i, i)(i, i), z: this.z(i, i)(i, i) }
+  while(i--) uv[i] = { x: this.x()(i, i), y: this.y()(i, i), z: this.z()(i, i) }
   return uv
 }
 
@@ -1237,6 +1242,7 @@ var particleShader = [
 , 'uniform float gravity;'
 , 'uniform float inertia;'
 , 'uniform float drag;'
+, 'uniform float clock;'
 , 'void main() {'
     , 'vec2 TARGET = vec2(mouse / resolution);'
         , 'vec4 data = texture2D(texture, (gl_FragCoord.xy) / dimensions);'
@@ -1246,8 +1252,8 @@ var particleShader = [
         , 'if (pos.y > 1.) { vel.y *= -1.; pos.y = 1.; } '
         , 'if (pos.x < 0.) { vel.x *= -1.; pos.x = 0.; } '
         , 'if (pos.y < 0.) { vel.y *= -1.; pos.y = 0.; } '
-        , 'pos += vel  * .005 / sqrt(distance(pos, TARGET));'
-        , 'vel += gravity * normalize(TARGET - pos) * inertia;'
+        , 'pos += inertia  * vel;'
+        , 'vel += gravity * normalize(TARGET - pos);'
         , 'vel *= drag;'
         , 'gl_FragColor = vec4(pos, vel);'
      , '}'
@@ -1264,7 +1270,9 @@ pathgl.sim.particles = function (s) {
   var shader = pathgl.shader().map(particleShader)
 
   texture.pipe(shader)
-  shader.pipe(texture).invalidate()
+  shader.pipe(texture)
+  //shader.pipe(null)
+  shader.invalidate()
   start()
 
   return extend(texture, { emit: emit, reverse: reversePolarity })
@@ -1275,8 +1283,8 @@ pathgl.sim.particles = function (s) {
 
   function start () {
     pathgl.uniform('dimensions', [width, height])
-    pathgl.uniform('gravity', 1)
-    pathgl.uniform('inertia', 0.05)
+    pathgl.uniform('gravity', .1)
+    pathgl.uniform('inertia', 0.005)
     pathgl.uniform('drag', 0.991)
     for(var i = -1; ++i < 10;)
       addParticles(size / 10, [1,2].map(Math.random))
