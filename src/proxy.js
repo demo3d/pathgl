@@ -37,16 +37,13 @@ var proto = {
           , stroke: function (v) {
               this.colorBuffer[this.indices[0]] = parseColor(v)
             },
-            opacity: function () {}
-          , tagName: 'circle'
+            tagName: 'circle'
           , schema: 'cx cy r cz'.split(' ')
           }
 
 
-, ellipse: { init: function () {
-
-
-             }, tagName: 'ellipse'
+, ellipse: { init: function () {},
+             tagName: 'ellipse'
            , cx: noop, cy: noop, rx: noop, ry: noop }
 , rect: { init: function (i) {
             this.fBuffer[i * 4] = 0
@@ -132,6 +129,9 @@ var baseProto = {
 , nextSibling: function () { canvas.scene[canvas.__scene__.indexOf()  + 1] }
 , parent: function () { return __scene__ }
 , gl: gl
+, opacity: function (v) {
+    this.fBuffer[this.indices[0] + 1] = 256 - (v * 256)
+  }
 
 , transform: function (d) {
   }
