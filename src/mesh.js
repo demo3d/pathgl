@@ -100,6 +100,7 @@ function RenderTarget(screen) {
     , prog = screen.program || program
     , types = screen.types = SVGProxy()
     , meshes = screen.mesh ? [screen.mesh] : buildBuffers(gl, screen.types)
+
   meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
 
   return screen.__renderTarget__ = {
@@ -112,6 +113,8 @@ function RenderTarget(screen) {
   function drawTo(texture) {
     if (! texture) return targets.push(null)
     targets.push(initFbo(texture))
+    screen.width = texture.width
+    screen.height = texture.height
   }
 
   function append(el) {
@@ -127,7 +130,7 @@ function RenderTarget(screen) {
     for(var i = -1; ++i < targets.length;) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, targets[i])
       setUniforms()
-      beforeRender(gl, targets[i])
+      beforeRender(gl, screen)
       for(var j = -1; ++j < meshes.length;) meshes[j].draw()
     }
   }
@@ -137,8 +140,8 @@ function RenderTarget(screen) {
       program[k] && program[k](uniforms[k])
   }
 
-  function beforeRender(gl, fbo) {
-    if (! fbo) gl.clear( gl.COLOR_BUFFER_BIT)
+  function beforeRender(gl, screen) {
+    if (screen == gl.canvas) gl.clear(gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
 }
@@ -162,4 +165,5 @@ function initFbo(texture) {
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture.texture, null)
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
   return fbo
+
 }

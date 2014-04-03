@@ -44,7 +44,7 @@ pathgl.sim.particles = function (s) {
   shader.pipe(texture)
   //shader.pipe(null)
   shader.invalidate()
-  start()
+  setTimeout(start, 1000)
 
   return extend(texture, { emit: emit, reverse: reversePolarity })
 
