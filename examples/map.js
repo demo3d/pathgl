@@ -108,8 +108,10 @@ function draw_history(err, hist) {
   setInterval(function () {
     if (b.node().pause) return
     if (brush.empty()) brush.extent([0, 10])
-    brush.extent(brush.extent().map(function (d) { return d + 1 })).event(b)
-;    b.call(brush)
+    var extent = brush.extent().map(function (d) { return d + 1 })
+    if (extent[0] > 2040 || extent[1] > 2040 ) extent = extent.map(function (d) { return d - 2500 })
+    brush.extent(extent).event(b)
+    b.call(brush)
   }, 16)
 
   function brushmove() {

@@ -13,12 +13,26 @@ pathgl.vertexShader = [
 , 'varying vec4 v_fill;'
 , 'varying vec4 dim;'
 
-, 'uniform sampler2D texture;'
+, 'uniform sampler2D texture0;'
+, 'uniform sampler2D texture1;'
+, 'uniform sampler2D texture2;'
+, 'uniform sampler2D texture3;'
 
 , 'const mat4 modelViewMatrix = mat4(1.);'
 , 'const mat4 projectionMatrix = mat4(1.);'
 
-, 'vec4 texel(vec2 get) { return texture2D(texture, abs(get)); }'
+//which texture? 0-4
+//uv coordinates...
+//which index or combination of indices?
+, 'vec4 unpack_tex(float col) {'
+, '    return vec4(mod(col / 1000. / 1000., 1000.),'
+, '                mod(col / 1000. , 1000.),'
+, '                mod(col, 1000.),'
+, '                col);'
+, '}'
+
+, 'vec4 texel(vec2 get) { return texture2D(texture0, abs(get)); }'
+
 
 , 'vec4 unpack_color(float col) {'
 , '    return vec4(mod(col / 256. / 256., 256.),'
@@ -46,7 +60,7 @@ pathgl.vertexShader = [
 ].join('\n\n')
 
 pathgl.fragmentShader = [
-  'uniform sampler2D texture;'
+  'uniform sampler2D texture0;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
 
@@ -60,7 +74,7 @@ pathgl.fragmentShader = [
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture, clipspace(dim.xy + (dim.zw * (gl_PointCoord - .5)))) : v_stroke;'
+, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture0, clipspace(dim.xy + (dim.zw * (gl_PointCoord - .5)))) : v_stroke;'
 , '}'
 ].join('\n')
 
@@ -98,6 +112,7 @@ function createProgram(gl, vs_src, fs_src, attributes) {
     var loc = gl.getUniformLocation(program, key)
       , method = 'uniform' + glslTypedef(type) + 'fv'
       , keep
+
     program[key] = function (data) {
       if (keep == data || ! arguments.length) return
 
@@ -115,7 +130,7 @@ function build_vs(src, subst) {
 
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? clamp(texel(pos.xy).w + texel(pos.xy).z, 1., 100.) : (2. * pos.z)'
+    , r: '(pos.z < 0.) ? max(texel(pos.xy).w + texel(pos.xy).z, 1.) : (2. * pos.z)'
     , x: '(pos.x < 1.) ? texel(pos.xy).x * resolution.x : pos.x'
     , y: '(pos.y < 1.) ? texel(pos.xy).y * resolution.y : pos.y'
     }, subst)

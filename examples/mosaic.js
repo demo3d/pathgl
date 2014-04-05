@@ -20,12 +20,8 @@ var col = 30
   , s = ~~ (width / col)
   , row = ~~ (height / s)
 
-var findAverageHue = 'uniform vec2 blockSize;'
-                   + 'void main () {'
-                   + '  vec3 averageHue = vec3();'
-                   + '  for (int i = 0; i < exp2(blockSize.x); i++)'
-                   + '    averageHue += texel(vec2(i % blockSize.x, i / blockSize.x));'
-                   + '  gl_FragColor = vec4(averageHue / blockSize, 1.0);'
+var findAverageHue = 'vec4 accumulator (vec4 a, vec4 b) {'
+                   + '  return vec4(a.x + b.x, 0, a.z, a.w);'
                    + '}'
 
 function init(arr) {

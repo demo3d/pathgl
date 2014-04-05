@@ -18,11 +18,11 @@ function Texture(image) {
 
   if (Array.isArray(image)) this.data = batchTexture.call(this)
   if (image.constructor == Object) image = parseJSON(image)
-  this.load()
+  loadTexture.call(this)
 }
 
 Texture.prototype = {
-update: function (data) {
+  update: function (data) {
     this.data ?
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data || this.data) :
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, null)
@@ -44,16 +44,6 @@ update: function (data) {
 , y: function () {
     var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
-  }
-, load: function ()  {
-    var image = this.data
-
-    initTexture.call(this)
-    this.update(checkerboard)
-
-    onLoad(image, this.update.bind(this))
-
-    return this
   }
 , subImage: function (x, y, data) {
     gl.bindTexture(gl.TEXTURE_2D, this.texture)
@@ -82,6 +72,7 @@ update: function (data) {
 
 , copy: function () { return pathgl.texture(this.src) }
 , pipe: pipeTexture
+, querySelector: querySelector
 , querySelectorAll: querySelectorAll
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 , unwrap: unwrap
@@ -134,7 +125,7 @@ function renderable() {
   var save  = this.update
   this.update = function () {
     save.call(this)
-     this.__renderTarget__.update()
+    this.__renderTarget__.update()
   }
 }
 
@@ -175,4 +166,18 @@ function parseJSON(json) {
     if (count > 1020) this.subImage(0, count, buff)
                     , buff = new Float32Array(1024)
   }
+}
+
+
+
+
+function loadTexture()  {
+  var image = this.data
+
+  initTexture.call(this)
+  this.update(checkerboard)
+
+  onLoad(image, this.update.bind(this))
+
+  return this
 }

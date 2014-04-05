@@ -119,45 +119,36 @@ var proto = {
 }
 
 var baseProto = {
-  querySelectorAll: querySelectorAll
+  gl: gl
 , children: Object.freeze([])
-, querySelector: function (s) { return this.querySelectorAll(s)[0] }
+, querySelector: querySelector
+, querySelectorAll: querySelectorAll
 , createElementNS: identity
 , insertBefore: noop
 , ownerDocument: { createElementNS: function (_, x) { debugger ;return x } }
 , previousSibling: function () { canvas.scene[canvas.__scene__.indexOf(this) - 1] }
 , nextSibling: function () { canvas.scene[canvas.__scene__.indexOf()  + 1] }
 , parent: function () { return __scene__ }
-, gl: gl
 , opacity: function (v) {
     this.fBuffer[this.indices[0] + 1] = 256 - (v * 256)
   }
-
-, transform: function (d) {
-  }
-
+, transform: function (d) {}
 , getAttribute: function (name) {
     return this.attr[name]
   }
-
 , setAttribute: function (name, value) {
     this.attr[name] = value
     this[name] && this[name](value)
-    if (value && value.adnan) this.mesh.addTexture(name, value)
+    if (value && value.texture) this.mesh.bindMaterial(name, value)
   }
-
-, style: { setProperty: noop }
-
 , removeAttribute: function (name) {
     delete this.attr[name]
   }
-
 , textContent: noop
 , removeEventListener: noop
 , addEventListener: addEventListener
-, ownerSVGElement: {
-  createSVGPoint: function () {}
-}
+, style: { setProperty: noop }
+, ownerSVGElement: { createSVGPoint: noop }
 }
 
 var types = [

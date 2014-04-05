@@ -12,7 +12,6 @@ function Mesh (gl, options, attr) {
   , alloc: alloc
   , draw: draw
   , bind: bind
-  , addTexture: addTexture
   , bindMaterial: bindMaterial
   , attributes: attributes
   , set: set
@@ -80,14 +79,7 @@ function Mesh (gl, options, attr) {
   function removeAttr () {}
   function boundingBox() {}
 
-  function bindMaterial() {
-    for (var i = -1; ++i < material.length;) {
-      //gl.activeTexture(gl.TEXTURE0 + i)
-      gl.bindTexture(gl.TEXTURE_2D, material[i].texture)
-    }
-  }
-
-  function addTexture(attr, tex) {
+  function bindMaterial(attr, tex) {
     if (!~ material.indexOf(tex))
       material.push(tex)
     //mapping

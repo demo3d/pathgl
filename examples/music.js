@@ -24,6 +24,7 @@ function play () {
   var s = d3.select('canvas')
 
   var scale = Math.PI * 2 / numLines
+  var texture
 
   promise ? initAudio.call(audio.node()) : audio.on('loadeddata', initAudio)
 
@@ -40,13 +41,13 @@ function play () {
 
   d3.timer(function () {
     if (! analyzer) return
+
     freqData = new Uint8Array(analyzer.fftSize)
-    timeData = new Uint8Array(analyzer.fftSize)
+    //pathgl.texture(freqData)
+    //timeData = new Uint8Array(analyzer.fftSize)
 
-    analyzer.getByteTimeDomainData(timeData)
+    //analyzer.getByteTimeDomainData(timeData)
     analyzer.getByteFrequencyData(freqData)
-    var min = d3.min(timeData)
-
     var dMax = 0
     lines.each(function (d, i) {
       var freq  = freqData[i % 1024] * 3

@@ -211,7 +211,7 @@ var cssColors = {
 function shader() {
   var  target = null
     , blockSize
-    , stepRate = 2
+    , stepRate = 3
     , dependents = []
 
   var self = {
@@ -254,6 +254,10 @@ function shader() {
     return this
   }
 
+  function read () {
+    //render.mesh.addMaterial(texture)
+  }
+
   function invalidate() {
     tasksOnce.push(step)
     dependents.forEach(function (d) {
@@ -272,13 +276,13 @@ function shader() {
 
     var search = shader() //takes 2 list of averages
                  .sort('float comparator(vec2 a, vec2 b) { return a > b ? a : b }')
-                 .search('float comparator(vec2 a, vec2 b) { return a > b ? a : b }')
+                 .map('bsearch')
                  .pipe(replace)
 
     var hsl2RGB =
          'void main (){'
          + 'float a = texel(uv);'
-         + 'float maxC = max(a.r, a.g, a.b)'
+          + 'float maxC = max(a.r, a.g, a.b)'
          + 'float minC = min(a.r, a.g, a.b)'
          + 'float lightness = (maxC + minC) * .5'
          + 'float  delta = maxC - minC'
@@ -287,23 +291,27 @@ function shader() {
                    + ': maxC == a.g  ? ( a.b - a.r ) / delta + 2'
                    + ': ( a.r - a.g ) / delta + 4;'
          + 'hue /= 6'
-         + 'return vec3(hue, saturation, lightness);'
+         + 'gl_FragColor = vec3(hue, saturation, threadIdx.xy);'
          + '}'
 
     dependencies.map(function (d) {
       var averages = shader()
       .blocksize(64, 64)
       .gridsize(8, 8)
-      .reduce(shader)
+      .map(hsl2RGB)
+      .reduce(shader) //1024^2 -> 64^2
       .pipe(search)
 
       d.pipe(averages)
       d[1].pipe(replace)
-
     })
 
     //this.children.push(subKernels, matchKernel)
     return this
+  }
+
+  function spawnChild () {
+
   }
 
   function pipe (ctx) {
@@ -334,12 +342,26 @@ function simMesh() {
 , 'varying vec4 v_fill;'
 , 'varying vec4 dim;'
 
-, 'uniform sampler2D texture;'
+, 'uniform sampler2D texture0;'
+, 'uniform sampler2D texture1;'
+, 'uniform sampler2D texture2;'
+, 'uniform sampler2D texture3;'
 
 , 'const mat4 modelViewMatrix = mat4(1.);'
 , 'const mat4 projectionMatrix = mat4(1.);'
 
-, 'vec4 texel(vec2 get) { return texture2D(texture, abs(get)); }'
+//which texture? 0-4
+//uv coordinates...
+//which index or combination of indices?
+, 'vec4 unpack_tex(float col) {'
+, '    return vec4(mod(col / 1000. / 1000., 1000.),'
+, '                mod(col / 1000. , 1000.),'
+, '                mod(col, 1000.),'
+, '                col);'
+, '}'
+
+, 'vec4 texel(vec2 get) { return texture2D(texture0, abs(get)); }'
+
 
 , 'vec4 unpack_color(float col) {'
 , '    return vec4(mod(col / 256. / 256., 256.),'
@@ -367,7 +389,7 @@ function simMesh() {
 ].join('\n\n')
 
 pathgl.fragmentShader = [
-  'uniform sampler2D texture;'
+  'uniform sampler2D texture0;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
 
@@ -381,7 +403,7 @@ pathgl.fragmentShader = [
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture, clipspace(dim.xy + (dim.zw * (gl_PointCoord - .5)))) : v_stroke;'
+, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture0, clipspace(dim.xy + (dim.zw * (gl_PointCoord - .5)))) : v_stroke;'
 , '}'
 ].join('\n')
 
@@ -419,6 +441,7 @@ function createProgram(gl, vs_src, fs_src, attributes) {
     var loc = gl.getUniformLocation(program, key)
       , method = 'uniform' + glslTypedef(type) + 'fv'
       , keep
+
     program[key] = function (data) {
       if (keep == data || ! arguments.length) return
 
@@ -436,7 +459,7 @@ function build_vs(src, subst) {
 
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? clamp(texel(pos.xy).w + texel(pos.xy).z, 1., 100.) : (2. * pos.z)'
+    , r: '(pos.z < 0.) ? max(texel(pos.xy).w + texel(pos.xy).z, 1.) : (2. * pos.z)'
     , x: '(pos.x < 1.) ? texel(pos.xy).x * resolution.x : pos.x'
     , y: '(pos.y < 1.) ? texel(pos.xy).y * resolution.y : pos.y'
     }, subst)
@@ -665,7 +688,6 @@ function addEvenLtistener (evt, listener, capture) {
   , alloc: alloc
   , draw: draw
   , bind: bind
-  , addTexture: addTexture
   , bindMaterial: bindMaterial
   , attributes: attributes
   , set: set
@@ -733,14 +755,7 @@ function addEvenLtistener (evt, listener, capture) {
   function removeAttr () {}
   function boundingBox() {}
 
-  function bindMaterial() {
-    for (var i = -1; ++i < material.length;) {
-      //gl.activeTexture(gl.TEXTURE0 + i)
-      gl.bindTexture(gl.TEXTURE_2D, material[i].texture)
-    }
-  }
-
-  function addTexture(attr, tex) {
+  function bindMaterial(attr, tex) {
     if (!~ material.indexOf(tex))
       material.push(tex)
     //mapping
@@ -820,6 +835,7 @@ function initFbo(texture) {
   return fbo
 
 };//regexes sourced from sizzle
+function querySelector(s) { return this.querySelectorAll(s)[0] }
 function querySelectorAll(selector, r) {
   return selector.replace(/^\s+|\s*([,\s\+\~>]|$)\s*/g, '$1').split(',')
   .forEach(function (s) { query(s, this).forEach(push.bind(r = [])) }, this) || r
@@ -1002,45 +1018,36 @@ var proto = {
 }
 
 var baseProto = {
-  querySelectorAll: querySelectorAll
+  gl: gl
 , children: Object.freeze([])
-, querySelector: function (s) { return this.querySelectorAll(s)[0] }
+, querySelector: querySelector
+, querySelectorAll: querySelectorAll
 , createElementNS: identity
 , insertBefore: noop
 , ownerDocument: { createElementNS: function (_, x) { debugger ;return x } }
 , previousSibling: function () { canvas.scene[canvas.__scene__.indexOf(this) - 1] }
 , nextSibling: function () { canvas.scene[canvas.__scene__.indexOf()  + 1] }
 , parent: function () { return __scene__ }
-, gl: gl
 , opacity: function (v) {
     this.fBuffer[this.indices[0] + 1] = 256 - (v * 256)
   }
-
-, transform: function (d) {
-  }
-
+, transform: function (d) {}
 , getAttribute: function (name) {
     return this.attr[name]
   }
-
 , setAttribute: function (name, value) {
     this.attr[name] = value
     this[name] && this[name](value)
-    if (value && value.adnan) this.mesh.addTexture(name, value)
+    if (value && value.texture) this.mesh.bindMaterial(name, value)
   }
-
-, style: { setProperty: noop }
-
 , removeAttribute: function (name) {
     delete this.attr[name]
   }
-
 , textContent: noop
 , removeEventListener: noop
 , addEventListener: addEventListener
-, ownerSVGElement: {
-  createSVGPoint: function () {}
-}
+, style: { setProperty: noop }
+, ownerSVGElement: { createSVGPoint: noop }
 }
 
 var types = [
@@ -1115,11 +1122,11 @@ var attrDefaults = {
 
   if (Array.isArray(image)) this.data = batchTexture.call(this)
   if (image.constructor == Object) image = parseJSON(image)
-  this.load()
+  loadTexture.call(this)
 }
 
 Texture.prototype = {
-update: function (data) {
+  update: function (data) {
     this.data ?
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data || this.data) :
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, null)
@@ -1141,16 +1148,6 @@ update: function (data) {
 , y: function () {
     var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
-  }
-, load: function ()  {
-    var image = this.data
-
-    initTexture.call(this)
-    this.update(checkerboard)
-
-    onLoad(image, this.update.bind(this))
-
-    return this
   }
 , subImage: function (x, y, data) {
     gl.bindTexture(gl.TEXTURE_2D, this.texture)
@@ -1179,6 +1176,7 @@ update: function (data) {
 
 , copy: function () { return pathgl.texture(this.src) }
 , pipe: pipeTexture
+, querySelector: querySelector
 , querySelectorAll: querySelectorAll
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 , unwrap: unwrap
@@ -1231,7 +1229,7 @@ function renderable() {
   var save  = this.update
   this.update = function () {
     save.call(this)
-     this.__renderTarget__.update()
+    this.__renderTarget__.update()
   }
 }
 
@@ -1273,7 +1271,20 @@ function parseJSON(json) {
                     , buff = new Float32Array(1024)
   }
 }
-;;var simulation_vs = [
+
+
+
+
+function loadTexture()  {
+  var image = this.data
+
+  initTexture.call(this)
+  this.update(checkerboard)
+
+  onLoad(image, this.update.bind(this))
+
+  return this
+};;var simulation_vs = [
   'attribute vec2 pos;'
 , '  void main() {'
 , '  gl_Position = vec4(pos.xy, 1.0 , 1.0);'

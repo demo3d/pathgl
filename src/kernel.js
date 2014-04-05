@@ -3,7 +3,7 @@ pathgl.shader = shader
 function shader() {
   var  target = null
     , blockSize
-    , stepRate = 2
+    , stepRate = 3
     , dependents = []
 
   var self = {
@@ -46,6 +46,10 @@ function shader() {
     return this
   }
 
+  function read () {
+    //render.mesh.addMaterial(texture)
+  }
+
   function invalidate() {
     tasksOnce.push(step)
     dependents.forEach(function (d) {
@@ -64,13 +68,13 @@ function shader() {
 
     var search = shader() //takes 2 list of averages
                  .sort('float comparator(vec2 a, vec2 b) { return a > b ? a : b }')
-                 .search('float comparator(vec2 a, vec2 b) { return a > b ? a : b }')
+                 .map('bsearch')
                  .pipe(replace)
 
     var hsl2RGB =
          'void main (){'
          + 'float a = texel(uv);'
-         + 'float maxC = max(a.r, a.g, a.b)'
+          + 'float maxC = max(a.r, a.g, a.b)'
          + 'float minC = min(a.r, a.g, a.b)'
          + 'float lightness = (maxC + minC) * .5'
          + 'float  delta = maxC - minC'
@@ -79,23 +83,27 @@ function shader() {
                    + ': maxC == a.g  ? ( a.b - a.r ) / delta + 2'
                    + ': ( a.r - a.g ) / delta + 4;'
          + 'hue /= 6'
-         + 'return vec3(hue, saturation, lightness);'
+         + 'gl_FragColor = vec3(hue, saturation, threadIdx.xy);'
          + '}'
 
     dependencies.map(function (d) {
       var averages = shader()
       .blocksize(64, 64)
       .gridsize(8, 8)
-      .reduce(shader)
+      .map(hsl2RGB)
+      .reduce(shader) //1024^2 -> 64^2
       .pipe(search)
 
       d.pipe(averages)
       d[1].pipe(replace)
-
     })
 
     //this.children.push(subKernels, matchKernel)
     return this
+  }
+
+  function spawnChild () {
+
   }
 
   function pipe (ctx) {
