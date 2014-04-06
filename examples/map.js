@@ -27,25 +27,20 @@ function mouseover(d) {
 }
 
 function draw_world(err, world) {
-  if (err) svg.append('path')
-  .attr('class', 'graticule noclick')
-  .datum(d3.geo.graticule())
-  .attr('d', path)
-  .attr('stroke-dasharray', '3 3')
-  .attr('fill', 'none')
-  .attr('stroke', 'aliceblue')
+  if (err) return
 
-  svg.append("path")
+  webgl.append("path")
   .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a == b && a.id !== 10 }))
   .attr({ class: 'world'
         , d: path
-        , fill: 'none'
+        , fill: 'pink'
         , 'stroke': 'grey'
         , 'stroke-width': 1
         })
 }
 
 function draw_history(err, hist) {
+  return
   var dates, m, to
     , from = -500
 
@@ -131,51 +126,51 @@ function draw_history(err, hist) {
                     return s[0] < (+ event.year)  && (+ event.year) < s[1]
                   }).map(function (e) {
                     var c = e.node
-                      e.dist = distance(c.attr.cx, c.attr.cy, x, y)
-                      return e
-                    })
-                    .sort(function (a, b) { return a.dist - b.dist })
-        p.text(event.length && event[0].event)
-      })
-    }
-    adnan([-500, -400])
-
-    d3.select('.right').insert('p', '*')
-    .attr('class', 'title')
-    .style({ color: 'white'
-           , position: 'absolute'
-           , top: 475 + 'px'
-           , left: 150 + 'px'
-           , width: "35%"
-           , 'font-size': '10px'
-           , 'text-anchor': 'end'
-           })
-
-    hist = hist.sort(function(a, b) { return a.year - b.year })
-    hist.forEach(function(d) {
-      d.location = proj(d.location.split(' ').map(parseFloat).reverse()) || d
+                    e.dist = distance(c.attr.cx, c.attr.cy, x, y)
+                    return e
+                  })
+                  .sort(function (a, b) { return a.dist - b.dist })
+      p.text(event.length && event[0].event)
     })
-
-    pathgl.uniform('dates', [0, 1])
-
-    webgl
-    .selectAll('circle')
-    .data(hist)
-    .enter()
-    .append('circle').call(tip)
-    .attr({ class:'event'
-          , stroke: function(d){ return d3.hsl(Math.random()*120 + 120, .8, 0.5) }
-          , cx: function(d){ return d.location[0] }
-          , cy: function(d){ return d.location[1] }
-          , cz: function(d){ return + d.year }
-          , r: 5
-          , opacity: .9
-          })
-    .shader({
-      'r': '(pos.w < dates.y && pos.w > dates.x) ? 20. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
-    })
-    .each(function (d) { return d.node = this })
   }
+  adnan([-500, -400])
+
+  d3.select('.right').insert('p', '*')
+  .attr('class', 'title')
+  .style({ color: 'white'
+         , position: 'absolute'
+         , top: 475 + 'px'
+         , left: 150 + 'px'
+         , width: "35%"
+         , 'font-size': '10px'
+         , 'text-anchor': 'end'
+         })
+
+  hist = hist.sort(function(a, b) { return a.year - b.year })
+  hist.forEach(function(d) {
+    d.location = proj(d.location.split(' ').map(parseFloat).reverse()) || d
+  })
+
+  pathgl.uniform('dates', [0, 1])
+
+  webgl
+  .selectAll('circle')
+  .data(hist)
+  .enter()
+  .append('circle').call(tip)
+  .attr({ class:'event'
+        , stroke: function(d){ return d3.hsl(Math.random()*120 + 120, .8, 0.5) }
+        , cx: function(d){ return d.location[0] }
+        , cy: function(d){ return d.location[1] }
+        , cz: function(d){ return + d.year }
+        , r: 5
+        , opacity: .9
+        })
+        .shader({
+          'r': '(pos.w < dates.y && pos.w > dates.x) ? 20. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
+        })
+ .each(function (d) { return d.node = this })
+}
 
 function distance (x1, y1, x2, y2) {
   var xd = x2 - x1, yd = y2 - y1

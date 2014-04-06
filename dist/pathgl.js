@@ -607,14 +607,13 @@ function startDrawLoop() {
   while(backTasks.length) backTasks.pop()()
   raf(startDrawLoop)
 }
-;function parse (str, stroke) {
-  var buffer = [], lb = this.buffer, pb = this.posBuffer, indices = this.indices, count = 0
-    , pos = [0, 0], l = indices.length, i = 0
+;function parsePath(str) {
+  var buffer = []
+    , pos = [0, 0]
     , origin = [0, 0]
 
   str.match(/[a-z][^a-z]*/ig).forEach(function (segment, i, match) {
     var points = segment.slice(1).trim().split(/,| /g), c = segment[0].toLowerCase(), j = 0
-
     while(j < points.length) {
       var x = points[j++], y = points[j++]
       c == 'm' ? origin = pos = [x, y] :
@@ -624,14 +623,13 @@ function startDrawLoop() {
     }
   })
 
-  while(indices.length < buffer.length) indices.push(lb.count + i++)
-  if (indices.length > buffer.length) indices.length = buffer.length
-
-  indices.forEach(function (d, i) {
-    pb[3 * lb[d] + d % 3] = i < buffer.length && buffer[i]
-  })
-
-  lb.count += buffer.length - l
+  // while(indices.length < buffer.length) indices.push(lb.count + i++)
+  // if (indices.length > buffer.length) indices.length = buffer.length
+  // indices.forEach(function (d, i) {
+  //   pb[3 * lb[d] + d % 3] = i < buffer.length && buffer[i]
+  // })
+  this.posBuffer.set(buffer, 0)
+  this.indices = buffer.map(function (d, i) { return i })
 }
 
 function applyCSSRules () {
@@ -697,6 +695,7 @@ function addEvenLtistener (evt, listener, capture) {
   }
 
   function alloc() {
+    if (options.primitive == 'lines') return count = 1e5
     return count += options.primitive == 'points' ? 1
                   : options.primitive == 'lines' ? 2
                   : 3
@@ -746,8 +745,8 @@ function addEvenLtistener (evt, listener, capture) {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
     //bindMaterial()
-
-    gl.drawArrays(primitive, offset || 0, count)
+    console.log('hi')
+    gl.drawArrays(primitive, offset, count)
   }
 
   function set () {}
@@ -821,6 +820,7 @@ function buildBuffers(gl, types) {
 
   var lineMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 2 }})
   lineMesh.bind(types.line)
+  lineMesh.bind(types.path)
   return [pointMesh, lineMesh]
 }
 
@@ -982,24 +982,22 @@ var proto = {
         , stroke: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
-              this.colorBuffer[i * 4] = parseInt(fill.toString().slice(1), 16)
+              this.colorBuffer[i * 4] = fill
             }, this)
           }
         }
 , path: { init: function () {
-
-
+            this.indices = []
           }, tagName: 'path'
         , d: buildPath
         , pathLength: noop
         , stroke: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
-              this.colorBuffer[i] = + parseInt(fill.toString().slice(1), 16)
+              this.colorBuffer[i * 4] = fill
             }, this)
           }
         }
-
 , polygon: { init: function () {
              }, tagName: 'polygon'
            , points: noop }
@@ -1064,7 +1062,7 @@ var types = [
 ]
 
 function buildPath (d) {
-  parse.call(this, d, this.stroke(this.attr.stroke))
+  parsePath.call(this, d, this.stroke(this.attr.stroke))
   this.stroke(this.attr.stroke)
 }
 

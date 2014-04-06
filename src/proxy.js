@@ -83,24 +83,22 @@ var proto = {
         , stroke: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
-              this.colorBuffer[i * 4] = parseInt(fill.toString().slice(1), 16)
+              this.colorBuffer[i * 4] = fill
             }, this)
           }
         }
 , path: { init: function () {
-
-
+            this.indices = []
           }, tagName: 'path'
         , d: buildPath
         , pathLength: noop
         , stroke: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
-              this.colorBuffer[i] = + parseInt(fill.toString().slice(1), 16)
+              this.colorBuffer[i * 4] = fill
             }, this)
           }
         }
-
 , polygon: { init: function () {
              }, tagName: 'polygon'
            , points: noop }
@@ -165,7 +163,7 @@ var types = [
 ]
 
 function buildPath (d) {
-  parse.call(this, d, this.stroke(this.attr.stroke))
+  parsePath.call(this, d, this.stroke(this.attr.stroke))
   this.stroke(this.attr.stroke)
 }
 

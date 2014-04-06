@@ -21,6 +21,7 @@ function Mesh (gl, options, attr) {
   }
 
   function alloc() {
+    if (options.primitive == 'lines') return count = 1e5
     return count += options.primitive == 'points' ? 1
                   : options.primitive == 'lines' ? 2
                   : 3
@@ -70,8 +71,8 @@ function Mesh (gl, options, attr) {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
     //bindMaterial()
-
-    gl.drawArrays(primitive, offset || 0, count)
+    console.log('hi')
+    gl.drawArrays(primitive, offset, count)
   }
 
   function set () {}
@@ -145,6 +146,7 @@ function buildBuffers(gl, types) {
 
   var lineMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 2 }})
   lineMesh.bind(types.line)
+  lineMesh.bind(types.path)
   return [pointMesh, lineMesh]
 }
 

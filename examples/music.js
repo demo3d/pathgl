@@ -55,7 +55,8 @@ function play () {
       d.v = freq
       d.a = freq + d.diff
     })
-    .attr('stroke', function (d) { return "hsl(" + Math.abs(d.diff / dMax * 10 + 240) + ",100%, 50%)" })
+    .attr('stroke', function (d, i) { return  i % 2 ? 'pink':'red'})
+//"hsl(" + Math.abs(d.diff / dMax * 10 + 240) + ",100%, 50%)"
     .attr('x2', function (d, i) { return midX + (Math.cos(i) * d.a) })
     .attr('y2', function (d, i) { return midY + (Math.sin(i) * d.a)})
     d3.select('canvas').node().gl.lineWidth(2)
