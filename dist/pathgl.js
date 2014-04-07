@@ -56,9 +56,11 @@ function nextSquare(n) { return Math.pow(Math.ceil(Math.sqrt(n)), 2) }
 
 function each(obj, fn) { for (var key in obj) fn(obj[key], key, obj) }
 
-function clamp (x, min, max) { return Math.min(Math.max(x, min), max) }
+function clamp(x, min, max) { return Math.min(Math.max(x, min), max) }
 
-function Quad () { return [-1.0, -1.0, 1.0, -1.0, -1.0,  1.0, 1.0,  1.0] }
+function invoke(list, method) { return list.map(function (d) { return d[method]() })  }
+
+function Quad() { return [-1.0, -1.0, 1.0, -1.0, -1.0,  1.0, 1.0,  1.0] }
 
 function isVideoUrl(url) { return url.split('.').pop().join().match(/mp4|ogg|webm/) }
 
@@ -104,238 +106,2069 @@ var checkerboard = (function() {
   return c.canvas
 })()
 
+function transformSVGPath(pathStr) {
+	var path = new THREE.Shape();
 
-;(function() {
-  "use strict";
+  const DEGS_TO_RADS = Math.PI / 180, UNIT_SIZE = 100;
 
-  var EPSILON = 1.0 / 1048576.0;
+  const DIGIT_0 = 48, DIGIT_9 = 57, COMMA = 44, SPACE = 32, PERIOD = 46, MINUS = 45;
+	var idx = 1, len = pathStr.length, activeCmd,
+		x = 0, y = 0, nx = 0, ny = 0, firstX = null, firstY = null,
+		x1 = 0, x2 = 0, y1 = 0, y2 = 0,
+		rx = 0, ry = 0, xar = 0, laf = 0, sf = 0, cx, cy;
 
-  function supertriangle(vertices) {
-    var xmin = Number.POSITIVE_INFINITY,
-        ymin = Number.POSITIVE_INFINITY,
-        xmax = Number.NEGATIVE_INFINITY,
-        ymax = Number.NEGATIVE_INFINITY,
-        i, dx, dy, dmax, xmid, ymid;
+	function eatNum() {
+		var sidx, c, isFloat = false, s;
+		// eat delims
+		while (idx < len) {
+			c = pathStr.charCodeAt(idx);
+			if (c !== COMMA && c !== SPACE)
+				break;
+			idx++;
+		}
+		if (c === MINUS)
+			sidx = idx++;
+		else
+			sidx = idx;
+		// eat number
+		while (idx < len) {
+			c = pathStr.charCodeAt(idx);
+			if (DIGIT_0 <= c && c <= DIGIT_9) {
+				idx++;
+				continue;
+			}
+			else if (c === PERIOD) {
+				idx++;
+				isFloat = true;
+				continue;
+			}
 
-    for(i = vertices.length; i--; ) {
-      if(vertices[i][0] < xmin) xmin = vertices[i][0];
-      if(vertices[i][0] > xmax) xmax = vertices[i][0];
-      if(vertices[i][1] < ymin) ymin = vertices[i][1];
-      if(vertices[i][1] > ymax) ymax = vertices[i][1];
+			s = pathStr.substring(sidx, idx);
+			return isFloat ? parseFloat(s) : parseInt(s);
+		}
+
+		s = pathStr.substring(sidx);
+		return isFloat ? parseFloat(s) : parseInt(s);
+	}
+
+	function nextIsNum() {
+		var c;
+		// do permanently eat any delims...
+		while (idx < len) {
+			c = pathStr.charCodeAt(idx);
+			if (c !== COMMA && c !== SPACE)
+				break;
+			idx++;
+		}
+		c = pathStr.charCodeAt(idx);
+		return (c === MINUS || (DIGIT_0 <= c && c <= DIGIT_9));
+	}
+
+	var canRepeat;
+	activeCmd = pathStr[0];
+	while (idx <= len) {
+		canRepeat = true;
+		switch (activeCmd) {
+			// moveto commands, become lineto's if repeated
+			case 'M':
+				x = eatNum();
+				y = eatNum();
+				path.moveTo(x, y);
+				activeCmd = 'L';
+				firstX = x;
+				firstY = y;
+				break;
+			case 'm':
+				x += eatNum();
+				y += eatNum();
+				path.moveTo(x, y);
+				activeCmd = 'l';
+				firstX = x;
+				firstY = y;
+				break;
+			case 'Z':
+			case 'z':
+				canRepeat = false;
+				if (x !== firstX || y !== firstY)
+					path.lineTo(firstX, firstY);
+				break;
+			// - lines!
+			case 'L':
+			case 'H':
+			case 'V':
+				nx = (activeCmd === 'V') ? x : eatNum();
+				ny = (activeCmd === 'H') ? y : eatNum();
+				path.lineTo(nx, ny);
+				x = nx;
+				y = ny;
+				break;
+			case 'l':
+			case 'h':
+			case 'v':
+				nx = (activeCmd === 'v') ? x : (x + eatNum());
+				ny = (activeCmd === 'h') ? y : (y + eatNum());
+				path.lineTo(nx, ny);
+				x = nx;
+				y = ny;
+				break;
+			// - cubic bezier
+			case 'C':
+				x1 = eatNum(); y1 = eatNum();
+			case 'S':
+				if (activeCmd === 'S') {
+					x1 = 2 * x - x2; y1 = 2 * y - y2;
+				}
+				x2 = eatNum();
+				y2 = eatNum();
+				nx = eatNum();
+				ny = eatNum();
+				path.bezierCurveTo(x1, y1, x2, y2, nx, ny);
+				x = nx; y = ny;
+				break;
+			case 'c':
+				x1 = x + eatNum();
+				y1 = y + eatNum();
+			case 's':
+				if (activeCmd === 's') {
+					x1 = 2 * x - x2;
+					y1 = 2 * y - y2;
+				}
+				x2 = x + eatNum();
+				y2 = y + eatNum();
+				nx = x + eatNum();
+				ny = y + eatNum();
+				path.bezierCurveTo(x1, y1, x2, y2, nx, ny);
+				x = nx; y = ny;
+				break;
+			// - quadratic bezier
+			case 'Q':
+				x1 = eatNum(); y1 = eatNum();
+			case 'T':
+				if (activeCmd === 'T') {
+					x1 = 2 * x - x1;
+					y1 = 2 * y - y1;
+				}
+				nx = eatNum();
+				ny = eatNum();
+				path.quadraticCurveTo(x1, y1, nx, ny);
+				x = nx;
+				y = ny;
+				break;
+			case 'q':
+				x1 = x + eatNum();
+				y1 = y + eatNum();
+			case 't':
+				if (activeCmd === 't') {
+					x1 = 2 * x - x1;
+					y1 = 2 * y - y1;
+				}
+				nx = x + eatNum();
+				ny = y + eatNum();
+				path.quadraticCurveTo(x1, y1, nx, ny);
+				x = nx; y = ny;
+				break;
+			// - elliptical arc
+			case 'A':
+				rx = eatNum();
+				ry = eatNum();
+				xar = eatNum() * DEGS_TO_RADS;
+				laf = eatNum();
+				sf = eatNum();
+				nx = eatNum();
+				ny = eatNum();
+				if (rx !== ry) {
+					console.warn("Forcing elliptical arc to be a circular one :(",
+						rx, ry);
+				}
+				// SVG implementation notes does all the math for us! woo!
+				// http://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
+				// step1, using x1 as x1'
+				x1 = Math.cos(xar) * (x - nx) / 2 + Math.sin(xar) * (y - ny) / 2;
+				y1 = -Math.sin(xar) * (x - nx) / 2 + Math.cos(xar) * (y - ny) / 2;
+				// step 2, using x2 as cx'
+				var norm = Math.sqrt(
+					 (rx*rx * ry*ry - rx*rx * y1*y1 - ry*ry * x1*x1) /
+					 (rx*rx * y1*y1 + ry*ry * x1*x1));
+				if (laf === sf)
+					norm = -norm;
+				x2 = norm * rx * y1 / ry;
+				y2 = norm * -ry * x1 / rx;
+				// step 3
+				cx = Math.cos(xar) * x2 - Math.sin(xar) * y2 + (x + nx) / 2;
+				cy = Math.sin(xar) * x2 + Math.cos(xar) * y2 + (y + ny) / 2;
+
+				var u = new THREE.Vector2(1, 0),
+					v = new THREE.Vector2((x1 - x2) / rx,
+					                      (y1 - y2) / ry);
+				var startAng = Math.acos(u.dot(v) / u.length() / v.length());
+				if (u.x * v.y - u.y * v.x < 0)
+					startAng = -startAng;
+
+				// we can reuse 'v' from start angle as our 'u' for delta angle
+				u.x = (-x1 - x2) / rx;
+				u.y = (-y1 - y2) / ry;
+
+				var deltaAng = Math.acos(v.dot(u) / v.length() / u.length());
+				// This normalization ends up making our curves fail to triangulate...
+				if (v.x * u.y - v.y * u.x < 0)
+					deltaAng = -deltaAng;
+				if (!sf && deltaAng > 0)
+					deltaAng -= Math.PI * 2;
+				if (sf && deltaAng < 0)
+					deltaAng += Math.PI * 2;
+
+				path.absarc(cx, cy, rx, startAng, startAng + deltaAng, sf);
+				x = nx;
+				y = ny;
+				break;
+			default:
+				throw new Error("weird path command: " + activeCmd);
+		}
+		// just reissue the command
+		if (canRepeat && nextIsNum())
+			continue;
+		activeCmd = pathStr[idx++];
+	}
+
+	return path;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    var js = js || {};
+    js.poly2tri = js.poly2tri || {};
+
+// ------------------------------------------------------------------------utils
+/**
+ * Called by the library for fatal error messages.
+ * For backward compatibility, ouputs to window.alert().
+ * You can replace by an exception thrower instead.
+ * @param   message   message string.
+ */
+js.poly2tri.fatal = function(message) {
+    alert(message);
+};
+
+// ------------------------------------------------------------------------Point
+js.poly2tri.Point = function() {
+    this.x = null;
+    this.y = null;
+
+    if (arguments.length == 0) {
+        this.x = 0.0;
+        this.y = 0.0;
+    } else if (arguments.length == 2) {
+        this.x = arguments[0];
+        this.y = arguments[1];
+    } else {
+        js.poly2tri.fatal('Invalid js.poly2tri.Point constructor call!');
     }
 
-    dx = xmax - xmin;
-    dy = ymax - ymin;
-    dmax = Math.max(dx, dy);
-    xmid = xmin + dx * 0.5;
-    ymid = ymin + dy * 0.5;
+    // The edges this point constitutes an upper ending point
+    this.edge_list = [];
 
-    return [
-      [xmid - 20 * dmax, ymid -      dmax],
-      [xmid            , ymid + 20 * dmax],
-      [xmid + 20 * dmax, ymid -      dmax]
-    ];
-  }
+}
 
-  function circumcircle(vertices, i, j, k) {
-    var x1 = vertices[i][0],
-        y1 = vertices[i][1],
-        x2 = vertices[j][0],
-        y2 = vertices[j][1],
-        x3 = vertices[k][0],
-        y3 = vertices[k][1],
-        fabsy1y2 = Math.abs(y1 - y2),
-        fabsy2y3 = Math.abs(y2 - y3),
-        xc, yc, m1, m2, mx1, mx2, my1, my2, dx, dy;
+/**
+ * For pretty printing ex. <i>"(5;42)"</i>)
+ */
+js.poly2tri.Point.prototype.toString = function() {
+    return ("(" + this.x + ";" + this.y + ")");
+};
 
-    /* Check for coincident points */
-    if(fabsy1y2 < EPSILON && fabsy2y3 < EPSILON)
-      throw new Error("Eek! Coincident points!");
+/**
+ * Set this Point instance to the origo. <code>(0; 0)</code>
+ */
+js.poly2tri.Point.prototype.set_zero = function() {
+    this.x = 0.0;
+    this.y = 0.0;
+}
 
-    if(fabsy1y2 < EPSILON) {
-      m2  = -((x3 - x2) / (y3 - y2));
-      mx2 = (x2 + x3) / 2.0;
-      my2 = (y2 + y3) / 2.0;
-      xc  = (x2 + x1) / 2.0;
-      yc  = m2 * (xc - mx2) + my2;
+/**
+ * Set the coordinates of this instance.
+ * @param   x   number.
+ * @param   y   number;
+ */
+js.poly2tri.Point.prototype.set = function(x, y) {
+    this.x = x;
+    this.y = y;
+}
+
+/**
+ * Negate this Point instance. (component-wise)
+ */
+js.poly2tri.Point.prototype.negate = function() {
+    this.x = -this.x;
+    this.y = -this.y;
+}
+
+/**
+ * Add another Point object to this instance. (component-wise)
+ * @param   n   Point object.
+ */
+js.poly2tri.Point.prototype.add = function(n) {
+    this.x += n.x;
+    this.y += n.y;
+}
+
+/**
+ * Subtract this Point instance with another point given. (component-wise)
+ * @param   n   Point object.
+ */
+js.poly2tri.Point.prototype.sub = function(n) {
+    this.x -= n.x;
+    this.y -= n.y;
+}
+
+/**
+ * Multiply this Point instance by a scalar. (component-wise)
+ * @param   s   scalar.
+ */
+js.poly2tri.Point.prototype.mul = function(s) {
+    this.x *= s;
+    this.y *= s;
+}
+
+/**
+ * Return the distance of this Point instance from the origo.
+ */
+js.poly2tri.Point.prototype.length = function() {
+    return Math.sqrt(this.x*this.x + this.y*this.y);
+}
+
+/**
+ * Normalize this Point instance (as a vector).
+ * @return The original distance of this instance from the origo.
+ */
+js.poly2tri.Point.prototype.normalize = function() {
+    var len = this.length();
+    this.x /= len;
+    this.y /= len;
+    return len;
+}
+
+/**
+ * Test this Point object with another for equality.
+ * @param   p   Point object.
+ * @return <code>True</code> if <code>this == p</code>, <code>false</code> otherwise.
+ */
+js.poly2tri.Point.prototype.equals = function(p) {
+    return js.poly2tri.equals(this, p);
+}
+
+/**
+ * Negate a point component-wise and return the result as a new Point object.
+ * @param   p   Point object.
+ * @return the resulting Point object.
+ */
+js.poly2tri.negate = function(p) {
+    return new js.poly2tri.Point(-p.x, -p.y);
+}
+
+/**
+ * Compare two points component-wise.
+ * @param   a   Point object.
+ * @param   b   Point object.
+ * @return <code>-1</code> if <code>a &lt; b</code>, <code>1</code> if
+ *         <code>a &gt; b</code>, <code>0</code> otherwise.
+ */
+js.poly2tri.cmp = function(a, b) {
+    if (a.y == b.y) {
+        return a.x - b.x;
+    } else {
+        return a.y - b.y;
     }
+}
 
-    else if(fabsy2y3 < EPSILON) {
-      m1  = -((x2 - x1) / (y2 - y1));
-      mx1 = (x1 + x2) / 2.0;
-      my1 = (y1 + y2) / 2.0;
-      xc  = (x3 + x2) / 2.0;
-      yc  = m1 * (xc - mx1) + my1;
-    }
+/**
+ * Add two points component-wise and return the result as a new Point object.
+ * @param   a   Point object.
+ * @param   b   Point object.
+ * @return the resulting Point object.
+ */
+js.poly2tri.add = function(a, b) {
+    return new js.poly2tri.Point(a.x+b.x, a.y+b.y);
+}
 
-    else {
-      m1  = -((x2 - x1) / (y2 - y1));
-      m2  = -((x3 - x2) / (y3 - y2));
-      mx1 = (x1 + x2) / 2.0;
-      mx2 = (x2 + x3) / 2.0;
-      my1 = (y1 + y2) / 2.0;
-      my2 = (y2 + y3) / 2.0;
-      xc  = (m1 * mx1 - m2 * mx2 + my2 - my1) / (m1 - m2);
-      yc  = (fabsy1y2 > fabsy2y3) ?
-        m1 * (xc - mx1) + my1 :
-        m2 * (xc - mx2) + my2;
-    }
+/**
+ * Subtract two points component-wise and return the result as a new Point object.
+ * @param   a   Point object.
+ * @param   b   Point object.
+ * @return the resulting Point object.
+ */
+js.poly2tri.sub = function(a, b) {
+    return new js.poly2tri.Point(a.x-b.x, a.y-b.y);
+}
 
-    dx = x2 - xc;
-    dy = y2 - yc;
-    return {i: i, j: j, k: k, x: xc, y: yc, r: dx * dx + dy * dy};
-  }
+/**
+ * Multiply a point by a scalar and return the result as a new Point object.
+ * @param   s   the scalar (a number).
+ * @param   p   Point object.
+ * @return the resulting Point object.
+ */
+js.poly2tri.mul = function(s, p) {
+    return new js.poly2tri.Point(s*p.x, s*p.y);
+}
 
-  function dedup(edges) {
-    var i, j, a, b, m, n;
+/**
+ * Test two Point objects for equality.
+ * @param   a   Point object.
+ * @param   b   Point object.
+ * @return <code>True</code> if <code>a == b</code>, <code>false</code> otherwise.
+ */
+js.poly2tri.equals = function(a, b) {
+    return a.x == b.x && a.y == b.y;
+}
 
-    for(j = edges.length; j; ) {
-      b = edges[--j];
-      a = edges[--j];
+/**
+ * Peform the dot product on two vectors.
+ * @param   a   Point object.
+ * @param   b   Point object.
+ * @return The dot product (as a number).
+ */
+js.poly2tri.dot = function(a, b) {
+    return a.x*b.x + a.y*b.y;
+}
 
-      for(i = j; i; ) {
-        n = edges[--i];
-        m = edges[--i];
-
-        if((a === m && b === n) || (a === n && b === m)) {
-          edges.splice(j, 2);
-          edges.splice(i, 2);
-          break;
+/**
+ * Perform the cross product on either two points (this produces a scalar)
+ * or a point and a scalar (this produces a point).
+ * This function requires two parameters, either may be a Point object or a
+ * number.
+ * @return a Point object or a number, depending on the parameters.
+ */
+js.poly2tri.cross = function() {
+    var a0_p = false;
+    var a1_p = false;
+    if (arguments.length == 2) {
+        if (typeof(arguments[0]) == 'number') {
+            a0_p = true;
         }
-      }
-    }
-  }
-
-  window.Delaunay = {
-    triangulate: function(vertices, key) {
-      var n = vertices.length,
-          i, j, indices, st, open, closed, edges, dx, dy, a, b, c;
-
-      /* Bail if there aren't enough vertices to form any triangles. */
-      if(n < 3)
-        return [];
-
-      /* Slice out the actual vertices from the passed objects. (Duplicate the
-       * array even if we don't, though, since we need to make a supertriangle
-       * later on!) */
-      vertices = vertices.slice(0);
-
-      if(key)
-        for(i = n; i--; )
-          vertices[i] = vertices[i][key];
-
-      /* Make an array of indices into the vertex array, sorted by the
-       * vertices' x-position. */
-      indices = new Array(n);
-
-      for(i = n; i--; )
-        indices[i] = i;
-
-      indices.sort(function(i, j) {
-        return vertices[j][0] - vertices[i][0];
-      });
-
-      /* Next, find the vertices of the supertriangle (which contains all other
-       * triangles), and append them onto the end of a (copy of) the vertex
-       * array. */
-      st = supertriangle(vertices);
-      vertices.push(st[0], st[1], st[2]);
-
-      /* Initialize the open list (containing the supertriangle and nothing
-       * else) and the closed list (which is empty since we havn't processed
-       * any triangles yet). */
-      open   = [circumcircle(vertices, n + 0, n + 1, n + 2)];
-      closed = [];
-      edges  = [];
-
-      /* Incrementally add each vertex to the mesh. */
-      for(i = indices.length; i--; edges.length = 0) {
-        c = indices[i];
-
-        /* For each open triangle, check to see if the current point is
-         * inside it's circumcircle. If it is, remove the triangle and add
-         * it's edges to an edge list. */
-        for(j = open.length; j--; ) {
-          /* If this point is to the right of this triangle's circumcircle,
-           * then this triangle should never get checked again. Remove it
-           * from the open list, add it to the closed list, and skip. */
-          dx = vertices[c][0] - open[j].x;
-          if(dx > 0.0 && dx * dx > open[j].r) {
-            closed.push(open[j]);
-            open.splice(j, 1);
-            continue;
-          }
-
-          /* If we're outside the circumcircle, skip this triangle. */
-          dy = vertices[c][1] - open[j].y;
-          if(dx * dx + dy * dy - open[j].r > EPSILON)
-            continue;
-
-          /* Remove the triangle and add it's edges to the edge list. */
-          edges.push(
-            open[j].i, open[j].j,
-            open[j].j, open[j].k,
-            open[j].k, open[j].i
-          );
-          open.splice(j, 1);
+        if (typeof(arguments[1] == 'number')) {
+            a1_p = true;
         }
 
-        /* Remove any doubled edges. */
-        dedup(edges);
-
-        /* Add a new triangle for each edge. */
-        for(j = edges.length; j; ) {
-          b = edges[--j];
-          a = edges[--j];
-          open.push(circumcircle(vertices, a, b, c));
+        if (a0_p) {
+            if (a1_p) return arguments[0].x*arguments[1].y - arguments[0].y*arguments[1].x;
+            else return new js.poly2tri.Point(arguments[1]*arguments[0].y, -arguments[1]*arguments[0].x);
+        } else {
+            if (a1_p) return new js.poly2tri.Point(-arguments[0]*arguments[1].y, arguments[0]*arguments[1].x);
+            else return arguments[0]*arguments[1];
         }
-      }
-
-      /* Copy any remaining open triangles to the closed list, and then
-       * remove any triangles that share a vertex with the supertriangle,
-       * building a list of triplets that represent triangles. */
-      for(i = open.length; i--; )
-        closed.push(open[i]);
-      open.length = 0;
-
-      for(i = closed.length; i--; )
-        if(closed[i].i < n && closed[i].j < n && closed[i].k < n)
-          open.push(closed[i].i, closed[i].j, closed[i].k);
-
-      /* Yay, we're done! */
-      return open;
-    },
-    contains: function(tri, p) {
-      /* Bounding box test first, for quick rejections. */
-      if((p[0] < tri[0][0] && p[0] < tri[1][0] && p[0] < tri[2][0]) ||
-         (p[0] > tri[0][0] && p[0] > tri[1][0] && p[0] > tri[2][0]) ||
-         (p[1] < tri[0][1] && p[1] < tri[1][1] && p[1] < tri[2][1]) ||
-         (p[1] > tri[0][1] && p[1] > tri[1][1] && p[1] > tri[2][1]))
-        return null;
-
-      var a = tri[1][0] - tri[0][0],
-          b = tri[2][0] - tri[0][0],
-          c = tri[1][1] - tri[0][1],
-          d = tri[2][1] - tri[0][1],
-          i = a * d - b * c;
-
-      /* Degenerate tri. */
-      if(i === 0.0)
-        return null;
-
-      var u = (d * (p[0] - tri[0][0]) - b * (p[1] - tri[0][1])) / i,
-          v = (a * (p[1] - tri[0][1]) - c * (p[0] - tri[0][0])) / i;
-
-      /* If we're outside the tri, fail. */
-      if(u < 0.0 || v < 0.0 || (u + v) > 1.0)
-        return null;
-
-      return [u, v];
+    } else {
+        js.poly2tri.fatal('Invalid js.poly2tri.cross call!');
+        return undefined;
     }
-  };
+}
 
-})();
-;function parseColor(v) {
+
+// -------------------------------------------------------------------------Edge
+js.poly2tri.Edge = function() {
+    this.p = null;
+    this.q = null;
+
+    if (arguments.length == 2) {
+        if (arguments[0].y > arguments[1].y) {
+            this.q = arguments[0];
+            this.p = arguments[1];
+        } else if (arguments[0].y == arguments[1].y) {
+            if (arguments[0].x > arguments[1].x) {
+                this.q = arguments[0];
+                this.p = arguments[1];
+            } else if (arguments[0].x == arguments[1].x) {
+                js.poly2tri.fatal('Invalid js.poly2tri.edge constructor call: repeated points! ' + arguments[0]);
+            } else {
+                this.p = arguments[0];
+                this.q = arguments[1];
+            }
+        } else {
+            this.p = arguments[0];
+            this.q = arguments[1];
+        }
+    } else {
+        js.poly2tri.fatal('Invalid js.poly2tri.Edge constructor call!');
+    }
+
+    this.q.edge_list.push(this);
+}
+
+// ---------------------------------------------------------------------Triangle
+/**
+ * Triangle class.<br>
+ * Triangle-based data structures are known to have better performance than
+ * quad-edge structures.
+ * See: J. Shewchuk, "Triangle: Engineering a 2D Quality Mesh Generator and
+ * Delaunay Triangulator", "Triangulations in CGAL"
+ *
+ * @param   p1  Point object.
+ * @param   p2  Point object.
+ * @param   p3  Point object.
+ */
+js.poly2tri.Triangle = function(p1, p2, p3) {
+    // Triangle points
+    this.points_ = [ null, null, null ];
+    // Neighbor list
+    this.neighbors_ = [ null, null, null ];
+    // Has this triangle been marked as an interior triangle?
+    this.interior_ = false;
+    // Flags to determine if an edge is a Constrained edge
+    this.constrained_edge = [ false, false, false ];
+    // Flags to determine if an edge is a Delauney edge
+    this.delaunay_edge = [ false, false, false ];
+
+    if (arguments.length == 3) {
+        this.points_[0] = p1;
+        this.points_[1] = p2;
+        this.points_[2] = p3;
+    }
+}
+
+/**
+ * For pretty printing ex. <i>"[(5;42)(10;20)(21;30)]"</i>)
+ */
+js.poly2tri.Triangle.prototype.toString = function() {
+    return ("[" + this.points_[0] + this.points_[1] + this.points_[2] + "]");
+};
+
+js.poly2tri.Triangle.prototype.GetPoint = function(index) {
+    return this.points_[index];
+}
+
+js.poly2tri.Triangle.prototype.GetNeighbor = function(index) {
+    return this.neighbors_[index];
+}
+
+/**
+ * Test if this Triangle contains the Point objects given as parameters as its
+ * vertices.
+ * @return <code>True</code> if the Point objects are of the Triangle's vertices,
+ *         <code>false</code> otherwise.
+ */
+js.poly2tri.Triangle.prototype.ContainsP = function() {
+    var back = true;
+    for (var aidx=0; aidx < arguments.length; ++aidx) {
+        back = back && (arguments[aidx].equals(this.points_[0]) ||
+                        arguments[aidx].equals(this.points_[1]) ||
+                        arguments[aidx].equals(this.points_[2])
+        );
+    }
+    return back;
+}
+
+/**
+ * Test if this Triangle contains the Edge objects given as parameters as its
+ * bounding edges.
+ * @return <code>True</code> if the Edge objects are of the Triangle's bounding
+ *         edges, <code>false</code> otherwise.
+ */
+js.poly2tri.Triangle.prototype.ContainsE = function() {
+    var back = true;
+    for (var aidx=0; aidx < arguments.length; ++aidx) {
+        back = back && this.ContainsP(arguments[aidx].p, arguments[aidx].q);
+    }
+    return back;
+}
+
+js.poly2tri.Triangle.prototype.IsInterior = function() {
+    if (arguments.length == 0) {
+        return this.interior_;
+    } else {
+        this.interior_ = arguments[0];
+        return this.interior_;
+    }
+}
+
+/**
+ * Update neighbor pointers.<br>
+ * This method takes either 3 parameters (<code>p1</code>, <code>p2</code> and
+ * <code>t</code>) or 1 parameter (<code>t</code>).
+ * @param   p1  Point object.
+ * @param   p2  Point object.
+ * @param   t   Triangle object.
+ */
+js.poly2tri.Triangle.prototype.MarkNeighbor = function() {
+    var t;
+    if (arguments.length == 3) {
+        var p1 = arguments[0];
+        var p2 = arguments[1];
+        t = arguments[2];
+
+        if ((p1.equals(this.points_[2]) && p2.equals(this.points_[1])) || (p1.equals(this.points_[1]) && p2.equals(this.points_[2]))) this.neighbors_[0] = t;
+        else if ((p1.equals(this.points_[0]) && p2.equals(this.points_[2])) || (p1.equals(this.points_[2]) && p2.equals(this.points_[0]))) this.neighbors_[1] = t;
+        else if ((p1.equals(this.points_[0]) && p2.equals(this.points_[1])) || (p1.equals(this.points_[1]) && p2.equals(this.points_[0]))) this.neighbors_[2] = t;
+        else js.poly2tri.fatal('Invalid js.poly2tri.Triangle.MarkNeighbor call (1)!');
+    } else if (arguments.length == 1) {
+        // exhaustive search to update neighbor pointers
+        t = arguments[0];
+        if (t.ContainsP(this.points_[1], this.points_[2])) {
+            this.neighbors_[0] = t;
+            t.MarkNeighbor(this.points_[1], this.points_[2], this);
+        } else if (t.ContainsP(this.points_[0], this.points_[2])) {
+            this.neighbors_[1] = t;
+            t.MarkNeighbor(this.points_[0], this.points_[2], this);
+        } else if (t.ContainsP(this.points_[0], this.points_[1])) {
+            this.neighbors_[2] = t;
+            t.MarkNeighbor(this.points_[0], this.points_[1], this);
+        }
+    } else {
+        js.poly2tri.fatal('Invalid js.poly2tri.Triangle.MarkNeighbor call! (2)');
+    }
+}
+
+js.poly2tri.Triangle.prototype.ClearNeigbors = function() {
+    this.neighbors_[0] = null;
+    this.neighbors_[1] = null;
+    this.neighbors_[2] = null;
+}
+
+js.poly2tri.Triangle.prototype.ClearDelunayEdges = function() {
+    this.delaunay_edge[0] = false;
+    this.delaunay_edge[1] = false;
+    this.delaunay_edge[2] = false;
+}
+
+/**
+ * Return the point clockwise to the given point.
+ */
+js.poly2tri.Triangle.prototype.PointCW = function(p) {
+    if (p.equals(this.points_[0])) {
+        return this.points_[2];
+    } else if (p.equals(this.points_[1])) {
+        return this.points_[0];
+    } else if (p.equals(this.points_[2])) {
+        return this.points_[1];
+    } else {
+        return null;
+    }
+}
+
+/**
+ * Return the point counter-clockwise to the given point.
+ */
+js.poly2tri.Triangle.prototype.PointCCW = function(p) {
+    if (p.equals(this.points_[0])) {
+        return this.points_[1];
+    } else if (p.equals(this.points_[1])) {
+        return this.points_[2];
+    } else if (p.equals(this.points_[2])) {
+        return this.points_[0];
+    } else {
+        return null;
+    }
+}
+
+/**
+ * Return the neighbor clockwise to given point.
+ */
+js.poly2tri.Triangle.prototype.NeighborCW = function(p) {
+    if (p.equals(this.points_[0])) {
+        return this.neighbors_[1];
+    } else if (p.equals(this.points_[1])) {
+        return this.neighbors_[2];
+    } else {
+        return this.neighbors_[0];
+    }
+}
+
+/**
+ * Return the neighbor counter-clockwise to given point.
+ */
+js.poly2tri.Triangle.prototype.NeighborCCW = function(p) {
+    if (p.equals(this.points_[0])) {
+        return this.neighbors_[2];
+    } else if (p.equals(this.points_[1])) {
+        return this.neighbors_[0];
+    } else {
+        return this.neighbors_[1];
+    }
+}
+
+js.poly2tri.Triangle.prototype.GetConstrainedEdgeCW = function(p) {
+    if (p.equals(this.points_[0])) {
+        return this.constrained_edge[1];
+    } else if (p.equals(this.points_[1])) {
+        return this.constrained_edge[2];
+    } else {
+        return this.constrained_edge[0];
+    }
+}
+
+js.poly2tri.Triangle.prototype.GetConstrainedEdgeCCW = function(p) {
+    if (p.equals(this.points_[0])) {
+        return this.constrained_edge[2];
+    } else if (p.equals(this.points_[1])) {
+        return this.constrained_edge[0];
+    } else {
+        return this.constrained_edge[1];
+    }
+}
+
+js.poly2tri.Triangle.prototype.SetConstrainedEdgeCW = function(p, ce) {
+    if (p.equals(this.points_[0])) {
+        this.constrained_edge[1] = ce;
+    } else if (p.equals(this.points_[1])) {
+        this.constrained_edge[2] = ce;
+    } else {
+        this.constrained_edge[0] = ce;
+    }
+}
+
+js.poly2tri.Triangle.prototype.SetConstrainedEdgeCCW = function(p, ce) {
+    if (p.equals(this.points_[0])) {
+        this.constrained_edge[2] = ce;
+    } else if (p.equals(this.points_[1])) {
+        this.constrained_edge[0] = ce;
+    } else {
+        this.constrained_edge[1] = ce;
+    }
+}
+
+js.poly2tri.Triangle.prototype.GetDelaunayEdgeCW = function(p) {
+    if (p.equals(this.points_[0])) {
+        return this.delaunay_edge[1];
+    } else if (p.equals(this.points_[1])) {
+        return this.delaunay_edge[2];
+    } else {
+        return this.delaunay_edge[0];
+    }
+}
+
+js.poly2tri.Triangle.prototype.GetDelaunayEdgeCCW = function(p) {
+    if (p.equals(this.points_[0])) {
+        return this.delaunay_edge[2];
+    } else if (p.equals(this.points_[1])) {
+        return this.delaunay_edge[0];
+    } else {
+        return this.delaunay_edge[1];
+    }
+}
+
+js.poly2tri.Triangle.prototype.SetDelaunayEdgeCW = function(p, e) {
+    if (p.equals(this.points_[0])) {
+        this.delaunay_edge[1] = e;
+    } else if (p.equals(this.points_[1])) {
+        this.delaunay_edge[2] = e;
+    } else {
+        this.delaunay_edge[0] = e;
+    }
+}
+
+js.poly2tri.Triangle.prototype.SetDelaunayEdgeCCW = function(p, e) {
+    if (p.equals(this.points_[0])) {
+        this.delaunay_edge[2] = e;
+    } else if (p.equals(this.points_[1])) {
+        this.delaunay_edge[0] = e;
+    } else {
+        this.delaunay_edge[1] = e;
+    }
+}
+
+/**
+ * The neighbor across to given point.
+ */
+js.poly2tri.Triangle.prototype.NeighborAcross = function(p) {
+    if (p.equals(this.points_[0])) {
+        return this.neighbors_[0];
+    } else if (p.equals(this.points_[1])) {
+        return this.neighbors_[1];
+    } else {
+        return this.neighbors_[2];
+    }
+}
+
+js.poly2tri.Triangle.prototype.OppositePoint = function(t, p) {
+    var cw = t.PointCW(p);
+    return this.PointCW(cw);
+}
+
+/**
+ * Legalize triangle by rotating clockwise.<br>
+ * This method takes either 1 parameter (then the triangle is rotated around
+ * points(0)) or 2 parameters (then the triangle is rotated around the first
+ * parameter).
+ */
+js.poly2tri.Triangle.prototype.Legalize = function() {
+    if (arguments.length == 1) {
+        this.Legalize(this.points_[0], arguments[0]);
+    } else if (arguments.length == 2) {
+        var opoint = arguments[0];
+        var npoint = arguments[1];
+
+        if (opoint.equals(this.points_[0])) {
+            this.points_[1] = this.points_[0];
+            this.points_[0] = this.points_[2];
+            this.points_[2] = npoint;
+        } else if (opoint.equals(this.points_[1])) {
+            this.points_[2] = this.points_[1];
+            this.points_[1] = this.points_[0];
+            this.points_[0] = npoint;
+        } else if (opoint.equals(this.points_[2])) {
+            this.points_[0] = this.points_[2];
+            this.points_[2] = this.points_[1];
+            this.points_[1] = npoint;
+        } else {
+            js.poly2tri.fatal('Invalid js.poly2tri.Triangle.Legalize call!');
+        }
+    } else {
+        js.poly2tri.fatal('Invalid js.poly2tri.Triangle.Legalize call!');
+    }
+}
+
+js.poly2tri.Triangle.prototype.Index = function(p) {
+    if (p.equals(this.points_[0])) return 0;
+    else if (p.equals(this.points_[1])) return 1;
+    else if (p.equals(this.points_[2])) return 2;
+    else return -1;
+}
+
+js.poly2tri.Triangle.prototype.EdgeIndex = function(p1, p2) {
+    if (p1.equals(this.points_[0])) {
+        if (p2.equals(this.points_[1])) {
+            return 2;
+        } else if (p2.equals(this.points_[2])) {
+            return 1;
+        }
+    } else if (p1.equals(this.points_[1])) {
+        if (p2.equals(this.points_[2])) {
+            return 0;
+        } else if (p2.equals(this.points_[0])) {
+            return 2;
+        }
+    } else if (p1.equals(this.points_[2])) {
+        if (p2.equals(this.points_[0])) {
+            return 1;
+        } else if (p2.equals(this.points_[1])) {
+            return 0;
+        }
+    }
+    return -1;
+}
+
+/**
+ * Mark an edge of this triangle as constrained.<br>
+ * This method takes either 1 parameter (an edge index or an Edge instance) or
+ * 2 parameters (two Point instances defining the edge of the triangle).
+ */
+js.poly2tri.Triangle.prototype.MarkConstrainedEdge = function() {
+    if (arguments.length == 1) {
+        if (typeof(arguments[0]) == 'number') {
+            this.constrained_edge[arguments[0]] = true;
+        } else {
+            this.MarkConstrainedEdge(arguments[0].p, arguments[0].q);
+        }
+    } else if (arguments.length == 2) {
+        var p = arguments[0];
+        var q = arguments[1];
+        if ((q.equals(this.points_[0]) && p.equals(this.points_[1])) || (q.equals(this.points_[1]) && p.equals(this.points_[0]))) {
+            this.constrained_edge[2] = true;
+        } else if ((q.equals(this.points_[0]) && p.equals(this.points_[2])) || (q.equals(this.points_[2]) && p.equals(this.points_[0]))) {
+            this.constrained_edge[1] = true;
+        } else if ((q.equals(this.points_[1]) && p.equals(this.points_[2])) || (q.equals(this.points_[2]) && p.equals(this.points_[1]))) {
+            this.constrained_edge[0] = true;
+        }
+    } else {
+        js.poly2tri.fatal('Invalid js.poly2tri.Triangle.MarkConstrainedEdge call!');
+    }
+}
+
+// ------------------------------------------------------------------------utils
+js.poly2tri.PI_3div4 = 3 * Math.PI / 4;
+js.poly2tri.PI_2 = Math.PI / 2;
+js.poly2tri.EPSILON = 1e-12;
+
+/*
+ * Inital triangle factor, seed triangle will extend 30% of
+ * PointSet width to both left and right.
+ */
+js.poly2tri.kAlpha = 0.3;
+
+js.poly2tri.Orientation = {
+    "CW"        : 1,
+    "CCW"       : -1,
+    "COLLINEAR" : 0
+};
+
+/**
+ * Forumla to calculate signed area<br>
+ * Positive if CCW<br>
+ * Negative if CW<br>
+ * 0 if collinear<br>
+ * <pre>
+ * A[P1,P2,P3]  =  (x1*y2 - y1*x2) + (x2*y3 - y2*x3) + (x3*y1 - y3*x1)
+ *              =  (x1-x3)*(y2-y3) - (y1-y3)*(x2-x3)
+ * </pre>
+ */
+js.poly2tri.Orient2d = function(pa, pb, pc) {
+    var detleft = (pa.x - pc.x) * (pb.y - pc.y);
+    var detright = (pa.y - pc.y) * (pb.x - pc.x);
+    var val = detleft - detright;
+    if (val > -(js.poly2tri.EPSILON) && val < (js.poly2tri.EPSILON)) {
+        return js.poly2tri.Orientation.COLLINEAR;
+    } else if (val > 0) {
+        return js.poly2tri.Orientation.CCW;
+    } else {
+        return js.poly2tri.Orientation.CW;
+    }
+}
+
+js.poly2tri.InScanArea = function(pa, pb, pc, pd) {
+    var pdx = pd.x;
+    var pdy = pd.y;
+    var adx = pa.x - pdx;
+    var ady = pa.y - pdy;
+    var bdx = pb.x - pdx;
+    var bdy = pb.y - pdy;
+
+    var adxbdy = adx * bdy;
+    var bdxady = bdx * ady;
+    var oabd = adxbdy - bdxady;
+
+    if (oabd <= (js.poly2tri.EPSILON)) {
+        return false;
+    }
+
+    var cdx = pc.x - pdx;
+    var cdy = pc.y - pdy;
+
+    var cdxady = cdx * ady;
+    var adxcdy = adx * cdy;
+    var ocad = cdxady - adxcdy;
+
+    if (ocad <= (js.poly2tri.EPSILON)) {
+        return false;
+    }
+
+    return true;
+}
+
+// ---------------------------------------------------------------AdvancingFront
+js.poly2tri.Node = function() {
+    this.point = null; // Point
+    this.triangle = null; // Triangle
+
+    this.next = null; // Node
+    this.prev = null; // Node
+
+    this.value = 0.0; // double
+
+    if (arguments.length == 1) {
+        this.point = arguments[0];
+        this.value = this.point.x;
+    } else if (arguments.length == 2) {
+        this.point = arguments[0];
+        this.triangle = arguments[1];
+        this.value = this.point.x;
+    } else {
+        js.poly2tri.fatal('Invalid js.poly2tri.Node constructor call!');
+    }
+}
+
+js.poly2tri.AdvancingFront = function(head, tail) {
+    this.head_ = head; // Node
+    this.tail_ = tail; // Node
+    this.search_node_ = head; // Node
+}
+
+js.poly2tri.AdvancingFront.prototype.head = function() {
+    return this.head_;
+}
+
+js.poly2tri.AdvancingFront.prototype.set_head = function(node) {
+    this.head_ = node;
+}
+
+js.poly2tri.AdvancingFront.prototype.tail = function() {
+    return this.tail_;
+}
+
+js.poly2tri.AdvancingFront.prototype.set_tail = function(node) {
+    this.tail_ = node;
+}
+
+js.poly2tri.AdvancingFront.prototype.search = function() {
+    return this.search_node_;
+}
+
+js.poly2tri.AdvancingFront.prototype.set_search = function(node) {
+    this.search_node_ = node;
+}
+
+js.poly2tri.AdvancingFront.prototype.FindSearchNode = function(x) {
+    return this.search_node_;
+}
+
+js.poly2tri.AdvancingFront.prototype.LocateNode = function(x) {
+    var node = this.search_node_;
+
+    if (x < node.value) {
+        while ((node = node.prev) != null) {
+            if (x >= node.value) {
+                this.search_node_ = node;
+                return node;
+            }
+        }
+    } else {
+        while ((node = node.next) != null) {
+            if (x < node.value) {
+                this.search_node_ = node.prev;
+                return node.prev;
+            }
+        }
+    }
+    return null;
+}
+
+js.poly2tri.AdvancingFront.prototype.LocatePoint = function(point) {
+    var px = point.x;
+    var node = this.FindSearchNode(px);
+    var nx = node.point.x;
+
+    if (px == nx) {
+        // We might have two nodes with same x value for a short time
+        if (node.prev && point.equals(node.prev.point)) {
+            node = node.prev;
+        } else if (node.next && point.equals(node.next.point)) {
+            node = node.next;
+        } else if (point.equals(node.point)) {
+            // do nothing
+        } else {
+            js.poly2tri.fatal('Invalid js.poly2tri.AdvancingFront.LocatePoint call!');
+            return null;
+        }
+    } else if (px < nx) {
+        while ((node = node.prev) != null) {
+            if (point.equals(node.point)) break;
+        }
+    } else {
+        while ((node = node.next) != null) {
+            if (point.equals(node.point)) break;
+        }
+    }
+
+    if (node != null) this.search_node_ = node;
+    return node;
+}
+
+// ------------------------------------------------------------------------Basin
+js.poly2tri.Basin = function() {
+    this.left_node = null; // Node
+    this.bottom_node = null; // Node
+    this.right_node = null; // Node
+    this.width = 0.0; // number
+    this.left_highest = false;
+}
+
+js.poly2tri.Basin.prototype.Clear = function() {
+    this.left_node = null;
+    this.bottom_node = null;
+    this.right_node = null;
+    this.width = 0.0;
+    this.left_highest = false;
+}
+
+// --------------------------------------------------------------------EdgeEvent
+js.poly2tri.EdgeEvent = function() {
+    this.constrained_edge = null; // Edge
+    this.right = false;
+}
+
+// -----------------------------------------------------------------SweepContext
+js.poly2tri.SweepContext = function(polyline) {
+    this.triangles_ = [];
+    this.map_ = [];
+    this.points_ = polyline;
+    this.edge_list = [];
+
+    // Advancing front
+    this.front_ = null; // AdvancingFront
+    // head point used with advancing front
+    this.head_ = null; // Point
+    // tail point used with advancing front
+    this.tail_ = null; // Point
+
+    this.af_head_ = null; // Node
+    this.af_middle_ = null; // Node
+    this.af_tail_ = null; // Node
+
+    this.basin = new js.poly2tri.Basin();
+    this.edge_event = new js.poly2tri.EdgeEvent();
+
+    this.InitEdges(this.points_);
+}
+
+js.poly2tri.SweepContext.prototype.AddHole = function(polyline) {
+    this.InitEdges(polyline);
+    for (var i in polyline) {
+        this.points_.push(polyline[i]);
+    }
+}
+
+js.poly2tri.SweepContext.prototype.AddPoint = function(point) {
+    this.points_.push(point);
+}
+
+js.poly2tri.SweepContext.prototype.front = function() {
+    return this.front_;
+}
+
+js.poly2tri.SweepContext.prototype.point_count = function() {
+    return this.points_.length;
+}
+
+js.poly2tri.SweepContext.prototype.head = function() {
+    return this.head_;
+}
+
+js.poly2tri.SweepContext.prototype.set_head = function(p1) {
+    this.head_ = p1;
+}
+
+js.poly2tri.SweepContext.prototype.tail = function() {
+    return this.tail_;
+}
+
+js.poly2tri.SweepContext.prototype.set_tail = function(p1) {
+    this.tail_ = p1;
+}
+
+js.poly2tri.SweepContext.prototype.GetTriangles = function() {
+    return this.triangles_;
+}
+
+js.poly2tri.SweepContext.prototype.GetMap = function() {
+    return this.map_;
+}
+
+js.poly2tri.SweepContext.prototype.InitTriangulation = function() {
+    var xmax = this.points_[0].x;
+    var xmin = this.points_[0].x;
+    var ymax = this.points_[0].y;
+    var ymin = this.points_[0].y;
+
+    // Calculate bounds
+    for (var i in this.points_) {
+        var p = this.points_[i];
+        if (p.x > xmax) xmax = p.x;
+        if (p.x < xmin) xmin = p.x;
+        if (p.y > ymax) ymax = p.y;
+        if (p.y < ymin) ymin = p.y;
+    }
+
+    var dx = js.poly2tri.kAlpha * (xmax - xmin);
+    var dy = js.poly2tri.kAlpha * (ymax - ymin);
+    this.head_ = new js.poly2tri.Point(xmax + dx, ymin - dy);
+    this.tail_ = new js.poly2tri.Point(xmin - dy, ymin - dy);
+
+    // Sort points along y-axis
+    this.points_.sort(js.poly2tri.cmp);
+}
+
+js.poly2tri.SweepContext.prototype.InitEdges = function(polyline) {
+    for (var i=0; i < polyline.length; ++i) {
+        this.edge_list.push(new js.poly2tri.Edge(polyline[i], polyline[(i+1) % polyline.length]));
+    }
+}
+
+js.poly2tri.SweepContext.prototype.GetPoint = function(index) {
+    return this.points_[index];
+}
+
+js.poly2tri.SweepContext.prototype.AddToMap = function(triangle) {
+    this.map_.push(triangle);
+}
+
+js.poly2tri.SweepContext.prototype.LocateNode = function(point) {
+    return this.front_.LocateNode(point.x);
+}
+
+js.poly2tri.SweepContext.prototype.CreateAdvancingFront = function() {
+    var head;
+    var middle;
+    var tail;
+    // Initial triangle
+    var triangle = new js.poly2tri.Triangle(this.points_[0], this.tail_, this.head_);
+
+    this.map_.push(triangle);
+
+    head = new js.poly2tri.Node(triangle.GetPoint(1), triangle);
+    middle = new js.poly2tri.Node(triangle.GetPoint(0), triangle);
+    tail = new js.poly2tri.Node(triangle.GetPoint(2));
+
+    this.front_ = new js.poly2tri.AdvancingFront(head, tail);
+
+    head.next = middle;
+    middle.next = tail;
+    middle.prev = head;
+    tail.prev = middle;
+}
+
+js.poly2tri.SweepContext.prototype.RemoveNode = function(node) {
+    // do nothing
+}
+
+js.poly2tri.SweepContext.prototype.MapTriangleToNodes = function(t) {
+    for (var i=0; i<3; ++i) {
+        if (t.GetNeighbor(i) == null) {
+            var n = this.front_.LocatePoint(t.PointCW(t.GetPoint(i)));
+            if (n != null) {
+                n.triangle = t;
+            }
+        }
+    }
+}
+
+js.poly2tri.SweepContext.prototype.RemoveFromMap = function(triangle) {
+    for (var i in this.map_) {
+        if (this.map_[i] == triangle) {
+            delete this.map_[i];
+            break;
+        }
+    }
+}
+
+// Do a depth first traversal to collect triangles
+js.poly2tri.SweepContext.prototype.MeshClean = function(triangle) {
+    // New implementation avoids recursive calls and use a loop instead.
+    // Cf. issues # 57, 65 and 69.
+    var triangles = [ triangle ], t, i;
+    while (t = triangles.pop()) {
+        if (!t.IsInterior()) {
+            t.IsInterior(true);
+            this.triangles_.push(t);
+            for (i = 0; i < 3; i++) {
+                if (!t.constrained_edge[i]) {
+                    triangles.push(t.GetNeighbor(i));
+                }
+            }
+        }
+    }
+};
+
+// ------------------------------------------------------------------------Sweep
+if (typeof Namespace === 'function') {
+    Namespace('js.poly2tri.sweep');
+} else {
+    js.poly2tri.sweep = js.poly2tri.sweep || {};
+}
+
+/**
+ * Triangulate simple polygon with holes.
+ * @param   tcx SweepContext object.
+ */
+js.poly2tri.sweep.Triangulate = function(tcx) {
+    tcx.InitTriangulation();
+    tcx.CreateAdvancingFront();
+    // Sweep points; build mesh
+    js.poly2tri.sweep.SweepPoints(tcx);
+    // Clean up
+    js.poly2tri.sweep.FinalizationPolygon(tcx);
+}
+
+js.poly2tri.sweep.SweepPoints = function(tcx) {
+    for (var i=1; i < tcx.point_count(); ++i) {
+        var point = tcx.GetPoint(i);
+        var node = js.poly2tri.sweep.PointEvent(tcx, point);
+        for (var j=0; j < point.edge_list.length; ++j) {
+            js.poly2tri.sweep.EdgeEvent(tcx, point.edge_list[j], node);
+        }
+    }
+}
+
+js.poly2tri.sweep.FinalizationPolygon = function(tcx) {
+    // Get an Internal triangle to start with
+    var t = tcx.front().head().next.triangle;
+    var p = tcx.front().head().next.point;
+    while (!t.GetConstrainedEdgeCW(p)) {
+        t = t.NeighborCCW(p);
+    }
+
+    // Collect interior triangles constrained by edges
+    tcx.MeshClean(t);
+}
+
+/**
+ * Find closes node to the left of the new point and
+ * create a new triangle. If needed new holes and basins
+ * will be filled to.
+ */
+js.poly2tri.sweep.PointEvent = function(tcx, point) {
+    var node = tcx.LocateNode(point);
+    var new_node = js.poly2tri.sweep.NewFrontTriangle(tcx, point, node);
+
+    // Only need to check +epsilon since point never have smaller
+    // x value than node due to how we fetch nodes from the front
+    if (point.x <= node.point.x + (js.poly2tri.EPSILON)) {
+        js.poly2tri.sweep.Fill(tcx, node);
+    }
+
+    //tcx.AddNode(new_node);
+
+    js.poly2tri.sweep.FillAdvancingFront(tcx, new_node);
+    return new_node;
+}
+
+js.poly2tri.sweep.EdgeEvent = function() {
+    var tcx;
+    if (arguments.length == 3) {
+        tcx = arguments[0];
+        var edge = arguments[1];
+        var node = arguments[2];
+
+        tcx.edge_event.constrained_edge = edge;
+        tcx.edge_event.right = (edge.p.x > edge.q.x);
+
+        if (js.poly2tri.sweep.IsEdgeSideOfTriangle(node.triangle, edge.p, edge.q)) {
+            return;
+        }
+
+        // For now we will do all needed filling
+        // TODO: integrate with flip process might give some better performance
+        //       but for now this avoid the issue with cases that needs both flips and fills
+        js.poly2tri.sweep.FillEdgeEvent(tcx, edge, node);
+        js.poly2tri.sweep.EdgeEvent(tcx, edge.p, edge.q, node.triangle, edge.q);
+    } else if (arguments.length == 5) {
+        tcx = arguments[0];
+        var ep = arguments[1];
+        var eq = arguments[2];
+        var triangle = arguments[3];
+        var point = arguments[4];
+
+        if (js.poly2tri.sweep.IsEdgeSideOfTriangle(triangle, ep, eq)) {
+            return;
+        }
+
+        var p1 = triangle.PointCCW(point);
+        var o1 = js.poly2tri.Orient2d(eq, p1, ep);
+        if (o1 == js.poly2tri.Orientation.COLLINEAR) {
+            js.poly2tri.fatal('js.poly2tri.sweep.EdgeEvent: Collinear not supported! ' + eq + p1 + ep);
+            return;
+        }
+
+        var p2 = triangle.PointCW(point);
+        var o2 = js.poly2tri.Orient2d(eq, p2, ep);
+        if (o2 == js.poly2tri.Orientation.COLLINEAR) {
+            js.poly2tri.fatal('js.poly2tri.sweep.EdgeEvent: Collinear not supported! ' + eq + p2 + ep);
+            return;
+        }
+
+        if (o1 == o2) {
+            // Need to decide if we are rotating CW or CCW to get to a triangle
+            // that will cross edge
+            if (o1 == js.poly2tri.Orientation.CW) {
+                triangle = triangle.NeighborCCW(point);
+            } else {
+                triangle = triangle.NeighborCW(point);
+            }
+            js.poly2tri.sweep.EdgeEvent(tcx, ep, eq, triangle, point);
+        } else {
+            // This triangle crosses constraint so lets flippin start!
+            js.poly2tri.sweep.FlipEdgeEvent(tcx, ep, eq, triangle, point);
+        }
+    } else {
+        js.poly2tri.fatal('Invalid js.poly2tri.sweep.EdgeEvent call!');
+    }
+}
+
+js.poly2tri.sweep.IsEdgeSideOfTriangle = function(triangle, ep, eq) {
+    var index = triangle.EdgeIndex(ep, eq);
+    if (index != -1) {
+        triangle.MarkConstrainedEdge(index);
+        var t = triangle.GetNeighbor(index);
+        if (t != null) {
+            t.MarkConstrainedEdge(ep, eq);
+        }
+        return true;
+    }
+    return false;
+}
+
+js.poly2tri.sweep.NewFrontTriangle = function(tcx, point, node) {
+    var triangle = new js.poly2tri.Triangle(point, node.point, node.next.point);
+
+    triangle.MarkNeighbor(node.triangle);
+    tcx.AddToMap(triangle);
+
+    var new_node = new js.poly2tri.Node(point);
+    new_node.next = node.next;
+    new_node.prev = node;
+    node.next.prev = new_node;
+    node.next = new_node;
+
+    if (!js.poly2tri.sweep.Legalize(tcx, triangle)) {
+        tcx.MapTriangleToNodes(triangle);
+    }
+
+    return new_node;
+}
+
+/**
+ * Adds a triangle to the advancing front to fill a hole.
+ * @param tcx
+ * @param node - middle node, that is the bottom of the hole
+ */
+js.poly2tri.sweep.Fill = function(tcx, node) {
+    var triangle = new js.poly2tri.Triangle(node.prev.point, node.point, node.next.point);
+
+    // TODO: should copy the constrained_edge value from neighbor triangles
+    //       for now constrained_edge values are copied during the legalize
+    triangle.MarkNeighbor(node.prev.triangle);
+    triangle.MarkNeighbor(node.triangle);
+
+    tcx.AddToMap(triangle);
+
+    // Update the advancing front
+    node.prev.next = node.next;
+    node.next.prev = node.prev;
+
+
+    // If it was legalized the triangle has already been mapped
+    if (!js.poly2tri.sweep.Legalize(tcx, triangle)) {
+        tcx.MapTriangleToNodes(triangle);
+    }
+
+    //tcx.RemoveNode(node);
+}
+
+/**
+ * Fills holes in the Advancing Front
+ */
+js.poly2tri.sweep.FillAdvancingFront = function(tcx, n) {
+    // Fill right holes
+    var node = n.next;
+    var angle;
+
+    while (node.next != null) {
+        angle = js.poly2tri.sweep.HoleAngle(node);
+        if (angle > js.poly2tri.PI_2 || angle < -(js.poly2tri.PI_2)) break;
+        js.poly2tri.sweep.Fill(tcx, node);
+        node = node.next;
+    }
+
+    // Fill left holes
+    node = n.prev;
+
+    while (node.prev != null) {
+        angle = js.poly2tri.sweep.HoleAngle(node);
+        if (angle > js.poly2tri.PI_2 || angle < -(js.poly2tri.PI_2)) break;
+        js.poly2tri.sweep.Fill(tcx, node);
+        node = node.prev;
+    }
+
+    // Fill right basins
+    if (n.next != null && n.next.next != null) {
+        angle = js.poly2tri.sweep.BasinAngle(n);
+        if (angle < js.poly2tri.PI_3div4) {
+            js.poly2tri.sweep.FillBasin(tcx, n);
+        }
+    }
+}
+
+js.poly2tri.sweep.BasinAngle = function(node) {
+    var ax = node.point.x - node.next.next.point.x;
+    var ay = node.point.y - node.next.next.point.y;
+    return Math.atan2(ay, ax);
+}
+
+/**
+ *
+ * @param node - middle node
+ * @return the angle between 3 front nodes
+ */
+js.poly2tri.sweep.HoleAngle = function(node) {
+  /* Complex plane
+   * ab = cosA +i*sinA
+   * ab = (ax + ay*i)(bx + by*i) = (ax*bx + ay*by) + i(ax*by-ay*bx)
+   * atan2(y,x) computes the principal value of the argument function
+   * applied to the complex number x+iy
+   * Where x = ax*bx + ay*by
+   *       y = ax*by - ay*bx
+   */
+  var ax = node.next.point.x - node.point.x;
+  var ay = node.next.point.y - node.point.y;
+  var bx = node.prev.point.x - node.point.x;
+  var by = node.prev.point.y - node.point.y;
+  return Math.atan2(ax * by - ay * bx, ax * bx + ay * by);
+}
+
+/**
+ * Returns true if triangle was legalized
+ */
+js.poly2tri.sweep.Legalize = function(tcx, t) {
+    // To legalize a triangle we start by finding if any of the three edges
+    // violate the Delaunay condition
+    for (var i=0; i < 3; ++i) {
+        if (t.delaunay_edge[i]) continue;
+
+        var ot = t.GetNeighbor(i);
+        if (ot != null) {
+            var p = t.GetPoint(i);
+            var op = ot.OppositePoint(t, p);
+            var oi = ot.Index(op);
+
+            // If this is a Constrained Edge or a Delaunay Edge(only during recursive legalization)
+            // then we should not try to legalize
+            if (ot.constrained_edge[oi] || ot.delaunay_edge[oi]) {
+                t.constrained_edge[i] = ot.constrained_edge[oi];
+                continue;
+            }
+
+            var inside = js.poly2tri.sweep.Incircle(p, t.PointCCW(p), t.PointCW(p), op);
+            if (inside) {
+                // Lets mark this shared edge as Delaunay
+                t.delaunay_edge[i] = true;
+                ot.delaunay_edge[oi] = true;
+
+                // Lets rotate shared edge one vertex CW to legalize it
+                js.poly2tri.sweep.RotateTrianglePair(t, p, ot, op);
+
+                // We now got one valid Delaunay Edge shared by two triangles
+                // This gives us 4 new edges to check for Delaunay
+
+                // Make sure that triangle to node mapping is done only one time for a specific triangle
+                var not_legalized = !js.poly2tri.sweep.Legalize(tcx, t);
+                if (not_legalized) {
+                    tcx.MapTriangleToNodes(t);
+                }
+
+                not_legalized = !js.poly2tri.sweep.Legalize(tcx, ot);
+                if (not_legalized) tcx.MapTriangleToNodes(ot);
+
+                // Reset the Delaunay edges, since they only are valid Delaunay edges
+                // until we add a new triangle or point.
+                // XXX: need to think about this. Can these edges be tried after we
+                //      return to previous recursive level?
+                t.delaunay_edge[i] = false;
+                ot.delaunay_edge[oi] = false;
+
+                // If triangle have been legalized no need to check the other edges since
+                // the recursive legalization will handles those so we can end here.
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * <b>Requirement</b>:<br>
+ * 1. a,b and c form a triangle.<br>
+ * 2. a and d is know to be on opposite side of bc<br>
+ * <pre>
+ *                a
+ *                +
+ *               / \
+ *              /   \
+ *            b/     \c
+ *            +-------+
+ *           /    d    \
+ *          /           \
+ * </pre>
+ * <b>Fact</b>: d has to be in area B to have a chance to be inside the circle formed by
+ *  a,b and c<br>
+ *  d is outside B if orient2d(a,b,d) or orient2d(c,a,d) is CW<br>
+ *  This preknowledge gives us a way to optimize the incircle test
+ * @param pa - triangle point, opposite d
+ * @param pb - triangle point
+ * @param pc - triangle point
+ * @param pd - point opposite a
+ * @return true if d is inside circle, false if on circle edge
+ */
+js.poly2tri.sweep.Incircle = function(pa, pb, pc, pd) {
+    var adx = pa.x - pd.x;
+    var ady = pa.y - pd.y;
+    var bdx = pb.x - pd.x;
+    var bdy = pb.y - pd.y;
+
+    var adxbdy = adx * bdy;
+    var bdxady = bdx * ady;
+    var oabd = adxbdy - bdxady;
+
+    if (oabd <= 0) return false;
+
+    var cdx = pc.x - pd.x;
+    var cdy = pc.y - pd.y;
+
+    var cdxady = cdx * ady;
+    var adxcdy = adx * cdy;
+    var ocad = cdxady - adxcdy;
+
+    if (ocad <= 0) return false;
+
+    var bdxcdy = bdx * cdy;
+    var cdxbdy = cdx * bdy;
+
+    var alift = adx * adx + ady * ady;
+    var blift = bdx * bdx + bdy * bdy;
+    var clift = cdx * cdx + cdy * cdy;
+
+    var det = alift * (bdxcdy - cdxbdy) + blift * ocad + clift * oabd;
+    return det > 0;
+}
+
+/**
+ * Rotates a triangle pair one vertex CW
+ *<pre>
+ *       n2                    n2
+ *  P +-----+             P +-----+
+ *    | t  /|               |\  t |
+ *    |   / |               | \   |
+ *  n1|  /  |n3           n1|  \  |n3
+ *    | /   |    after CW   |   \ |
+ *    |/ oT |               | oT \|
+ *    +-----+ oP            +-----+
+ *       n4                    n4
+ * </pre>
+ */
+js.poly2tri.sweep.RotateTrianglePair = function(t, p, ot, op) {
+    var n1; var n2; var n3; var n4;
+    n1 = t.NeighborCCW(p);
+    n2 = t.NeighborCW(p);
+    n3 = ot.NeighborCCW(op);
+    n4 = ot.NeighborCW(op);
+
+    var ce1; var ce2; var ce3; var ce4;
+    ce1 = t.GetConstrainedEdgeCCW(p);
+    ce2 = t.GetConstrainedEdgeCW(p);
+    ce3 = ot.GetConstrainedEdgeCCW(op);
+    ce4 = ot.GetConstrainedEdgeCW(op);
+
+    var de1; var de2; var de3; var de4;
+    de1 = t.GetDelaunayEdgeCCW(p);
+    de2 = t.GetDelaunayEdgeCW(p);
+    de3 = ot.GetDelaunayEdgeCCW(op);
+    de4 = ot.GetDelaunayEdgeCW(op);
+
+    t.Legalize(p, op);
+    ot.Legalize(op, p);
+
+    // Remap delaunay_edge
+    ot.SetDelaunayEdgeCCW(p, de1);
+    t.SetDelaunayEdgeCW(p, de2);
+    t.SetDelaunayEdgeCCW(op, de3);
+    ot.SetDelaunayEdgeCW(op, de4);
+
+    // Remap constrained_edge
+    ot.SetConstrainedEdgeCCW(p, ce1);
+    t.SetConstrainedEdgeCW(p, ce2);
+    t.SetConstrainedEdgeCCW(op, ce3);
+    ot.SetConstrainedEdgeCW(op, ce4);
+
+    // Remap neighbors
+    // XXX: might optimize the markNeighbor by keeping track of
+    //      what side should be assigned to what neighbor after the
+    //      rotation. Now mark neighbor does lots of testing to find
+    //      the right side.
+    t.ClearNeigbors();
+    ot.ClearNeigbors();
+    if (n1) ot.MarkNeighbor(n1);
+    if (n2) t.MarkNeighbor(n2);
+    if (n3) t.MarkNeighbor(n3);
+    if (n4) ot.MarkNeighbor(n4);
+    t.MarkNeighbor(ot);
+}
+
+/**
+ * Fills a basin that has formed on the Advancing Front to the right
+ * of given node.<br>
+ * First we decide a left,bottom and right node that forms the
+ * boundaries of the basin. Then we do a reqursive fill.
+ *
+ * @param tcx
+ * @param node - starting node, this or next node will be left node
+ */
+js.poly2tri.sweep.FillBasin = function(tcx, node) {
+    if (js.poly2tri.Orient2d(node.point, node.next.point, node.next.next.point) == js.poly2tri.Orientation.CCW) {
+        tcx.basin.left_node = node.next.next;
+    } else {
+        tcx.basin.left_node = node.next;
+    }
+
+    // Find the bottom and right node
+    tcx.basin.bottom_node = tcx.basin.left_node;
+    while (tcx.basin.bottom_node.next != null && tcx.basin.bottom_node.point.y >= tcx.basin.bottom_node.next.point.y) {
+        tcx.basin.bottom_node = tcx.basin.bottom_node.next;
+    }
+    if (tcx.basin.bottom_node == tcx.basin.left_node) {
+        // No valid basin
+        return;
+    }
+
+    tcx.basin.right_node = tcx.basin.bottom_node;
+    while (tcx.basin.right_node.next != null && tcx.basin.right_node.point.y < tcx.basin.right_node.next.point.y) {
+        tcx.basin.right_node = tcx.basin.right_node.next;
+    }
+    if (tcx.basin.right_node == tcx.basin.bottom_node) {
+        // No valid basins
+        return;
+    }
+
+    tcx.basin.width = tcx.basin.right_node.point.x - tcx.basin.left_node.point.x;
+    tcx.basin.left_highest = tcx.basin.left_node.point.y > tcx.basin.right_node.point.y;
+
+    js.poly2tri.sweep.FillBasinReq(tcx, tcx.basin.bottom_node);
+}
+
+/**
+ * Recursive algorithm to fill a Basin with triangles
+ *
+ * @param tcx
+ * @param node - bottom_node
+ */
+js.poly2tri.sweep.FillBasinReq = function(tcx, node) {
+    // if shallow stop filling
+    if (js.poly2tri.sweep.IsShallow(tcx, node)) {
+        return;
+    }
+
+    js.poly2tri.sweep.Fill(tcx, node);
+
+    var o;
+    if (node.prev == tcx.basin.left_node && node.next == tcx.basin.right_node) {
+        return;
+    } else if (node.prev == tcx.basin.left_node) {
+        o = js.poly2tri.Orient2d(node.point, node.next.point, node.next.next.point);
+        if (o == js.poly2tri.Orientation.CW) {
+            return;
+        }
+        node = node.next;
+    } else if (node.next == tcx.basin.right_node) {
+        o = js.poly2tri.Orient2d(node.point, node.prev.point, node.prev.prev.point);
+        if (o == js.poly2tri.Orientation.CCW) {
+            return;
+        }
+        node = node.prev;
+    } else {
+        // Continue with the neighbor node with lowest Y value
+        if (node.prev.point.y < node.next.point.y) {
+            node = node.prev;
+        } else {
+            node = node.next;
+        }
+    }
+
+    js.poly2tri.sweep.FillBasinReq(tcx, node);
+}
+
+js.poly2tri.sweep.IsShallow = function(tcx, node) {
+    var height;
+    if (tcx.basin.left_highest) {
+        height = tcx.basin.left_node.point.y - node.point.y;
+    } else {
+        height = tcx.basin.right_node.point.y - node.point.y;
+    }
+
+    // if shallow stop filling
+    if (tcx.basin.width > height) {
+        return true;
+    }
+    return false;
+}
+
+js.poly2tri.sweep.FillEdgeEvent = function(tcx, edge, node) {
+    if (tcx.edge_event.right) {
+        js.poly2tri.sweep.FillRightAboveEdgeEvent(tcx, edge, node);
+    } else {
+        js.poly2tri.sweep.FillLeftAboveEdgeEvent(tcx, edge, node);
+    }
+}
+
+js.poly2tri.sweep.FillRightAboveEdgeEvent = function(tcx, edge, node) {
+    while (node.next.point.x < edge.p.x) {
+        // Check if next node is below the edge
+        if (js.poly2tri.Orient2d(edge.q, node.next.point, edge.p) == js.poly2tri.Orientation.CCW) {
+            js.poly2tri.sweep.FillRightBelowEdgeEvent(tcx, edge, node);
+        } else {
+            node = node.next;
+        }
+    }
+}
+
+js.poly2tri.sweep.FillRightBelowEdgeEvent = function(tcx, edge, node) {
+    if (node.point.x < edge.p.x) {
+        if (js.poly2tri.Orient2d(node.point, node.next.point, node.next.next.point) == js.poly2tri.Orientation.CCW) {
+            // Concave
+            js.poly2tri.sweep.FillRightConcaveEdgeEvent(tcx, edge, node);
+        } else{
+            // Convex
+            js.poly2tri.sweep.FillRightConvexEdgeEvent(tcx, edge, node);
+            // Retry this one
+            js.poly2tri.sweep.FillRightBelowEdgeEvent(tcx, edge, node);
+        }
+    }
+}
+
+js.poly2tri.sweep.FillRightConcaveEdgeEvent = function(tcx, edge, node) {
+    js.poly2tri.sweep.Fill(tcx, node.next);
+    if (node.next.point != edge.p) {
+        // Next above or below edge?
+        if (js.poly2tri.Orient2d(edge.q, node.next.point, edge.p) == js.poly2tri.Orientation.CCW) {
+            // Below
+            if (js.poly2tri.Orient2d(node.point, node.next.point, node.next.next.point) == js.poly2tri.Orientation.CCW) {
+                // Next is concave
+                js.poly2tri.sweep.FillRightConcaveEdgeEvent(tcx, edge, node);
+            } else {
+            // Next is convex
+            }
+        }
+    }
+}
+
+js.poly2tri.sweep.FillRightConvexEdgeEvent = function(tcx, edge, node) {
+    // Next concave or convex?
+    if (js.poly2tri.Orient2d(node.next.point, node.next.next.point, node.next.next.next.point) == js.poly2tri.Orientation.CCW) {
+        // Concave
+        js.poly2tri.sweep.FillRightConcaveEdgeEvent(tcx, edge, node.next);
+    } else {
+        // Convex
+        // Next above or below edge?
+        if (js.poly2tri.Orient2d(edge.q, node.next.next.point, edge.p) == js.poly2tri.Orientation.CCW) {
+            // Below
+            js.poly2tri.sweep.FillRightConvexEdgeEvent(tcx, edge, node.next);
+        } else {
+            // Above
+        }
+    }
+}
+
+js.poly2tri.sweep.FillLeftAboveEdgeEvent = function(tcx, edge, node) {
+    while (node.prev.point.x > edge.p.x) {
+        // Check if next node is below the edge
+        if (js.poly2tri.Orient2d(edge.q, node.prev.point, edge.p) == js.poly2tri.Orientation.CW) {
+            js.poly2tri.sweep.FillLeftBelowEdgeEvent(tcx, edge, node);
+        } else {
+            node = node.prev;
+        }
+    }
+}
+
+js.poly2tri.sweep.FillLeftBelowEdgeEvent = function(tcx, edge, node) {
+    if (node.point.x > edge.p.x) {
+        if (js.poly2tri.Orient2d(node.point, node.prev.point, node.prev.prev.point) == js.poly2tri.Orientation.CW) {
+            // Concave
+            js.poly2tri.sweep.FillLeftConcaveEdgeEvent(tcx, edge, node);
+        } else {
+            // Convex
+            js.poly2tri.sweep.FillLeftConvexEdgeEvent(tcx, edge, node);
+            // Retry this one
+            js.poly2tri.sweep.FillLeftBelowEdgeEvent(tcx, edge, node);
+        }
+    }
+}
+
+js.poly2tri.sweep.FillLeftConvexEdgeEvent = function(tcx, edge, node) {
+    // Next concave or convex?
+    if (js.poly2tri.Orient2d(node.prev.point, node.prev.prev.point, node.prev.prev.prev.point) == js.poly2tri.Orientation.CW) {
+        // Concave
+        js.poly2tri.sweep.FillLeftConcaveEdgeEvent(tcx, edge, node.prev);
+    } else {
+        // Convex
+        // Next above or below edge?
+        if (js.poly2tri.Orient2d(edge.q, node.prev.prev.point, edge.p) == js.poly2tri.Orientation.CW) {
+            // Below
+            js.poly2tri.sweep.FillLeftConvexEdgeEvent(tcx, edge, node.prev);
+        } else {
+            // Above
+        }
+    }
+}
+
+js.poly2tri.sweep.FillLeftConcaveEdgeEvent = function(tcx, edge, node) {
+    js.poly2tri.sweep.Fill(tcx, node.prev);
+    if (node.prev.point != edge.p) {
+        // Next above or below edge?
+        if (js.poly2tri.Orient2d(edge.q, node.prev.point, edge.p) == js.poly2tri.Orientation.CW) {
+            // Below
+            if (js.poly2tri.Orient2d(node.point, node.prev.point, node.prev.prev.point) == js.poly2tri.Orientation.CW) {
+                // Next is concave
+                js.poly2tri.sweep.FillLeftConcaveEdgeEvent(tcx, edge, node);
+            } else {
+                // Next is convex
+            }
+        }
+    }
+}
+
+js.poly2tri.sweep.FlipEdgeEvent = function(tcx, ep, eq, t, p) {
+    var ot = t.NeighborAcross(p);
+    if (ot == null) {
+        // If we want to integrate the fillEdgeEvent do it here
+        // With current implementation we should never get here
+        js.poly2tri.fatal('[BUG:FIXME] FLIP failed due to missing triangle!');
+        return;
+    }
+    var op = ot.OppositePoint(t, p);
+
+    if (js.poly2tri.InScanArea(p, t.PointCCW(p), t.PointCW(p), op)) {
+        // Lets rotate shared edge one vertex CW
+        js.poly2tri.sweep.RotateTrianglePair(t, p, ot, op);
+        tcx.MapTriangleToNodes(t);
+        tcx.MapTriangleToNodes(ot);
+
+        if (p == eq && op == ep) {
+            if (eq == tcx.edge_event.constrained_edge.q && ep == tcx.edge_event.constrained_edge.p) {
+                t.MarkConstrainedEdge(ep, eq);
+                ot.MarkConstrainedEdge(ep, eq);
+                js.poly2tri.sweep.Legalize(tcx, t);
+                js.poly2tri.sweep.Legalize(tcx, ot);
+            } else {
+                // XXX: I think one of the triangles should be legalized here?
+            }
+        } else {
+            var o = js.poly2tri.Orient2d(eq, op, ep);
+            t = js.poly2tri.sweep.NextFlipTriangle(tcx, o, t, ot, p, op);
+            js.poly2tri.sweep.FlipEdgeEvent(tcx, ep, eq, t, p);
+        }
+    } else {
+        var newP = js.poly2tri.sweep.NextFlipPoint(ep, eq, ot, op);
+        js.poly2tri.sweep.FlipScanEdgeEvent(tcx, ep, eq, t, ot, newP);
+        js.poly2tri.sweep.EdgeEvent(tcx, ep, eq, t, p);
+    }
+}
+
+js.poly2tri.sweep.NextFlipTriangle = function(tcx, o, t, ot, p, op) {
+    var edge_index;
+    if (o == js.poly2tri.Orientation.CCW) {
+        // ot is not crossing edge after flip
+        edge_index = ot.EdgeIndex(p, op);
+        ot.delaunay_edge[edge_index] = true;
+        js.poly2tri.sweep.Legalize(tcx, ot);
+        ot.ClearDelunayEdges();
+        return t;
+    }
+
+    // t is not crossing edge after flip
+    edge_index = t.EdgeIndex(p, op);
+
+    t.delaunay_edge[edge_index] = true;
+    js.poly2tri.sweep.Legalize(tcx, t);
+    t.ClearDelunayEdges();
+    return ot;
+}
+
+js.poly2tri.sweep.NextFlipPoint = function(ep, eq, ot, op) {
+    var o2d = js.poly2tri.Orient2d(eq, op, ep);
+    if (o2d == js.poly2tri.Orientation.CW) {
+        // Right
+        return ot.PointCCW(op);
+    } else if (o2d == js.poly2tri.Orientation.CCW) {
+        // Left
+        return ot.PointCW(op);
+    } else {
+        js.poly2tri.fatal("[Unsupported] js.poly2tri.sweep.NextFlipPoint: opposing point on constrained edge!");
+        return undefined;
+    }
+}
+
+js.poly2tri.sweep.FlipScanEdgeEvent = function(tcx, ep, eq, flip_triangle, t, p) {
+    var ot = t.NeighborAcross(p);
+
+    if (ot == null) {
+        // If we want to integrate the fillEdgeEvent do it here
+        // With current implementation we should never get here
+        js.poly2tri.fatal('[BUG:FIXME] FLIP failed due to missing triangle');
+        return;
+    }
+    var op = ot.OppositePoint(t, p);
+
+    if (js.poly2tri.InScanArea(eq, flip_triangle.PointCCW(eq), flip_triangle.PointCW(eq), op)) {
+        // flip with new edge op.eq
+        js.poly2tri.sweep.FlipEdgeEvent(tcx, eq, op, ot, op);
+        // TODO: Actually I just figured out that it should be possible to
+        //       improve this by getting the next ot and op before the the above
+        //       flip and continue the flipScanEdgeEvent here
+        // set new ot and op here and loop back to inScanArea test
+        // also need to set a new flip_triangle first
+        // Turns out at first glance that this is somewhat complicated
+        // so it will have to wait.
+    } else {
+        var newP = js.poly2tri.sweep.NextFlipPoint(ep, eq, ot, op);
+        js.poly2tri.sweep.FlipScanEdgeEvent(tcx, ep, eq, flip_triangle, ot, newP);
+    }
+}
+
+
+
+function omg( pts, holes ) {
+
+		// For use with Poly2Tri.js
+
+		var allpts = pts.concat();
+		var shape = [];
+		for (var p in pts) {
+			shape.push(new js.poly2tri.Point(pts[p].x, pts[p].y));
+		}
+
+		var swctx = new js.poly2tri.SweepContext(shape);
+
+		for (var h in holes) {
+			var aHole = holes[h];
+			var newHole = []
+			for (i in aHole) {
+				newHole.push(new js.poly2tri.Point(aHole[i].x, aHole[i].y));
+				allpts.push(aHole[i]);
+			}
+			swctx.AddHole(newHole);
+		}
+
+		var find;
+		var findIndexForPt = function (pt) {
+			find = new THREE.Vector2(pt.x, pt.y);
+			var p;
+			for (p=0, pl = allpts.length; p<pl; p++) {
+				if (allpts[p].equals(find)) return p;
+			}
+			return -1;
+		};
+
+		// triangulate
+		js.poly2tri.sweep.Triangulate(swctx);
+
+		var triangles =  swctx.GetTriangles();
+		var tr ;
+		var facesPts = [];
+		for (var t in triangles) {
+			tr =  triangles[t];
+			facesPts.push([
+				findIndexForPt(tr.GetPoint(0)),
+				findIndexForPt(tr.GetPoint(1)),
+				findIndexForPt(tr.GetPoint(2))
+					]);
+		}
+
+
+	//	console.log(facesPts);
+	//	console.log("triangles", triangles.length, triangles);
+
+		// Returns array of faces with 3 element each
+	return facesPts;
+	}
+
+
+
+function uniq(array, iterator) {
+  var results = [], seen = {}
+  each(iterator ? array.map(iterator) : array, function(value, index) {
+      if (seen[value]) return
+      seen[value] = true
+      results.push(array[index])
+    })
+  return results
+}
+
+function debug (cond, message) {
+  if (! cond) console.log(message)
+};function parseColor(v) {
   var a = setStyle(v)
   return + (a[0] * 255) << 16 ^ (a[1] * 255) << 8 ^ (a[2] * 255) << 0
 }
@@ -443,7 +2276,7 @@ var cssColors = {
 function shader() {
   var  target = null
     , blockSize
-    , stepRate = 3
+    , stepRate = 2
     , dependents = []
 
   var self = {
@@ -691,7 +2524,7 @@ function build_vs(src, subst) {
 
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? max(texel(pos.xy).w + texel(pos.xy).z, 1.) : (2. * pos.z)'
+    , r: '(pos.z < 0.) ? clamp(texel(pos.xy).w + texel(pos.xy).z, 1., 100.) : (2. * pos.z)'
     , x: '(pos.x < 1.) ? texel(pos.xy).x * resolution.x : pos.x'
     , y: '(pos.y < 1.) ? texel(pos.xy).y * resolution.y : pos.y'
     }, subst)
@@ -839,27 +2672,34 @@ function startDrawLoop() {
   while(backTasks.length) backTasks.pop()()
   raf(startDrawLoop)
 }
-;function parsePath(str) {
+;;
+window.parsePath = parsePath
+
+function parsePath(str) {
   var buffer = []
     , pos = [0, 0]
     , origin = [0, 0]
 
+  var contours = []
+  contours.push([])
   str.match(/[a-z][^a-z]*/ig).forEach(function (segment, i, match) {
     var points = segment.slice(1).trim().split(/,| /g), c = segment[0].toLowerCase(), j = 0
     while(j < points.length) {
       var x = points[j++], y = points[j++]
-      c == 'm' ?  (1,(origin = pos = [x, y])) :
-        c == 'l' ? buffer.push(pos, [x, y]) && (pos = [x, y]) :
-        c == 'z' ? buffer.push(pos, [origin[0], origin[1]]) && (pos = origin) :
+      c == 'm' ? (contours.push(buffer = []) ,(origin = pos = [x, y])) :
+        c == 'l' ? buffer.push(pos[0], pos[1], x, y) && (pos = [x, y]) :
+        c == 'z' ? buffer.push(pos[0], pos[1], origin[0], origin[1]) && (pos = origin) :
         console.log('%d method is not supported malformed path:', c)
     }
   })
 
+  buffer = triangulate(contours)
 
-  buffer = ppp(buffer)
+  var off = this.mesh.tessOffset
+  this.posBuffer.set(buffer, off)
+  this.indices = buffer.map(function (d, i) { return (off + i) / 2 })
 
-  this.posBuffer.set(buffer, 0)
-  this.indices = buffer.map(function (d, i) { return i })
+  this.mesh.tessOffset += buffer.length
 }
 
 function applyCSSRules () {
@@ -896,6 +2736,7 @@ function matchesSelector(selector) {
 
 
 function ppp (a) {
+  console.log(a)
   return flatten(a)
 };//cpu intersection tests
 //offscreen render color test
@@ -918,6 +2759,7 @@ function addEvenLtistener (evt, listener, capture) {
   return {
     init : init
   , free: free
+  , tessOffset: 0
   , alloc: alloc
   , draw: draw
   , bind: bind
@@ -1053,14 +2895,13 @@ function buildBuffers(gl, types) {
   pointMesh.bind(types.circle)
   pointMesh.bind(types.rect)
 
-  var lineMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 1 }})
+  var lineMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 1 } })
   lineMesh.bind(types.line)
 
-
-  var triangleMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 2 } })
+  var triangleMesh = new Mesh(gl, { primitive: 'triangles', pos: { size: 2 } })
   triangleMesh.bind(types.path)
 
-  return [pointMesh, lineMesh, triangleMesh]
+  return [triangleMesh, pointMesh, lineMesh]
 }
 
 
@@ -1072,7 +2913,6 @@ function initFbo(texture) {
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture.texture, null)
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
   return fbo
-
 };//regexes sourced from sizzle
 function querySelector(s) { return this.querySelectorAll(s)[0] }
 function querySelectorAll(selector, r) {
@@ -1230,7 +3070,7 @@ var proto = {
           }, tagName: 'path'
         , d: buildPath
         , pathLength: noop
-        , stroke: function (v) {
+        , fill: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
               this.colorBuffer[i * 4] = fill
@@ -1301,8 +3141,8 @@ var types = [
 ]
 
 function buildPath (d) {
-  parsePath.call(this, d, this.stroke(this.attr.stroke))
-  this.stroke(this.attr.stroke)
+  parsePath.call(this, d)
+  this.fill(this.attr.stroke)
 }
 
 function insertBefore(node, next) {
@@ -1357,7 +3197,9 @@ var attrDefaults = {
     }
   })
 
-  if (Array.isArray(image)) this.data = batchTexture.call(this)
+  if (Array.isArray(image)) this.data = null, chunkIt.call(this, image)
+
+  //if (Array.isArray(image)) this.data = batchTexture.call(this)
   if (image.constructor == Object) image = parseJSON(image)
   loadTexture.call(this)
 }
@@ -1509,9 +3351,6 @@ function parseJSON(json) {
   }
 }
 
-
-
-
 function loadTexture()  {
   var image = this.data
 
@@ -1521,7 +3360,32 @@ function loadTexture()  {
   onLoad(image, this.update.bind(this))
 
   return this
-};;var simulation_vs = [
+}
+
+function chunkIt(array) {
+  var x = this.height
+    , y = this.height
+    , chunks = [{ x: x, y: y, i: 0, size: array.length }]
+    , texture = this
+
+  ;(function recur(chunk) {
+    var boundary = chunk.x + chunk.size
+      , delta = boundary - width
+    if (boundary < width) return
+    chunk.size -= delta
+    chunks.push(chunk = { x: 0, y:(chunk.y + 1) % x, size: delta , i: ++chunk.i })
+    recur(chunk)
+  })(chunks[0])
+
+  chunks.forEach(function (chunk) {
+    var data = [], j = -1
+    while(++j < chunk.size)
+      data.push(array[chunk.i])
+
+    texture.subImage(chunk.x, chunk.y, data)
+  })
+}
+;;var simulation_vs = [
   'attribute vec2 pos;'
 , '  void main() {'
 , '  gl_Position = vec4(pos.xy, 1.0 , 1.0);'
@@ -1538,7 +3402,7 @@ var particleShader = [
 , 'uniform float drag;'
 , 'uniform float clock;'
 , 'void main() {'
-    , 'vec2 TARGET = vec2(mouse / resolution);'
+        , 'vec2 TARGET = vec2(mouse / resolution);'
         , 'vec4 data = texture2D(texture, (gl_FragCoord.xy) / dimensions);'
         , 'vec2 pos = data.xy;'
         , 'vec2 vel = data.zw;'
@@ -1552,7 +3416,10 @@ var particleShader = [
         , 'gl_FragColor = vec4(pos, vel);'
      , '}'
 ].join('\n')
-
+//float checkBounds () { return vec}
+//if pos(0. > pos.x || pos.x > 1.) vel.x *= -1;
+//if pos(0. > pos.y || pos.y > 1.) vel.y *= -1;
+//pos = clamp(pos, 0., 1.);
 var since = Date.now()
 pathgl.sim.particles = function (s) {
   var size  = nextSquare(s)

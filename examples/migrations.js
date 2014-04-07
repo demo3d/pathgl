@@ -7,7 +7,7 @@ var width = size.width,
     time = Date.now();
 
 var simplify = d3.geo.transform({ point: function(x, y, z) { this.stream.point(x, y); } })
-var proj = d3.geo.albersUsa().scale(1250).translate([size.width / 2 , size.height / 2]).precision(.1)
+var proj = d3.geo.albersUsa().scale(1250).translate([size.width / 2 , size.height / 2])
   , path = d3.geo.path().projection(proj)
 
 var svg = d3.select(selector)
@@ -15,21 +15,62 @@ var svg = d3.select(selector)
           .attr("height", height)
 
 var webgl = d3.select('canvas').attr(size).attr('class', 'no-click')
-
-d3.json('data/birds.json', draw_birds)
-d3.json('data/us.json', draw_world)
-
-function draw_world(err, world) {
+var getDayOfYear = d3.time.format('%j')
+var dsv = d3.csv('data/birds.csv')
+          .row(function (d, i) {
+            var pos = proj([d.lat, d.long]) || []
+            var x = d3.time.format('%Y-%m-%e').parse(d.date)
+            return { x: pos[0], y:pos[1], intensity: .01, size: 50, date: x }
+})
+.get(function (err, birds) {
+  window.birds = birds.reduce(function (a, b) {
+    a[+ getDayOfYear(b.date)].push(b)
+    return a
+  }, d3.range(367).map(function () { return [] }))
+   window.birds.pop()
+  d3.json('data/us.json', draw_world)
+})
+var i = 0
+function draw_world(err, us) {
   if (err) throw err
+  var states = topojson.feature(us, us.objects.counties).features
+               //.filter(function (d) { return d.id !== 2 && d.id !== 15 })
+  // var dest = pathgl.texture()
+  //var bin = shader
+  //.block
+  //.global(week)
+  //.reduce()
+  //.pipe(dest)
+  // birds.width = birds.height = ~~Math.sqrt(birds.length)
+  // var birdTex = pathgl.texture(birds)//shit.json
+  //.pipe(shader)
+  //
+  //birdTex.lookup(d.long, d.lat)
+  webgl.selectAll('path')
+  .data(states)
+  .enter()
+  .append("path")
+  .attr('d', path)
+  .attr('fill', function (d, i) { return 'hsl(' + Math.random() *360 + ', 90% , 70%)' })
 
-  webgl.append("path")
-  .datum(topojson.mesh(world, world.objects.states))
-  .attr({ class: 'world'
-        , d: path
-        , fill: 'none'
-        , 'stroke': 'grey'
-        , 'stroke-width': 1
-        })
+
+  var canv  = d3.select('.right').append('canvas')
+              .attr('height', 500)
+              .attr('width', 960)
+              .node()
+
+  // var heat = createWebGLHeatmap({canvas:  canv})
+
+  // setInterval(function () {
+  //   heat.multiply(0.91)
+  //   heat.update()
+  //   heat.display()
+  //   heat.addPoints(birds[i = 1 + i % 364])
+  //   heat.blur()
+  // }, 16)
+  // heat.update()
+  // heat.display()
+
 }
 
 function draw_birds(err, data) {
@@ -51,7 +92,3 @@ function draw_birds(err, data) {
           })
     .shader({'r': '5. - distance(pos.w, dates.x);'})
 }
-var x = 0
-setInterval(function () {
-  pathgl.uniform('dates', [x = (x + .2) % 52, 0])
-}, 32)

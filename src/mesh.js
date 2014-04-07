@@ -9,6 +9,7 @@ function Mesh (gl, options, attr) {
   return {
     init : init
   , free: free
+  , tessOffset: 0
   , alloc: alloc
   , draw: draw
   , bind: bind
@@ -144,14 +145,13 @@ function buildBuffers(gl, types) {
   pointMesh.bind(types.circle)
   pointMesh.bind(types.rect)
 
-  var lineMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 1 }})
+  var lineMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 1 } })
   lineMesh.bind(types.line)
 
-
-  var triangleMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 2 } })
+  var triangleMesh = new Mesh(gl, { primitive: 'triangles', pos: { size: 2 } })
   triangleMesh.bind(types.path)
 
-  return [pointMesh, lineMesh, triangleMesh]
+  return [triangleMesh, pointMesh, lineMesh]
 }
 
 
@@ -163,5 +163,4 @@ function initFbo(texture) {
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture.texture, null)
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
   return fbo
-
 }

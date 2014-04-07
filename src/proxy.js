@@ -92,7 +92,7 @@ var proto = {
           }, tagName: 'path'
         , d: buildPath
         , pathLength: noop
-        , stroke: function (v) {
+        , fill: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
               this.colorBuffer[i * 4] = fill
@@ -163,8 +163,8 @@ var types = [
 ]
 
 function buildPath (d) {
-  parsePath.call(this, d, this.stroke(this.attr.stroke))
-  this.stroke(this.attr.stroke)
+  parsePath.call(this, d)
+  this.fill(this.attr.stroke)
 }
 
 function insertBefore(node, next) {

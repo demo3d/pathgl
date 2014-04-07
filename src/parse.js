@@ -1,24 +1,31 @@
+
+window.parsePath = parsePath
+
 function parsePath(str) {
   var buffer = []
     , pos = [0, 0]
     , origin = [0, 0]
 
+  var contours = []
+  contours.push([])
   str.match(/[a-z][^a-z]*/ig).forEach(function (segment, i, match) {
     var points = segment.slice(1).trim().split(/,| /g), c = segment[0].toLowerCase(), j = 0
     while(j < points.length) {
       var x = points[j++], y = points[j++]
-      c == 'm' ?  (1,(origin = pos = [x, y])) :
-        c == 'l' ? buffer.push(pos, [x, y]) && (pos = [x, y]) :
-        c == 'z' ? buffer.push(pos, [origin[0], origin[1]]) && (pos = origin) :
+      c == 'm' ? (contours.push(buffer = []) ,(origin = pos = [x, y])) :
+        c == 'l' ? buffer.push(pos[0], pos[1], x, y) && (pos = [x, y]) :
+        c == 'z' ? buffer.push(pos[0], pos[1], origin[0], origin[1]) && (pos = origin) :
         console.log('%d method is not supported malformed path:', c)
     }
   })
 
+  buffer = triangulate(contours)
 
-  buffer = ppp(buffer)
+  var off = this.mesh.tessOffset
+  this.posBuffer.set(buffer, off)
+  this.indices = buffer.map(function (d, i) { return (off + i) / 2 })
 
-  this.posBuffer.set(buffer, 0)
-  this.indices = buffer.map(function (d, i) { return i })
+  this.mesh.tessOffset += buffer.length
 }
 
 function applyCSSRules () {
@@ -55,5 +62,6 @@ function matchesSelector(selector) {
 
 
 function ppp (a) {
+  console.log(a)
   return flatten(a)
 }

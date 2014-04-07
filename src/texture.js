@@ -16,7 +16,9 @@ function Texture(image) {
     }
   })
 
-  if (Array.isArray(image)) this.data = batchTexture.call(this)
+  if (Array.isArray(image)) this.data = null, chunkIt.call(this, image)
+
+  //if (Array.isArray(image)) this.data = batchTexture.call(this)
   if (image.constructor == Object) image = parseJSON(image)
   loadTexture.call(this)
 }
@@ -168,9 +170,6 @@ function parseJSON(json) {
   }
 }
 
-
-
-
 function loadTexture()  {
   var image = this.data
 
@@ -180,4 +179,28 @@ function loadTexture()  {
   onLoad(image, this.update.bind(this))
 
   return this
+}
+
+function chunkIt(array) {
+  var x = this.height
+    , y = this.height
+    , chunks = [{ x: x, y: y, i: 0, size: array.length }]
+    , texture = this
+
+  ;(function recur(chunk) {
+    var boundary = chunk.x + chunk.size
+      , delta = boundary - width
+    if (boundary < width) return
+    chunk.size -= delta
+    chunks.push(chunk = { x: 0, y:(chunk.y + 1) % x, size: delta , i: ++chunk.i })
+    recur(chunk)
+  })(chunks[0])
+
+  chunks.forEach(function (chunk) {
+    var data = [], j = -1
+    while(++j < chunk.size)
+      data.push(array[chunk.i])
+
+    texture.subImage(chunk.x, chunk.y, data)
+  })
 }
