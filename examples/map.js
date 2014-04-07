@@ -35,12 +35,10 @@ function draw_world(err, world) {
         , d: path
         , fill: 'pink'
         , 'stroke': 'grey'
-        , 'stroke-width': 1
         })
 }
 
 function draw_history(err, hist) {
-  return
   var dates, m, to
     , from = -500
 

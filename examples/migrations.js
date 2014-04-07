@@ -7,7 +7,7 @@ var width = size.width,
     time = Date.now();
 
 var simplify = d3.geo.transform({ point: function(x, y, z) { this.stream.point(x, y); } })
-var proj = d3.geo.wagner4().scale(225).translate([size.width / 2 - 75, size.height / 2]).precision(.1)
+var proj = d3.geo.albersUsa().scale(1250).translate([size.width / 2 , size.height / 2]).precision(.1)
   , path = d3.geo.path().projection(proj)
 
 var svg = d3.select(selector)
@@ -17,19 +17,13 @@ var svg = d3.select(selector)
 var webgl = d3.select('canvas').attr(size).attr('class', 'no-click')
 
 d3.json('data/birds.json', draw_birds)
-d3.json('data/world-50m.json', draw_world)
+d3.json('data/us.json', draw_world)
 
 function draw_world(err, world) {
-  if (err) svg.append('path')
-  .attr('class', 'graticule noclick')
-  .datum(d3.geo.graticule())
-  .attr('d', path)
-  .attr('stroke-dasharray', '3 3')
-  .attr('fill', 'none')
-  .attr('stroke', '#999')
+  if (err) throw err
 
-  svg.append("path")
-  .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a == b && a.id !== 10 }))
+  webgl.append("path")
+  .datum(topojson.mesh(world, world.objects.states))
   .attr({ class: 'world'
         , d: path
         , fill: 'none'
@@ -39,6 +33,7 @@ function draw_world(err, world) {
 }
 
 function draw_birds(err, data) {
+  return
   data.forEach(function (d) {
     d.location = proj([d[1], d[0]])
   })
@@ -60,5 +55,3 @@ var x = 0
 setInterval(function () {
   pathgl.uniform('dates', [x = (x + .2) % 52, 0])
 }, 32)
-
-//lat long week num_cites

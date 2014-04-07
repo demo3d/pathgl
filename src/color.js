@@ -1,27 +1,26 @@
 function parseColor(v) {
   var a = setStyle(v)
-  return + ( a[0] * 255 ) << 16 ^ ( a[1] * 255 ) << 8 ^ ( a[2] * 255 ) << 0
+  return + (a[0] * 255) << 16 ^ (a[1] * 255) << 8 ^ (a[2] * 255) << 0
 }
 
 function hexColor( hex ) {
-  hex = Math.floor( hex )
-  return [ (hex >> 16 & 255 ) / 255
-         , (hex >> 8 & 255 ) / 255
-         , (hex & 255 ) / 255]
+  hex = Math.floor(hex)
+  return [ (hex >> 16 & 255) / 255
+         , (hex >> 8 & 255) / 255
+         , (hex & 255) / 255
+         ]
 }
 
 function parse_hsl(h, s, l) {
-  if ( s === 0 ) {
-    return [l, l, l]
-  } else {
-    var p = l <= 0.5 ? l * (1 + s) : l + s - (l * s)
-    var q = ( 2 * l ) - p
-    return [
-      hue2rgb(q, p, h + 1 / 3)
-    , hue2rgb(q, p, h)
-    , hue2rgb(q, p, h - 1 / 3)
-    ]
-  }
+  if (s === 0) return [l, l, l]
+  var p = l <= 0.5 ? l * (1 + s) : l + s - (l * s)
+    , q = (2 * l) - p
+
+  return [
+    hue2rgb(q, p, h + 1 / 3)
+  , hue2rgb(q, p, h)
+  , hue2rgb(q, p, h - 1 / 3)
+  ]
 }
 
 function hue2rgb(p, q, t) {

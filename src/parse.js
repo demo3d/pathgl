@@ -7,18 +7,16 @@ function parsePath(str) {
     var points = segment.slice(1).trim().split(/,| /g), c = segment[0].toLowerCase(), j = 0
     while(j < points.length) {
       var x = points[j++], y = points[j++]
-      c == 'm' ? origin = pos = [x, y] :
-        c == 'l' ? buffer.push(pos[0], pos[1], x, y) && (pos = [x, y]) :
-        c == 'z' ? buffer.push(pos[0], pos[1], origin[0], origin[1]) && (pos = origin):
+      c == 'm' ?  (1,(origin = pos = [x, y])) :
+        c == 'l' ? buffer.push(pos, [x, y]) && (pos = [x, y]) :
+        c == 'z' ? buffer.push(pos, [origin[0], origin[1]]) && (pos = origin) :
         console.log('%d method is not supported malformed path:', c)
     }
   })
 
-  // while(indices.length < buffer.length) indices.push(lb.count + i++)
-  // if (indices.length > buffer.length) indices.length = buffer.length
-  // indices.forEach(function (d, i) {
-  //   pb[3 * lb[d] + d % 3] = i < buffer.length && buffer[i]
-  // })
+
+  buffer = ppp(buffer)
+
   this.posBuffer.set(buffer, 0)
   this.indices = buffer.map(function (d, i) { return i })
 }
@@ -53,4 +51,9 @@ function matchesSelector(selector) {
   if (isFinite(selector.length)) return !!~flatten(selector).indexOf(this)
   for (var selectors = selector.split(','), tokens, dividedTokens; selector = selectors.pop(); tokens = selector.split(tokenizr).slice(0))
     if (interpret.apply(this, q(tokens.pop())) && (!tokens.length || ancestorMatch(this, tokens, selector.match(dividers)))) return true
+}
+
+
+function ppp (a) {
+  return flatten(a)
 }
