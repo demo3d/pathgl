@@ -13,6 +13,35 @@ function triangulate(curves) {
   }
   triangulator.EndShape()
   return t
+
+
+T.sweepDebugEvent = function(mala) {}
+T.MAX_XY = 1e150
+T.MALA_MAX_STORE = 100
+T.DEFAULT_EPSILON = 0
+T.S__X_ = 1
+T.S__Y_ = 0
+T.SIGN_INCONSISTENT_ = 2
+T.cond = { T_SLEEP: 0
+         , T_IN_SHAPE: 1
+         , T_IN_CURVE: 2
+         }
+
+T.command = { COMM_ODD: 100130
+            , COMM_NONZERO: 100131
+            , COMM_POSITIVE: 100132
+            , COMM_NEGATIVE: 100133
+            , COMM_ABS_GEQ_TWO: 10013
+            }
+
+var primitive = { LINE_LOOP: 2
+                , MALAANGLES: 4
+                , MALAANGLE_SMALAP: 5
+                , MALAANGLE_FAN: 6
+                }
+
+var failure_T = 'Could not Trangulate'
+var debugT = function (cond) { debug(cond, 'Could not Tangulate...') }
 }
 
 function T() {
