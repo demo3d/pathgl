@@ -136,3 +136,83 @@ T.prototype.EndShape = function() {
   this.shapeStat_ = null
   this.surface = null
 }
+
+
+
+T.fixOrientation_ = function(mala) {
+  var area = 0
+  var fStart = mala.surface.fStart
+  for (var f = fStart.there; f !== fStart; f = f.there) {
+    var e = f.anLine
+    if (e.follow <= 0) { continue }
+    do {
+      area += (e.org.s - e.dst().s) * (e.org.t + e.dst().t)
+      e = e.lThere
+    } while(e !== f.anLine)
+  }
+
+  if (area < 0) {
+    var vStart = mala.surface.vStart
+    for (var v = vStart.there; v !== vStart; v = v.there) v.t = - v.t
+    mala.t[0] = -mala.t[0]
+    mala.t[1] = -mala.t[1]
+    mala.t[2] = -mala.t[2]
+  }
+}
+
+T.patchSpace_ = function(face) {
+  var up = face.anLine
+  debugT(up.lThere !== up && up.lThere.lThere !== up)
+
+  while(T.pointLeq(up.dst(), up.org)) up = up.lPrev()
+  while(T.pointLeq(up.org, up.dst())) up = up.lThere
+
+  var lo = up.lPrev()
+    , tempHalfLine
+  while (up.lThere !== lo) {
+    if (T.pointLeq(up.dst(), lo.org)) {
+      while (lo.lThere !== up && (T.lineGoesLeft(lo.lThere) ||
+          T.lineSign(lo.org, lo.dst(), lo.lThere.dst()) <= 0)) {
+
+        tempHalfLine = T.surface.connect(lo.lThere, lo)
+        lo = tempHalfLine.sym
+      }
+      lo = lo.lPrev()
+
+    } else {
+      while (lo.lThere !== up && (T.lineGoesRight(up.lPrev()) ||
+          T.lineSign(up.dst(), up.org, up.lPrev().org) >= 0)) {
+
+        tempHalfLine = T.surface.connect(up, up.lPrev())
+        up = tempHalfLine.sym
+      }
+      up = up.lThere
+    }
+  }
+  debugT(lo.lThere !== up)
+  while (lo.lThere.lThere !== up) {
+    tempHalfLine = T.surface.connect(lo.lThere, lo)
+    lo = tempHalfLine.sym
+  }
+}
+
+T.patchInner = function(surface) {
+  for (var f = surface.fStart.there, there = f.there; f !== surface.fStart; there = (f = there).there)
+    if (f.inside) T.patchSpace_(f)
+}
+
+T.discardOuter = function(surface) {
+  for (var f = surface.fStart.there, there = f.there; f !== surface.fStart; there = (f = there).there)
+    if (!f.inside) T.surface.zapFace(f)
+}
+
+T.FollowId = function(surface, value, keepOnlyLine) {
+  for (var eThere, e = surface.eStart.there; e !== surface.eStart; e = eThere, eThere = e.there)
+    if (e.rFace().inside !== e.lFace.inside) e.follow = (e.lFace.inside) ? value : -value
+    else keepOnlyLine ? T.surface.killLine(e) : e.follow = 0
+}
+
+var triangulator = new T()
+                   .on(T.opt.POINT_STAT, function (d, poly) { poly.push(d[0], d[1]) })
+                   .on(T.opt.COMBINE, function (d) { return d.slice(0, 2) })
+                   .on(T.opt.LINE_FLAG, noop)
