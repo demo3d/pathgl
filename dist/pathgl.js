@@ -2869,6 +2869,215 @@ T.patchSpace_ = function(face) {
     lo = tempHalfLine.sym
   }
 }
+T.merge_ = function(a, x, b, y) {
+  a = (a < 0) ? 0 : a
+  b = (b < 0) ? 0 : b
+
+  return a <= b ?
+    b === 0 ? (x+y) / 2 :
+    x + (y-x) * (a/(a+b)) :
+    y + (x-y) * (b/(a+b))
+}
+
+T.lineIntersect = function(o1, d1, o2, d2, v) {
+  var z1, z2
+  var swap
+
+  if (!T.pointLeq(o1, d1)) {
+    swap = o1
+    o1 = d1
+    d1 = swap
+  }
+
+  if (!T.pointLeq(o2, d2)) {
+    swap = o2
+    o2 = d2
+    d2 = swap
+  }
+
+  if (!T.pointLeq(o1, o2)) {
+    swap = o1
+    o1 = o2
+    o2 = swap
+    swap = d1
+    d1 = d2
+    d2 = swap
+  }
+
+  if (!T.pointLeq(o2, d1)) v.s = (o2.s + d1.s) / 2
+  else if (T.pointLeq(d1, d2)) {
+    z1 = T.lineEval(o1, o2, d1)
+    z2 = T.lineEval(o2, d1, d2)
+    if (z1+z2 < 0) { z1 = -z1; z2 = -z2 }
+    v.s = T.merge_(z1, o2.s, z2, d1.s)
+  } else {
+    z1 = T.lineSign(o1, o2, d1)
+    z2 = -T.lineSign(o1, d2, d1)
+    if (z1+z2 < 0) { z1 = -z1; z2 = -z2 }
+    v.s = T.merge_(z1, o2.s, z2, d2.s)
+  }
+
+  if (!T.Leq(o1, d1)) {
+    swap = o1
+    o1 = d1
+    d1 = swap
+  }
+  if (!T.Leq(o2, d2)) {
+    swap = o2
+    o2 = d2
+    d2 = swap
+  }
+  if (!T.Leq(o1, o2)) {
+    swap = o1
+    o1 = o2
+    o2 = swap
+    swap = d1
+    d1 = d2
+    d2 = swap
+  }
+
+  if (!T.Leq(o2, d1)) v.t = (o2.t + d1.t) / 2
+  else if (T.Leq(d1, d2)) {
+    z1 = T.Eval(o1, o2, d1)
+    z2 = T.Eval(o2, d1, d2)
+    if (z1+z2 < 0)  z1 = -z1, z2 = -z2
+    v.t = T.merge_(z1, o2.t, z2, d1.t)
+  } else {
+    z1 = T.Sign(o1, o2, d1)
+    z2 = -T.Sign(o1, d2, d1)
+    if (z1+z2 < 0) { z1 = -z1; z2 = -z2 }
+    v.t = T.merge_(z1, o2.t, z2, d2.t)
+  }
+}
+
+T.projectShape = function(mala) {
+  var computedPerp = false
+    , norm = [0, 0, 0]
+  norm[0] = mala.perp[0]
+  norm[1] = mala.perp[1]
+  norm[2] = mala.perp[2]
+  if (norm[0] === 0 && norm[1] === 0 && norm[2] === 0) {
+    T.computePerp_(mala, norm)
+    computedPerp = true
+  }
+
+  var s = mala.s
+  var t = mala.t
+  var i = T.longAxis_(norm)
+
+  if (T.TRUE_PROJECT) {
+    T.perpize_(norm)
+
+    s[i] = 0
+    s[(i+1)%3] = T.S__X_
+    s[(i+2)%3] = T.S__Y_
+
+    var w = T.dot_(s, norm)
+    s[0] -= w * norm[0]
+    s[1] -= w * norm[1]
+    s[2] -= w * norm[2]
+    T.perpize_(s)
+
+    t[0] = norm[1]*s[2] - norm[2]*s[1]
+    t[1] = norm[2]*s[0] - norm[0]*s[2]
+    t[2] = norm[0]*s[1] - norm[1]*s[0]
+    T.perpize_(t)
+
+  } else {
+    s[i] = 0
+    s[(i+1)%3] = T.S__X_
+    s[(i+2)%3] = T.S__Y_
+
+    t[i] = 0
+    t[(i+1)%3] = (norm[i] > 0) ? -T.S__Y_ : T.S__Y_
+    t[(i+2)%3] = (norm[i] > 0) ? T.S__X_ : -T.S__X_
+  }
+
+  var vStart = mala.surface.vStart
+  for (var v = vStart.there; v !== vStart; v = v.there)
+    v.s = T.dot_(v.xys, s), v.t = T.dot_(v.xys, t)
+
+  if (computedPerp)
+    T.fixOrientation_(mala)
+}
+
+T.dot_ = function(u, v) {
+  return u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
+}
+
+T.perpize_ = function(v) {
+  var len = v[0]*v[0] + v[1]*v[1] + v[2]*v[2]
+  debugT(len > 0)
+  len = Math.sqrt(len)
+  v[0] /= len
+  v[1] /= len
+  v[2] /= len
+}
+
+T.longAxis_ = function(v) {
+  var i = 0
+  if (Math.abs(v[1]) > Math.abs(v[i])) i = 1
+  if (Math.abs(v[2]) > Math.abs(v[i])) i = 2
+  return i
+}
+
+T.computePerp_ = function(mala, norm) {
+  var maxVal = [0, 0, 0]
+  var minVal = [0, 0, 0]
+  var d1 = [0, 0, 0]
+  var d2 = [0, 0, 0]
+  var tNorm = [0, 0, 0]
+
+  maxVal[0] = maxVal[1] = maxVal[2] = -2 * T.MAX_XY
+  minVal[0] = minVal[1] = minVal[2] = 2 * T.MAX_XY
+
+  var maxPoint = new Array(3)
+  var minPoint = new Array(3)
+
+  var i
+  var v
+  var vStart = mala.surface.vStart
+  for (v = vStart.there; v !== vStart; v = v.there) {
+    for (i = 0; i < 3; ++i) {
+      var c = v.xys[i]
+      if (c < minVal[i]) { minVal[i] = c; minPoint[i] = v }
+      if (c > maxVal[i]) { maxVal[i] = c; maxPoint[i] = v }
+    }
+  }
+
+  i = 0
+
+  if (maxVal[1] - minVal[1] > maxVal[0] - minVal[0]) i = 1
+  if (maxVal[2] - minVal[2] > maxVal[i] - minVal[i]) i = 2
+  if (minVal[i] >= maxVal[i]) return norm[0] = 0; norm[1] = 0; norm[2] = 1
+
+  var maxLen2 = 0
+  var v1 = minPoint[i]
+  var v2 = maxPoint[i]
+  d1[0] = v1.xys[0] - v2.xys[0]
+  d1[1] = v1.xys[1] - v2.xys[1]
+  d1[2] = v1.xys[2] - v2.xys[2]
+  for (v = vStart.there; v !== vStart; v = v.there) {
+    d2[0] = v.xys[0] - v2.xys[0]
+    d2[1] = v.xys[1] - v2.xys[1]
+    d2[2] = v.xys[2] - v2.xys[2]
+    tNorm[0] = d1[1]*d2[2] - d1[2]*d2[1]
+    tNorm[1] = d1[2]*d2[0] - d1[0]*d2[2]
+    tNorm[2] = d1[0]*d2[1] - d1[1]*d2[0]
+    var tLen2 = tNorm[0]*tNorm[0] + tNorm[1]*tNorm[1] + tNorm[2]*tNorm[2]
+    if (tLen2 > maxLen2) {
+      maxLen2 = tLen2
+      norm[0] = tNorm[0]
+      norm[1] = tNorm[1]
+      norm[2] = tNorm[2]
+    }
+  }
+
+  if (maxLen2 <= 0) {
+    norm[0] = norm[1] = norm[2] = 0
+    norm[T.longAxis_(d1)] = 1
+  }
+}
 
 T.patchInner = function(surface) {
   for (var f = surface.fStart.there, there = f.there; f !== surface.fStart; there = (f = there).there)
