@@ -404,6 +404,30 @@ T.computePerp_ = function(mala, norm) {
     norm[T.longAxis_(d1)] = 1
   }
 }
+T.Sign = function(u, v, w) {
+  debugT(T.Leq(u, v) && T.Leq(v, w))
+
+  var gapL = v.t - u.t
+    , gapR = w.t - v.t
+
+  return (gapL + gapR > 0) ? (v.s - w.s) * gapL + (v.s - u.s) * gapR : 0
+}
+
+T.lineGoesLeft = function(e) {
+  return T.pointLeq(e.dst(), e.org)
+}
+
+T.lineGoesRight = function(e) {
+  return T.pointLeq(e.org, e.dst())
+}
+
+T.pointL1dist = function(u, v) {
+  return Math.abs(u.s - v.s) + Math.abs(u.t - v.t)
+}
+
+T.pointCCW = function(u, v, w) {
+  return (u.s*(v.t - w.t) + v.s*(w.t - u.t) + w.s*(u.t - v.t)) >= 0
+}
 
 T.patchInner = function(surface) {
   for (var f = surface.fStart.there, there = f.there; f !== surface.fStart; there = (f = there).there)
