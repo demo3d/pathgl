@@ -15,6 +15,37 @@ function triangulate(curves) {
   return t
 
 
+
+
+T.failureType = {
+  MISSING_START_SHAPE: 100151,
+  MISSING_END_SHAPE: 100153,
+  MISSING_START_CURVE: 100152,
+  MISSING_END_CURVE: 100154,
+  XY_TOO_BIG: 100155,
+  NEED_COMBINE_BACK: 100156
+}
+
+T.opt =  { SURFACE: 100112
+         , EPSILON: 100142
+         , COMM_RULE: 100140
+         , LINE_ONLY: 100141
+         , INVALID_: 100900
+         , INVALID_VALUE: 100901
+         , START: 100100
+         , POINT: 100101
+         , END: 100102
+         , FAILURE: 100103
+         , LINE_FLAG: 100104
+         , COMBINE: 100105
+         , START_STAT: 100106
+         , POINT_STAT: 100107
+         , END_STAT: 100108
+         , FAILURE_STAT: 100109
+         , LINE_FLAG_STAT: 100110
+         , COMBINE_STAT: 100111
+         }
+
 T.sweepDebugEvent = function(mala) {}
 T.MAX_XY = 1e150
 T.MALA_MAX_STORE = 100
@@ -609,6 +640,180 @@ T.Eval = function(u, v, w) {
     (v.s - w.s) + (w.s - u.s) * (gapR / (gapL + gapR))
 
   return 0
+}
+
+
+T.drawStore = function(mala) {
+  if (mala.storeCount < 3) return true
+  var norm = [0, 0, 0]
+  norm[0] = mala.perp[0]
+  norm[1] = mala.perp[1]
+  norm[2] = mala.perp[2]
+
+  if (norm[0] === 0 && norm[1] === 0 && norm[2] === 0)
+    T.computePerp_(mala, norm, false)
+
+  var sign = T.computePerp_(mala, norm, true)
+  if (sign === T.SIGN_INCONSISTENT_) return false
+  if (sign === 0) return true
+
+  switch(mala.command) {
+    case T.command.COMM_ODD:
+    case T.command.COMM_NONZERO:
+      break
+    case T.command.COMM_POSITIVE:
+      if (sign < 0) return true
+      else break
+    case T.command.COMM_NEGATIVE:
+      if (sign > 0) return true
+      else break
+    case T.command.COMM_ABS_GEQ_TWO:
+      return true
+  }
+
+  mala.StartOrStartStat(mala.lineOnly ?
+      primitive.LINE_LOOP : (mala.storeCount > 3) ?
+      primitive.MALAANGLE_FAN : primitive.TRIANGLES)
+
+  var v0 = 0
+  var vn = v0 + mala.storeCount
+  var vc
+
+  mala.pointOrpointStat(mala.store[v0].stat)
+  if (sign > 0) {
+    for (vc = v0+1; vc < vn; ++vc)
+      mala.pointOrpointStat(mala.store[vc].stat)
+  } else {
+    for(vc = vn-1; vc > v0; --vc)
+      mala.pointOrpointStat(mala.store[vc].stat)
+  }
+  mala.EndOrEndStat()
+  return true
+}
+
+T.marked_ = function(f) {
+  return (!f.inside || f.marked)
+}
+
+T.fTrail_ = function(t) {
+  while (t !== null)
+    t.marked = false, t = t.trail
+}
+
+T.maximumFan_ = function(eOrig) {
+  var newFace = new T.FaceCount(0, null, T.drawFan_)
+    , trail = null
+    , e
+
+  for(e = eOrig; !T.marked_(e.lFace); e = e.oThere) {
+    e.lFace.trail = trail
+    trail = e.lFace
+    e.lFace.marked = true
+    ++newFace.size
+  }
+
+  for(e = eOrig; !T.marked_(e.rFace()); e = e.oPrev()) {
+    e.rFace().trail = trail
+    trail = e.rFace()
+    e.rFace().marked = true
+    ++newFace.size
+  }
+
+  newFace.eStart = e
+  T.fTrail_(trail)
+  return newFace
+}
+
+T.maximumSTp_ = function(eOrig) {
+  var newFace = new T.FaceCount(0, null, T.drawSTp_)
+  var startSize = 0, tailSize = startSize
+  var trail = null
+  var e
+  var eTail
+  var eStart
+
+  for (e = eOrig; !T.marked_(e.lFace); ++tailSize, e = e.oThere) {
+    e.lFace.trail = trail
+    trail = e.lFace
+    e.lFace.marked = true
+
+    ++tailSize
+    e = e.dPrev()
+    if (T.marked_(e.lFace)) {
+      break
+    }
+    e.lFace.trail = trail
+    trail = e.lFace
+    e.lFace.marked = true
+  }
+  eTail = e
+
+  for (e = eOrig; !T.marked_(e.rFace()); ++startSize, e = e.dThere()) {
+    e.rFace().trail = trail
+    trail = e.rFace()
+    e.rFace().marked = true
+
+    ++startSize
+    e = e.oPrev()
+    if (T.marked_(e.rFace())) {
+      break
+    }
+    e.rFace().trail = trail
+    trail = e.rFace()
+    e.rFace().marked = true
+  }
+  eStart = e
+
+  newFace.size = tailSize + startSize
+  if ((tailSize & 1) === 0) {
+    newFace.eStart = eTail.sym
+  } else if ((startSize & 1) === 0) {
+    newFace.eStart = eStart
+  } else {
+    --newFace.size
+    newFace.eStart = eStart.oThere
+  }
+
+  T.fTrail_(trail)
+  return newFace
+}
+
+T.drawFan_ = function(mala, e, size) {
+  mala.StartOrStartStat(primitive.MALAANGLE_FAN)
+  mala.pointOrpointStat(e.org.stat)
+  mala.pointOrpointStat(e.dst().stat)
+
+  while (!T.marked_(e.lFace)) {
+    e.lFace.marked = true
+    --size
+    e = e.oThere
+    mala.pointOrpointStat(e.dst().stat)
+  }
+
+  debugT(size === 0)
+  mala.EndOrEndStat()
+}
+
+T.drawSTp_ = function(mala, e, size) {
+  mala.StartOrStartStat(primitive.MALAANGLE_SMALAP)
+  mala.pointOrpointStat(e.org.stat)
+  mala.pointOrpointStat(e.dst().stat)
+
+  while (!T.marked_(e.lFace)) {
+    e.lFace.marked = true
+    --size
+    e = e.dPrev()
+    mala.pointOrpointStat(e.org.stat)
+    if (T.marked_(e.lFace)) break
+
+    e.lFace.marked = true
+    --size
+    e = e.oThere
+    mala.pointOrpointStat(e.dst().stat)
+  }
+
+  debugT(size === 0)
+  mala.EndOrEndStat()
 }
 
 
