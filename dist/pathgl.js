@@ -2844,6 +2844,357 @@ T.prototype.emptyStore_ = function() {
   this.emptyStore = false
 }
 
+T.DictN = function() {
+    this.key = null
+    this.there = null
+    this.prev = null
+}
+
+T.DictN.prototype.Key = function() {
+  return this.key
+}
+
+T.DictN.prototype.Succ = function() {
+  return this.there
+}
+
+T.DictN.prototype.Pred = function() {
+  return this.prev
+}
+
+T.Dict = function(frame, leq) {
+  this.start = new T.DictN()
+  this.start.there = this.start
+  this.start.prev = this.start
+  this.frame = frame
+  this.leq_ = (leq)
+}
+
+T.Dict.prototype.addBefore = function(n, key) {
+  do {
+    n = n.prev
+  } while(n.key !== null && !this.leq_(this.frame, n.key, key))
+
+  var newN = new T.DictN()
+  newN.key = key
+  newN.there = n.there
+  n.there.prev = newN
+  newN.prev = n
+  n.there = newN
+  return newN
+}
+
+T.Dict.prototype.add = function(key) {
+  return this.addBefore(this.start, key)
+}
+
+T.Dict.prototype.killN = function(n) {
+  n.there.prev = n.prev
+  n.prev.there = n.there
+}
+
+T.Dict.prototype.search = function(key) {
+  var n = this.start
+  do {
+    n = n.there
+  } while(n.key !== null && !this.leq_(this.frame, key, n.key))
+  return n
+}
+
+
+T.Dict.prototype.Min = function() {
+  return this.start.there
+}
+
+T.Dict.prototype.Max = function() {
+  return this.start.prev
+}
+
+
+T.PQN = function() {
+    this.handle = 0
+}
+
+T.PQN.renew = function(oldArray, size) {
+  var newArray = new Array(size)
+  var index = 0
+
+  if (oldArray !== null)
+    for (;index < oldArray.length; index++) newArray[index] = oldArray[index]
+
+  for (;index < size; index++) newArray[index] = new T.PQN()
+
+  return newArray
+}
+
+
+T.PQHandleElem = function() {
+    this.key = null
+    this.n = 0
+}
+
+T.PQHandleElem.renew = function(oldArray, size) {
+  var newArray = new Array(size)
+  var index = 0
+  if (oldArray !== null)
+    for (;index < oldArray.length; index++) newArray[index] = oldArray[index]
+
+  for (;index < size; index++) newArray[index] = new T.PQHandleElem()
+
+  return newArray
+}
+
+T.Heap = function(leq) {
+  this.ns_ = T.PQN.renew(null, T.Heap.INIT_SIZE_ + 1)
+  this.handles_ = T.PQHandleElem.renew(null, T.Heap.INIT_SIZE_ + 1)
+  this.size_ = 0
+  this.max_ = T.Heap.INIT_SIZE_
+  this.fList_ = 0
+  this.initialized_ = false
+  this.leq_ = leq
+  this.ns_[1].handle = 1
+}
+
+T.Heap.INIT_SIZE_ = 32
+T.Heap.prototype.killHeap = function() {
+  this.handles_ = null
+  this.ns_ = null
+}
+
+T.Heap.prototype.init = function() {
+  for(var i = this.size_; i >= 1; --i)
+    this.floatDown_(i)
+
+  this.initialized_ = true
+}
+
+T.Heap.prototype.add = function(keyNew) {
+  var now = ++this.size_, f
+
+  if ((now*2) > this.max_) {
+    this.max_ *= 2
+    this.ns_ = T.PQN.renew(this.ns_, this.max_ + 1)
+    this.handles_ = T.PQHandleElem.renew(this.handles_, this.max_ + 1)
+  }
+
+  if (this.fList_ === 0) f = now
+  else {
+    f = this.fList_
+    this.fList_ = this.handles_[f].n
+  }
+
+  this.ns_[now].handle = f
+  this.handles_[f].n = now
+  this.handles_[f].key = keyNew
+
+  if (this.initialized_) this.floatUp_(now)
+  return f
+}
+
+T.Heap.prototype.isEmpty = function() {
+  return this.size_ === 0
+}
+
+T.Heap.prototype.minimum = function() {
+  return this.handles_[this.ns_[1].handle].key
+}
+
+T.Heap.prototype.extractMin = function() {
+  var n = this.ns_
+  var h = this.handles_
+  var hMin = n[1].handle
+  var min = h[hMin].key
+
+  if (this.size_ > 0) {
+    n[1].handle = n[this.size_].handle
+    h[n[1].handle].n = 1
+
+    h[hMin].key = null
+    h[hMin].n = this.fList_
+    this.fList_ = hMin
+
+    if (--this.size_ > 0 ) this.floatDown_(1)
+  }
+
+  return min
+}
+
+T.Heap.prototype.remove = function(hNow) {
+  var n = this.ns_
+  var h = this.handles_
+
+  debugT(hNow >= 1 && hNow <= this.max_ && h[hNow].key !== null)
+
+  var now = h[hNow].n
+  n[now].handle = n[this.size_].handle
+  h[n[now].handle].n = now
+
+  if (now <= --this.size_) {
+    (now <= 1 || this.leq_(h[n[now>>1].handle].key, h[n[now].handle].key)) ?
+      this.floatDown_(now) :
+      this.floatUp_(now)
+  }
+
+  h[hNow].key = null
+  h[hNow].n = this.fList_
+  this.fList_ = hNow
+}
+
+T.Heap.prototype.floatDown_ = function(now) {
+  var n = this.ns_
+  var h = this.handles_
+  var hNow = n[now].handle
+  for( ;; ) {
+    var child = now << 1
+    if (child < this.size_ && this.leq_(h[n[child+1].handle].key, h[n[child].handle].key)) ++child
+
+    debugT(child <= this.max_)
+
+    var hChild = n[child].handle
+    if (child > this.size_ || this.leq_(h[hNow].key, h[hChild].key)) {
+      n[now].handle = hNow
+      return h[hNow].n = now
+    }
+    n[now].handle = hChild
+    h[hChild].n = now
+    now = child
+  }
+}
+
+T.Heap.prototype.floatUp_ = function(now) {
+  var n = this.ns_
+  var h = this.handles_
+
+  var hNow = n[now].handle
+  for( ;; ) {
+    var parent = now >> 1
+    var hParent = n[parent].handle
+    if (parent === 0 || this.leq_(h[hParent].key, h[hNow].key)) {
+      n[now].handle = hNow
+      return h[hNow].n = now
+    }
+
+    n[now].handle = hParent
+    h[hParent].n = now
+    now = parent
+  }
+}
+
+
+T.PriorityQ = function(leq) {
+  this.keys_ = T.PriorityQ.prototype.PQKeyRenew_(null, T.PriorityQ.INIT_SIZE_)
+  this.order_ = null
+  this.size_ = 0
+  this.max_ = T.PriorityQ.INIT_SIZE_
+  this.initialized_ = false
+
+  this.leq_ = (leq)
+
+  this.heap_ = new T.Heap(this.leq_)
+}
+
+T.PriorityQ.INIT_SIZE_ = 32
+
+T.PriorityQ.prototype.init = function() {
+  this.order_ = []
+  for (var i = 0; i < this.size_; i++) this.order_[i] = i
+  var comparator = (function(keys, leq) {
+    return function(a, b) {
+      return leq(keys[a], keys[b]) ? 1 : -1
+    }
+  })(this.keys_, this.leq_)
+  this.order_.sort(comparator)
+
+  this.max_ = this.size_
+  this.initialized_ = true
+  this.heap_.init()
+
+  var p = 0
+  var r = p + this.size_ - 1
+  for (i = p; i < r; ++i)
+    debugT(this.leq_(this.keys_[this.order_[i+1]], this.keys_[this.order_[i]]))
+}
+
+T.PriorityQ.prototype.add = function(keyNew) {
+  if (this.initialized_) return this.heap_.add(keyNew)
+
+  var now = this.size_
+  if (++this.size_ >= this.max_) {
+    this.max_ *= 2
+    this.keys_ = T.PriorityQ.prototype.PQKeyRenew_(this.keys_, this.max_)
+  }
+
+  this.keys_[now] = keyNew
+  return -(now+1)
+}
+
+T.PriorityQ.prototype.PQKeyRenew_ = function(oldArray, size) {
+  var newArray = new Array(size)
+  var index = 0
+  if (oldArray !== null)
+    for (; index < oldArray.length; index++)
+      newArray[index] = oldArray[index]
+
+  for (; index < size; index++) newArray[index] = null
+
+  return newArray
+}
+
+T.PriorityQ.prototype.keyLessThan_ = function(x, y) {
+  var keyX = this.keys_[x]
+  var keyY = this.keys_[y]
+  return !this.leq_(keyY, keyX)
+}
+
+T.PriorityQ.prototype.keyGreaterThan_ = function(x, y) {
+  var keyX = this.keys_[x]
+  var keyY = this.keys_[y]
+  return !this.leq_(keyX, keyY)
+}
+
+T.PriorityQ.prototype.extractMin = function() {
+  if (this.size_ === 0) return this.heap_.extractMin()
+
+  var sortMin = this.keys_[this.order_[this.size_-1]]
+  if (!this.heap_.isEmpty()) {
+    var heapMin = this.heap_.minimum()
+    if (this.leq_(heapMin, sortMin)) return this.heap_.extractMin()
+  }
+
+  do {
+    --this.size_
+  } while(this.size_ > 0 && this.keys_[this.order_[this.size_-1]] === null)
+
+  return sortMin
+}
+
+T.PriorityQ.prototype.minimum = function() {
+  if (this.size_ === 0) return this.heap_.minimum()
+
+  var sortMin = this.keys_[this.order_[this.size_-1]]
+  if (!this.heap_.isEmpty()) {
+    var heapMin = this.heap_.minimum()
+    if (this.leq_(heapMin, sortMin)) return heapMin
+  }
+  return sortMin
+}
+
+T.PriorityQ.prototype.isEmpty = function() {
+  return (this.size_ === 0) && this.heap_.isEmpty()
+}
+
+T.PriorityQ.prototype.remove = function(now) {
+  if (now >= 0) return this.heap_.remove(now)
+
+  now = -(now+1)
+
+  debugT(now < this.max_ && this.keys_[now] !== null)
+
+  this.keys_[now] = null
+  while(this.size_ > 0 && this.keys_[this.order_[this.size_-1]] === null)
+    --this.size_
+}
+
 T.sweepDebugEvent = function(mala) {}
 T.MAX_XY = 1e150
 T.MALA_MAX_STORE = 100
