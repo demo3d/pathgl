@@ -2720,6 +2720,130 @@ T.opt =  { SURFACE: 100112
          , COMBINE_STAT: 100111
          }
 
+
+T.storepoint = function() {
+  this.xys = [0, 0, 0]
+}
+
+T.prototype.point = function(xys, stat) {
+  var tooBig = false
+  var clamped = [0, 0, 0]
+
+  this.requireState_(T.cond.T_IN_CURVE)
+
+  if (this.emptyStore) {
+    this.emptyStore_()
+    this.lastLine_ = null
+  }
+
+  for (var i = 0; i < 3; ++i) {
+    var x = xys[i]
+    if (x < -T.MAX_XY) {
+      x = -T.MAX_XY
+      tooBig = true
+    }
+    if (x > T.MAX_XY) {
+      x = T.MAX_XY
+      tooBig = true
+    }
+    clamped[i] = x
+  }
+
+  if (tooBig) this.FailureOrFailureStat(T.failureType.XY_TOO_BIG)
+
+  if (this.surface === null) {
+    if (this.storeCount < T.MALA_MAX_STORE) return this.storepoint_(clamped, stat)
+    this.emptyStore_()
+  }
+
+  this.addpoint_(clamped, stat)
+}
+
+T.prototype.StartShape = function(stat) {
+  this.requireState_(T.cond.T_SLEEP)
+
+  this.state = T.cond.T_IN_SHAPE
+  this.storeCount = 0
+  this.emptyStore = false
+  this.surface = null
+
+  this.shapeStat_ = stat
+}
+
+
+T.prototype.makeSleep_ = function() {
+  if (this.surface) T.surface.killSurface(this.surface)
+  this.state = T.cond.T_SLEEP
+  this.lastLine_ = null
+  this.surface = null
+}
+
+T.prototype.requireState_ = function(state) {
+  if (this.state !== state) this.gotoState_(state)
+}
+
+T.prototype.gotoState_ = function(newState) {
+  while (this.state !== newState) {
+    if (this.state < newState) {
+      switch (this.state) {
+        case T.cond.T_SLEEP:
+          this.FailureOrFailureStat(T.failureType.MISSING_START_SHAPE)
+          return this.StartShape(null)
+        case T.cond.T_IN_SHAPE:
+          this.FailureOrFailureStat(T.failureType.MISSING_START_CURVE)
+          return this.StartCurve()
+      }
+    } else {
+      switch (this.state) {
+        case T.cond.T_IN_CURVE:
+          this.FailureOrFailureStat(T.failureType.MISSING_END_CURVE)
+          return this.EndCurve()
+        case T.cond.T_IN_SHAPE:
+          this.FailureOrFailureStat(T.failureType.MISSING_END_SHAPE)
+          return this.makeSleep_()
+      }
+    }
+  }
+}
+
+T.prototype.addpoint_ = function(xys, stat) {
+  var e = this.lastLine_
+  if (e === null) {
+    e = T.surface.makeLine(this.surface)
+    T.surface.surfaceSplit(e, e.sym)
+  } else {
+    T.surface.splitLine(e)
+    e = e.lThere
+  }
+
+  e.org.stat = stat
+  e.org.xys[0] = xys[0]
+  e.org.xys[1] = xys[1]
+  e.org.xys[2] = xys[2]
+  e.follow = 1
+  e.sym.follow = -1
+  this.lastLine_ = e
+}
+
+T.prototype.storepoint_ = function(xys, stat) {
+  var v = this.store[this.storeCount]
+  v.stat = stat
+  v.xys[0] = xys[0]
+  v.xys[1] = xys[1]
+  v.xys[2] = xys[2]
+  ++this.storeCount
+}
+
+T.prototype.emptyStore_ = function() {
+  this.surface = new T.Surface()
+  for (var i = 0; i < this.storeCount; i++) {
+    var v = this.store[i]
+    this.addpoint_(v.xys, v.stat)
+  }
+  this.storeCount = 0
+  this.emptyStore = false
+}
+
 T.sweepDebugEvent = function(mala) {}
 T.MAX_XY = 1e150
 T.MALA_MAX_STORE = 100
