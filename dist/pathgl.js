@@ -3119,6 +3119,173 @@ T.FollowId = function(surface, value, keepOnlyLine) {
     else keepOnlyLine ? T.surface.killLine(e) : e.follow = 0
 }
 
+T.drawTangle_ = function(mala, e, size) {
+  debugT(size === 1)
+
+  e.lFace.trail = mala.lonelyTList
+  mala.lonelyTList = e.lFace
+  e.lFace.marked = true
+}
+
+T.drawMaximumFaceGroup_ = function(mala, fOrig) {
+  var e = fOrig.anLine
+    , max = new T.FaceCount(1, e, T.drawTangle_)
+    , newFace
+
+  if (!mala.flagLine) {
+    newFace = T.maximumFan_(e)
+    if (newFace.size > max.size) max = newFace
+
+    newFace = T.maximumFan_(e.lThere)
+    if (newFace.size > max.size) max = newFace
+
+    newFace = T.maximumFan_(e.lPrev())
+    if (newFace.size > max.size) max = newFace
+
+    newFace = T.maximumSTp_(e)
+    if (newFace.size > max.size) max = newFace
+
+    newFace = T.maximumSTp_(e.lThere)
+    if (newFace.size > max.size) max = newFace
+
+    newFace = T.maximumSTp_(e.lPrev())
+    if (newFace.size > max.size) max = newFace
+  }
+
+  max.draw(mala, max.eStart, max.size)
+}
+
+T.drawLonelyTangles_ = function(mala, start) {
+  var lineState = -1
+  var f = start
+  mala.StartOrStartStat(primitive.TRIANGLES)
+  for(; f !== null; f = f.trail) {
+    var e = f.anLine
+    do {
+      if (mala.flagLine) {
+        var newState = !e.rFace().inside ? 1 : 0
+        if (lineState !== newState) {
+          lineState = newState
+          mala.LineFlagOrLineFlagStat(!!lineState)
+        }
+      }
+      mala.pointOrpointStat(e.org.stat)
+
+      e = e.lThere
+    } while (e !== f.anLine)
+  }
+
+  mala.EndOrEndStat()
+}
+
+T.computePerp_ = function(mala, norm, fix) {
+  if (!fix)
+    norm[0] = norm[1] = norm[2] = 0
+  var v0 = 0
+  var vn = v0 + mala.storeCount
+  var vc = v0 + 1
+  var point0 = mala.store[v0]
+  var pointc = mala.store[vc]
+
+  var xc = pointc.xys[0] - point0.xys[0]
+  var yc = pointc.xys[1] - point0.xys[1]
+  var zc = pointc.xys[2] - point0.xys[2]
+
+  var sign = 0
+  while (++vc < vn) {
+    pointc = mala.store[vc]
+    var xp = xc
+    var yp = yc
+    var zp = zc
+    xc = pointc.xys[0] - point0.xys[0]
+    yc = pointc.xys[1] - point0.xys[1]
+    zc = pointc.xys[2] - point0.xys[2]
+
+    var n = [0, 0, 0]
+    n[0] = yp*zc - zp*yc
+    n[1] = zp*xc - xp*zc
+    n[2] = xp*yc - yp*xc
+
+    var dot = n[0]*norm[0] + n[1]*norm[1] + n[2]*norm[2]
+    if (!fix) {
+      if (dot >= 0) {
+        norm[0] += n[0]
+        norm[1] += n[1]
+        norm[2] += n[2]
+      } else {
+        norm[0] -= n[0]
+        norm[1] -= n[1]
+        norm[2] -= n[2]
+      }
+    } else if (dot !== 0) {
+      if (dot > 0) {
+        if (sign < 0)
+          return T.SIGN_INCONSISTENT_
+        sign = 1
+      } else {
+        if (sign > 0)
+          return T.SIGN_INCONSISTENT_
+        sign = -1
+      }
+    }
+  }
+
+  return sign
+}
+
+T.FaceCount = function(size, eStart, drawFunction) {
+  this.size = size
+  this.eStart = eStart
+  this.draw = drawFunction
+}
+
+T.pointEq = function(u, v) {
+  return u.s === v.s && u.t === v.t
+}
+
+T.pointLeq = function(u, v) {
+  return (u.s < v.s) || (u.s === v.s && u.t <= v.t)
+}
+
+T.lineEval = function(u, v, w) {
+  debugT(T.pointLeq(u, v) && T.pointLeq(v, w))
+
+  var gapL = v.s - u.s
+    , gapR = w.s - v.s
+
+  if (gapL + gapR > 0) return (gapL < gapR) ?
+    (v.t - u.t) + (u.t - w.t) * (gapL / (gapL + gapR)) :
+    (v.t - w.t) + (w.t - u.t) * (gapR / (gapL + gapR))
+
+  return 0
+}
+
+T.lineSign = function(u, v, w) {
+  debugT(T.pointLeq(u, v) && T.pointLeq(v, w))
+  var gapL = v.s - u.s
+    , gapR = w.s - v.s
+  if (gapL + gapR > 0) return (v.t - w.t) * gapL + (v.t - u.t) * gapR
+
+  return 0
+}
+
+T.Leq = function(u, v) {
+  return (u.t < v.t) || (u.t === v.t && u.s <= v.s)
+}
+
+T.Eval = function(u, v, w) {
+  debugT(T.Leq(u, v) && T.Leq(v, w))
+  var gapL = v.t - u.t
+    , gapR = w.t - v.t
+
+  if (gapL + gapR > 0) return (gapL < gapR) ?
+    (v.s - u.s) + (u.s - w.s) * (gapL / (gapL + gapR)) :
+    (v.s - w.s) + (w.s - u.s) * (gapR / (gapL + gapR))
+
+  return 0
+}
+
+
 var triangulator = new T()
                    .on(T.opt.POINT_STAT, function (d, poly) { poly.push(d[0], d[1]) })
                    .on(T.opt.COMBINE, function (d) { return d.slice(0, 2) })
