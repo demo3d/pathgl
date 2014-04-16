@@ -4050,6 +4050,892 @@ T.Combine_ = function(mala, isect, stat, depths, needed) {
   }
 }
 
+
+T.splitMergePoints_ = function(mala, e1, e2) {
+  var stat = [null, null, null, null]
+  var depths = [0.5, 0.5, 0, 0]
+
+  stat[0] = e1.org.stat
+  stat[1] = e2.org.stat
+  T.Combine_(mala, e1.org, stat, depths, false)
+  T.surface.surfaceSplit(e1, e2)
+}
+
+T.pointDepths_ = function(isect, org, dst, depths, depthIndex) {
+  var t1 = T.pointL1dist(org, isect)
+  var t2 = T.pointL1dist(dst, isect)
+  var i0 = depthIndex
+  var i1 = depthIndex + 1
+  depths[i0] = 0.5 * t2 / (t1 + t2)
+  depths[i1] = 0.5 * t1 / (t1 + t2)
+  isect.xys[0] += depths[i0]*org.xys[0] + depths[i1]*dst.xys[0]
+  isect.xys[1] += depths[i0]*org.xys[1] + depths[i1]*dst.xys[1]
+  isect.xys[2] += depths[i0]*org.xys[2] + depths[i1]*dst.xys[2]
+}
+
+T.IntersectStat_ = function(mala, isect, orgUp, dstUp, orgLo, dstLo) {
+  var depths = [0, 0, 0, 0]
+  var stat = [
+    orgUp.stat,
+    dstUp.stat,
+    orgLo.stat,
+    dstLo.stat
+  ]
+  isect.xys[0] = isect.xys[1] = isect.xys[2] = 0
+  T.pointDepths_(isect, orgUp, dstUp, depths, 0)
+  T.pointDepths_(isect, orgLo, dstLo, depths, 2)
+  T.Combine_(mala, isect, stat, depths, true)
+}
+
+T.fixForRightSplit_ = function(mala, regUp) {
+  var regLo = regUp.spaceBelow()
+  var eUp = regUp.eUp
+  var eLo = regLo.eUp
+
+  if (T.pointLeq(eUp.org, eLo.org)) {
+    if (T.lineSign(eLo.dst(), eUp.org, eLo.org) > 0) return false
+
+    if (!T.pointEq(eUp.org, eLo.org)) {
+      T.surface.splitLine(eLo.sym)
+      T.surface.surfaceSplit(eUp, eLo.oPrev())
+      regUp.dirty = regLo.dirty = true
+
+    } else if (eUp.org !== eLo.org) {
+      mala.pq.remove((eUp.org.pqHandle))
+      T.splitMergePoints_(mala, eLo.oPrev(), eUp)
+    }
+
+  } else {
+    if (T.lineSign(eUp.dst(), eLo.org, eUp.org) < 0) return false
+
+    regUp.spaceAbove().dirty = regUp.dirty = true
+    T.surface.splitLine(eUp.sym)
+    T.surface.surfaceSplit(eLo.oPrev(), eUp)
+  }
+
+  return true
+}
+
+T.fixForLeftSplit_ = function(mala, regUp) {
+  var regLo = regUp.spaceBelow()
+  var eUp = regUp.eUp
+  var eLo = regLo.eUp
+  var e
+
+  debugT(!T.pointEq(eUp.dst(), eLo.dst()))
+
+  if (T.pointLeq(eUp.dst(), eLo.dst())) {
+    if (T.lineSign(eUp.dst(), eLo.dst(), eUp.org) < 0) return false
+
+    regUp.spaceAbove().dirty = regUp.dirty = true
+    e = T.surface.splitLine(eUp)
+    T.surface.surfaceSplit(eLo.sym, e)
+    e.lFace.inside = regUp.inside
+  } else {
+    if (T.lineSign(eLo.dst(), eUp.dst(), eLo.org) > 0) return false
+
+    regUp.dirty = regLo.dirty = true
+    e = T.surface.splitLine(eLo)
+    T.surface.surfaceSplit(eUp.lThere, eLo.sym)
+    e.rFace().inside = regUp.inside
+  }
+
+  return true
+}
+
+T.fixForIntersect_ = function(mala, regUp) {
+  var regLo = regUp.spaceBelow()
+  var eUp = regUp.eUp
+  var eLo = regLo.eUp
+  var orgUp = eUp.org
+  var orgLo = eLo.org
+  var dstUp = eUp.dst()
+  var dstLo = eLo.dst()
+
+  var isect = new T.point()
+
+  debugT(!T.pointEq(dstLo, dstUp))
+  debugT(T.lineSign(dstUp, mala.event, orgUp) <= 0)
+  debugT(T.lineSign(dstLo, mala.event, orgLo) >= 0 )
+  debugT(orgUp !== mala.event && orgLo !== mala.event)
+  debugT(!regUp.fixUpperLine && !regLo.fixUpperLine)
+
+  if (orgUp === orgLo) return false
+
+  var tMinUp = Math.min(orgUp.t, dstUp.t)
+  var tMaxLo = Math.max(orgLo.t, dstLo.t)
+  if (tMinUp > tMaxLo) return false
+
+  if (T.pointLeq(orgUp, orgLo)) {
+    if (T.lineSign(dstLo, orgUp, orgLo) > 0) return false
+  } else {
+    if (T.lineSign(dstUp, orgLo, orgUp) < 0) return false
+  }
+
+  T.sweepDebugEvent(mala)
+
+  T.lineIntersect(dstUp, orgUp, dstLo, orgLo, isect)
+
+
+  debugT(Math.min(orgUp.t, dstUp.t) <= isect.t)
+  debugT(isect.t <= Math.max(orgLo.t, dstLo.t))
+  debugT(Math.min(dstLo.s, dstUp.s) <= isect.s)
+  debugT(isect.s <= Math.max(orgLo.s, orgUp.s))
+
+  if (T.pointLeq(isect, mala.event)) {
+    isect.s = mala.event.s
+    isect.t = mala.event.t
+  }
+
+
+  var orgMin = T.pointLeq(orgUp, orgLo) ? orgUp : orgLo
+  if (T.pointLeq(orgMin, isect)) {
+    isect.s = orgMin.s
+    isect.t = orgMin.t
+  }
+
+  if (T.pointEq(isect, orgUp) || T.pointEq(isect, orgLo)) {
+    T.fixForRightSplit_(mala, regUp)
+    return false
+  }
+
+  if ((!T.pointEq(dstUp, mala.event) && T.lineSign(dstUp, mala.event, isect) >= 0) ||
+      (!T.pointEq(dstLo, mala.event) && T.lineSign(dstLo, mala.event, isect) <= 0)) {
+    if (dstLo === mala.event) {
+      T.surface.splitLine(eUp.sym)
+      T.surface.surfaceSplit(eLo.sym, eUp)
+      regUp = T.topLeftSpace_(regUp)
+      eUp = regUp.spaceBelow().eUp
+      T.finishLeftSpaces_(mala, regUp.spaceBelow(), regLo)
+      T.addRightLines_(mala, regUp, eUp.oPrev(), eUp, eUp, true)
+      return true
+    }
+
+    if (dstUp === mala.event) {
+      T.surface.splitLine(eLo.sym)
+      T.surface.surfaceSplit(eUp.lThere, eLo.oPrev())
+      regLo = regUp
+      regUp = T.topRightSpace_(regUp)
+      var e = regUp.spaceBelow().eUp.rPrev()
+      regLo.eUp = eLo.oPrev()
+      eLo = T.finishLeftSpaces_(mala, regLo, null)
+      T.addRightLines_(mala, regUp, eLo.oThere, eUp.rPrev(), e, true)
+      return true
+    }
+
+    if (T.lineSign(dstUp, mala.event, isect) >= 0) {
+      regUp.spaceAbove().dirty = regUp.dirty = true
+      T.surface.splitLine(eUp.sym)
+      eUp.org.s = mala.event.s
+      eUp.org.t = mala.event.t
+    }
+
+    if (T.lineSign(dstLo, mala.event, isect) <= 0) {
+      regUp.dirty = regLo.dirty = true
+      T.surface.splitLine(eLo.sym)
+      eLo.org.s = mala.event.s
+      eLo.org.t = mala.event.t
+    }
+    return false
+  }
+
+  T.surface.splitLine(eUp.sym)
+  T.surface.splitLine(eLo.sym)
+  T.surface.surfaceSplit(eLo.oPrev(), eUp)
+  eUp.org.s = isect.s
+  eUp.org.t = isect.t
+  eUp.org.pqHandle = mala.pq.add(eUp.org)
+  T.IntersectStat_(mala, eUp.org, orgUp, dstUp, orgLo, dstLo)
+  regUp.spaceAbove().dirty = regUp.dirty = regLo.dirty = true
+
+  return false
+}
+
+T.walkDirtySpaces_ = function(mala, regUp) {
+  var regLo = regUp.spaceBelow()
+
+  for ( ;; ) {
+    while (regLo.dirty) {
+      regUp = regLo
+      regLo = regLo.spaceBelow()
+    }
+    if (!regUp.dirty) {
+      regLo = regUp
+      regUp = regUp.spaceAbove()
+      if (regUp === null || !regUp.dirty) return
+    }
+
+    regUp.dirty = false
+    var eUp = regUp.eUp
+    var eLo = regLo.eUp
+
+    if (eUp.dst() !== eLo.dst()) {
+      if (T.fixForLeftSplit_(mala, regUp)) {
+        if (regLo.fixUpperLine) {
+          T.killSpace_(mala, regLo)
+          T.surface.killLine(eLo)
+          regLo = regUp.spaceBelow()
+          eLo = regLo.eUp
+
+        } else if (regUp.fixUpperLine) {
+          T.killSpace_(mala, regUp)
+          T.surface.killLine(eUp)
+          regUp = regLo.spaceAbove()
+          eUp = regUp.eUp
+        }
+      }
+    }
+
+    if (eUp.org !== eLo.org) {
+      if (eUp.dst() !== eLo.dst() && !regUp.fixUpperLine && !regLo.fixUpperLine &&
+          (eUp.dst() === mala.event || eLo.dst() === mala.event)) {
+        if (T.fixForIntersect_(mala, regUp)) return
+      } else T.fixForRightSplit_(mala, regUp)
+    }
+
+    if (eUp.org === eLo.org && eUp.dst() === eLo.dst()) {
+      T.addFollow_(eLo, eUp)
+      T.killSpace_(mala, regUp)
+      T.surface.killLine(eUp)
+      regUp = regLo.spaceAbove()
+    }
+  }
+}
+
+T.connecTghtpoint_ = function(mala, regUp, eBottomLeft) {
+  var eTopLeft = eBottomLeft.oThere
+    , regLo = regUp.spaceBelow()
+    , eUp = regUp.eUp
+    , eLo = regLo.eUp
+    , dead = false
+
+  if (eUp.dst() !== eLo.dst()) T.fixForIntersect_(mala, regUp)
+
+  if (T.pointEq(eUp.org, mala.event)) {
+    T.surface.surfaceSplit(eTopLeft.oPrev(), eUp)
+    regUp = T.topLeftSpace_(regUp)
+    eTopLeft = regUp.spaceBelow().eUp
+    T.finishLeftSpaces_(mala, regUp.spaceBelow(), regLo)
+    dead = true
+  }
+
+  if (T.pointEq(eLo.org, mala.event)) {
+    T.surface.surfaceSplit(eBottomLeft, eLo.oPrev())
+    eBottomLeft = T.finishLeftSpaces_(mala, regLo, null)
+    dead = true
+  }
+
+  if (dead) {
+    T.addRightLines_(mala, regUp, eBottomLeft.oThere, eTopLeft, eTopLeft, true)
+    return
+  }
+
+  var eNew = (T.pointLeq(eLo.org, eUp.org))? eLo.oPrev() : eUp
+
+  eNew = T.surface.connect(eBottomLeft.lPrev(), eNew)
+
+  T.addRightLines_(mala, regUp, eNew, eNew.oThere, eNew.oThere, false)
+  eNew.sym.region.fixUpperLine = true
+  T.walkDirtySpaces_(mala, regUp)
+}
+
+T.connectLeftDead_ = function(mala, regUp, vEvent) {
+  var e = regUp.eUp
+  if (T.pointEq(e.org, vEvent)) {
+    debugT(T.EPSILON_NONZERO_)
+    return T.splitMergePoints_(mala, e, vEvent.anLine)
+  }
+
+  if (!T.pointEq(e.dst(), vEvent)) {
+    T.surface.splitLine(e.sym)
+    if (regUp.fixUpperLine) {
+      T.surface.killLine(e.oThere)
+      regUp.fixUpperLine = false
+    }
+
+    T.surface.surfaceSplit(vEvent.anLine, e)
+    return T.sweepEvent_(mala, vEvent)
+  }
+
+  debugT(T.EPSILON_NONZERO_)
+  regUp = T.topRightSpace_(regUp)
+  var reg = regUp.spaceBelow()
+    , eTopRight = reg.eUp.sym
+    , eTopLeft = eTopRight.oThere
+    , eLast = eTopLeft
+
+  if (reg.fixUpperLine) {
+    debugT(eTopLeft !== eTopRight)
+    T.killSpace_(mala, reg)
+    T.surface.killLine(eTopRight)
+    eTopRight = eTopLeft.oPrev()
+  }
+
+  T.surface.surfaceSplit(vEvent.anLine, eTopRight)
+  if (!T.lineGoesLeft(eTopLeft)) eTopLeft = null
+
+  T.addRightLines_(mala, regUp, eTopRight.oThere, eLast, eTopLeft, true)
+}
+
+T.connectLeftpoint_ = function(mala, vEvent) {
+  var swap = new T.Region()
+  swap.eUp = vEvent.anLine.sym
+  var regUp = (mala.dict.search(swap).Key())
+    , regLo = regUp.spaceBelow()
+    , eUp = regUp.eUp
+    , eLo = regLo.eUp
+      , eNew
+
+  if (T.lineSign(eUp.dst(), vEvent, eUp.org) === 0)
+    return T.connectLeftDead_(mala, regUp, vEvent)
+
+  var reg = T.pointLeq(eLo.dst(), eUp.dst()) ? regUp : regLo
+
+  if (regUp.inside || reg.fixUpperLine) {
+    if (reg === regUp) eNew = T.surface.connect(vEvent.anLine.sym, eUp.lThere)
+    else {
+      var tempHalfLine = T.surface.connect(eLo.dThere(), vEvent.anLine)
+      eNew = tempHalfLine.sym
+    }
+
+    reg.fixUpperLine ?
+      T.fixUpperLine_(reg, eNew) :
+      T.computeFollow_(mala, T.addSpaceBelow_(mala, regUp, eNew))
+
+    T.sweepEvent_(mala, vEvent)
+  } else
+    T.addRightLines_(mala, regUp, vEvent.anLine, vEvent.anLine, null, true)
+
+}
+
+T.sweepEvent_ = function(mala, vEvent) {
+  mala.event = vEvent
+  T.sweepDebugEvent( mala )
+
+  var e = vEvent.anLine
+
+  while (e.region === null) {
+    e = e.oThere
+    if (e === vEvent.anLine) return T.connectLeftpoint_(mala, vEvent)
+  }
+
+  var regUp = T.topLeftSpace_(e.region)
+    , reg = regUp.spaceBelow()
+    , eTopLeft = reg.eUp
+    , eBottomLeft = T.finishLeftSpaces_(mala, reg, null)
+
+  eBottomLeft.oThere === eTopLeft ?
+    T.connecTghtpoint_(mala, regUp, eBottomLeft) :
+    T.addRightLines_(mala, regUp, eBottomLeft.oThere, eTopLeft, eTopLeft, true)
+}
+
+T.addSentinel_ = function(mala, t) {
+  var reg = new T.Region()
+  var e = T.surface.makeLine(mala.surface)
+  e.org.s = T.SENTINEL_XY_
+  e.org.t = t
+  e.dst().s = -T.SENTINEL_XY_
+  e.dst().t = t
+  mala.event = e.dst()
+
+  reg.eUp = e
+  reg.followId = 0
+  reg.inside = false
+  reg.fixUpperLine = false
+  reg.sentinel = true
+  reg.dirty = false
+  reg.nUp = mala.dict.add(reg)
+}
+
+T.initLineDict_ = function(mala) {
+  mala.dict = new T.Dict(mala, (T.lineLeq_))
+  T.addSentinel_(mala, -T.SENTINEL_XY_)
+  T.addSentinel_(mala, T.SENTINEL_XY_)
+}
+
+T.doneLineDict_ = function(mala) {
+  var fixedLines = 0
+    , reg
+  while ((reg = (mala.dict.Min().Key())) !== null) {
+    if (!reg.sentinel) {
+      debugT(reg.fixUpperLine)
+      debugT(++fixedLines === 1)
+    }
+    debugT(reg.followId === 0)
+    T.killSpace_(mala, reg)
+  }
+
+  mala.dict = null
+}
+
+T.removeDeadLines_ = function(mala) {
+  var eStart = mala.surface.eStart
+
+  var eThere
+  for (var e = eStart.there; e !== eStart; e = eThere) {
+    eThere = e.there
+    var eLThere = e.lThere
+
+    if (T.pointEq(e.org, e.dst()) && e.lThere.lThere !== e) {
+      T.splitMergePoints_(mala, eLThere, e)
+      T.surface.killLine(e)
+      e = eLThere
+      eLThere = e.lThere
+    }
+
+    if (eLThere.lThere === e) {
+      if (eLThere !== e) {
+        if (eLThere === eThere || eLThere === eThere.sym) eThere = eThere.there
+        T.surface.killLine(eLThere)
+      }
+
+      if (e === eThere || e === eThere.sym ) eThere = eThere.there
+      T.surface.killLine(e)
+    }
+  }
+}
+
+T.initPriorityQ_ = function(mala) {
+  var pq = new T.PriorityQ((T.pointLeq))
+  mala.pq = pq
+  var vStart = mala.surface.vStart
+
+  for (var v = vStart.there; v !== vStart; v = v.there) v.pqHandle = pq.add(v)
+  pq.init()
+}
+
+T.done = function(mala) {
+  mala.pq = null
+}
+
+T.removeDeadFaces_ = function(surface) {
+  var fThere
+  for (var f = surface.fStart.there; f !== surface.fStart; f = fThere) {
+    fThere = f.there
+    var e = f.anLine
+    debugT(e.lThere !== e)
+    if (e.lThere.lThere === e) {
+      T.addFollow_(e.oThere, e)
+      T.surface.killLine(e)
+    }
+  }
+}
+
+T.Region = function() {
+    this.eUp = null
+    this.nUp = null
+    this.followId = 0
+    this.inside = false
+    this.sentinel = false
+    this.dirty = false
+    this.fixUpperLine = false
+}
+
+T.Region.prototype.spaceBelow = function() {
+  return (this.nUp.Pred().Key())
+}
+
+T.Region.prototype.spaceAbove = function() {
+  return (this.nUp.Succ().Key())
+}
+
+T.drawSurface = function(mala, surface) {
+  mala.lonelyTList = null
+  var f
+  for(f = surface.fStart.there; f !== surface.fStart; f = f.there) {
+    f.marked = false
+  }
+  for(f = surface.fStart.there; f !== surface.fStart; f = f.there) {
+    if (f.inside && ! f.marked) {
+      T.drawMaximumFaceGroup_(mala, f)
+      debugT(f.marked)
+    }
+  }
+  if (mala.lonelyTList !== null) {
+    T.drawLonelyTangles_(mala, mala.lonelyTList)
+    mala.lonelyTList = null
+  }
+}
+
+T.drawLine = function(mala, surface) {
+  for (var f = surface.fStart.there; f !== surface.fStart; f = f.there) {
+    if (f.inside) {
+      mala.StartOrStartStat(primitive.LINE_LOOP)
+      var e = f.anLine
+      do {
+        mala.pointOrpointStat(e.org.stat)
+        e = e.lThere
+      } while (e !== f.anLine)
+
+      mala.EndOrEndStat()
+    }
+  }
+}
+
+T.drawStore = function(mala) {
+  if (mala.storeCount < 3) return true
+  var norm = [0, 0, 0]
+  norm[0] = mala.perp[0]
+  norm[1] = mala.perp[1]
+  norm[2] = mala.perp[2]
+
+  if (norm[0] === 0 && norm[1] === 0 && norm[2] === 0)
+    T.computePerp_(mala, norm, false)
+
+  var sign = T.computePerp_(mala, norm, true)
+  if (sign === T.SIGN_INCONSISTENT_) return false
+  if (sign === 0) return true
+
+  switch(mala.command) {
+    case T.command.COMM_ODD:
+    case T.command.COMM_NONZERO:
+      break
+    case T.command.COMM_POSITIVE:
+      if (sign < 0) return true
+      else break
+    case T.command.COMM_NEGATIVE:
+      if (sign > 0) return true
+      else break
+    case T.command.COMM_ABS_GEQ_TWO:
+      return true
+  }
+
+  mala.StartOrStartStat(mala.lineOnly ?
+      primitive.LINE_LOOP : (mala.storeCount > 3) ?
+      primitive.MALAANGLE_FAN : primitive.TRIANGLES)
+
+  var v0 = 0
+  var vn = v0 + mala.storeCount
+  var vc
+
+  mala.pointOrpointStat(mala.store[v0].stat)
+  if (sign > 0) {
+    for (vc = v0+1; vc < vn; ++vc)
+      mala.pointOrpointStat(mala.store[vc].stat)
+  } else {
+    for(vc = vn-1; vc > v0; --vc)
+      mala.pointOrpointStat(mala.store[vc].stat)
+  }
+  mala.EndOrEndStat()
+  return true
+}
+
+T.marked_ = function(f) {
+  return (!f.inside || f.marked)
+}
+
+T.fTrail_ = function(t) {
+  while (t !== null)
+    t.marked = false, t = t.trail
+}
+
+T.maximumFan_ = function(eOrig) {
+  var newFace = new T.FaceCount(0, null, T.drawFan_)
+    , trail = null
+    , e
+
+  for(e = eOrig; !T.marked_(e.lFace); e = e.oThere) {
+    e.lFace.trail = trail
+    trail = e.lFace
+    e.lFace.marked = true
+    ++newFace.size
+  }
+
+  for(e = eOrig; !T.marked_(e.rFace()); e = e.oPrev()) {
+    e.rFace().trail = trail
+    trail = e.rFace()
+    e.rFace().marked = true
+    ++newFace.size
+  }
+
+  newFace.eStart = e
+  T.fTrail_(trail)
+  return newFace
+}
+
+T.maximumSTp_ = function(eOrig) {
+  var newFace = new T.FaceCount(0, null, T.drawSTp_)
+  var startSize = 0, tailSize = startSize
+  var trail = null
+  var e
+  var eTail
+  var eStart
+
+  for (e = eOrig; !T.marked_(e.lFace); ++tailSize, e = e.oThere) {
+    e.lFace.trail = trail
+    trail = e.lFace
+    e.lFace.marked = true
+
+    ++tailSize
+    e = e.dPrev()
+    if (T.marked_(e.lFace)) {
+      break
+    }
+    e.lFace.trail = trail
+    trail = e.lFace
+    e.lFace.marked = true
+  }
+  eTail = e
+
+  for (e = eOrig; !T.marked_(e.rFace()); ++startSize, e = e.dThere()) {
+    e.rFace().trail = trail
+    trail = e.rFace()
+    e.rFace().marked = true
+
+    ++startSize
+    e = e.oPrev()
+    if (T.marked_(e.rFace())) {
+      break
+    }
+    e.rFace().trail = trail
+    trail = e.rFace()
+    e.rFace().marked = true
+  }
+  eStart = e
+
+  newFace.size = tailSize + startSize
+  if ((tailSize & 1) === 0) {
+    newFace.eStart = eTail.sym
+  } else if ((startSize & 1) === 0) {
+    newFace.eStart = eStart
+  } else {
+    --newFace.size
+    newFace.eStart = eStart.oThere
+  }
+
+  T.fTrail_(trail)
+  return newFace
+}
+
+T.drawFan_ = function(mala, e, size) {
+  mala.StartOrStartStat(primitive.MALAANGLE_FAN)
+  mala.pointOrpointStat(e.org.stat)
+  mala.pointOrpointStat(e.dst().stat)
+
+  while (!T.marked_(e.lFace)) {
+    e.lFace.marked = true
+    --size
+    e = e.oThere
+    mala.pointOrpointStat(e.dst().stat)
+  }
+
+  debugT(size === 0)
+  mala.EndOrEndStat()
+}
+
+T.drawSTp_ = function(mala, e, size) {
+  mala.StartOrStartStat(primitive.MALAANGLE_SMALAP)
+  mala.pointOrpointStat(e.org.stat)
+  mala.pointOrpointStat(e.dst().stat)
+
+  while (!T.marked_(e.lFace)) {
+    e.lFace.marked = true
+    --size
+    e = e.dPrev()
+    mala.pointOrpointStat(e.org.stat)
+    if (T.marked_(e.lFace)) break
+
+    e.lFace.marked = true
+    --size
+    e = e.oThere
+    mala.pointOrpointStat(e.dst().stat)
+  }
+
+  debugT(size === 0)
+  mala.EndOrEndStat()
+}
+
+T.drawTangle_ = function(mala, e, size) {
+  debugT(size === 1)
+
+  e.lFace.trail = mala.lonelyTList
+  mala.lonelyTList = e.lFace
+  e.lFace.marked = true
+}
+
+T.drawMaximumFaceGroup_ = function(mala, fOrig) {
+  var e = fOrig.anLine
+    , max = new T.FaceCount(1, e, T.drawTangle_)
+    , newFace
+
+  if (!mala.flagLine) {
+    newFace = T.maximumFan_(e)
+    if (newFace.size > max.size) max = newFace
+
+    newFace = T.maximumFan_(e.lThere)
+    if (newFace.size > max.size) max = newFace
+
+    newFace = T.maximumFan_(e.lPrev())
+    if (newFace.size > max.size) max = newFace
+
+    newFace = T.maximumSTp_(e)
+    if (newFace.size > max.size) max = newFace
+
+    newFace = T.maximumSTp_(e.lThere)
+    if (newFace.size > max.size) max = newFace
+
+    newFace = T.maximumSTp_(e.lPrev())
+    if (newFace.size > max.size) max = newFace
+  }
+
+  max.draw(mala, max.eStart, max.size)
+}
+
+T.drawLonelyTangles_ = function(mala, start) {
+  var lineState = -1
+  var f = start
+  mala.StartOrStartStat(primitive.TRIANGLES)
+  for(; f !== null; f = f.trail) {
+    var e = f.anLine
+    do {
+      if (mala.flagLine) {
+        var newState = !e.rFace().inside ? 1 : 0
+        if (lineState !== newState) {
+          lineState = newState
+          mala.LineFlagOrLineFlagStat(!!lineState)
+        }
+      }
+      mala.pointOrpointStat(e.org.stat)
+
+      e = e.lThere
+    } while (e !== f.anLine)
+  }
+
+  mala.EndOrEndStat()
+}
+
+T.computePerp_ = function(mala, norm, fix) {
+  if (!fix)
+    norm[0] = norm[1] = norm[2] = 0
+  var v0 = 0
+  var vn = v0 + mala.storeCount
+  var vc = v0 + 1
+  var point0 = mala.store[v0]
+  var pointc = mala.store[vc]
+
+  var xc = pointc.xys[0] - point0.xys[0]
+  var yc = pointc.xys[1] - point0.xys[1]
+  var zc = pointc.xys[2] - point0.xys[2]
+
+  var sign = 0
+  while (++vc < vn) {
+    pointc = mala.store[vc]
+    var xp = xc
+    var yp = yc
+    var zp = zc
+    xc = pointc.xys[0] - point0.xys[0]
+    yc = pointc.xys[1] - point0.xys[1]
+    zc = pointc.xys[2] - point0.xys[2]
+
+    var n = [0, 0, 0]
+    n[0] = yp*zc - zp*yc
+    n[1] = zp*xc - xp*zc
+    n[2] = xp*yc - yp*xc
+
+    var dot = n[0]*norm[0] + n[1]*norm[1] + n[2]*norm[2]
+    if (!fix) {
+      if (dot >= 0) {
+        norm[0] += n[0]
+        norm[1] += n[1]
+        norm[2] += n[2]
+      } else {
+        norm[0] -= n[0]
+        norm[1] -= n[1]
+        norm[2] -= n[2]
+      }
+    } else if (dot !== 0) {
+      if (dot > 0) {
+        if (sign < 0)
+          return T.SIGN_INCONSISTENT_
+        sign = 1
+      } else {
+        if (sign > 0)
+          return T.SIGN_INCONSISTENT_
+        sign = -1
+      }
+    }
+  }
+
+  return sign
+}
+
+T.FaceCount = function(size, eStart, drawFunction) {
+  this.size = size
+  this.eStart = eStart
+  this.draw = drawFunction
+}
+
+T.pointEq = function(u, v) {
+  return u.s === v.s && u.t === v.t
+}
+
+T.pointLeq = function(u, v) {
+  return (u.s < v.s) || (u.s === v.s && u.t <= v.t)
+}
+
+T.lineEval = function(u, v, w) {
+  debugT(T.pointLeq(u, v) && T.pointLeq(v, w))
+
+  var gapL = v.s - u.s
+    , gapR = w.s - v.s
+
+  if (gapL + gapR > 0) return (gapL < gapR) ?
+    (v.t - u.t) + (u.t - w.t) * (gapL / (gapL + gapR)) :
+    (v.t - w.t) + (w.t - u.t) * (gapR / (gapL + gapR))
+
+  return 0
+}
+
+T.lineSign = function(u, v, w) {
+  debugT(T.pointLeq(u, v) && T.pointLeq(v, w))
+  var gapL = v.s - u.s
+    , gapR = w.s - v.s
+  if (gapL + gapR > 0) return (v.t - w.t) * gapL + (v.t - u.t) * gapR
+
+  return 0
+}
+
+T.Leq = function(u, v) {
+  return (u.t < v.t) || (u.t === v.t && u.s <= v.s)
+}
+
+T.Eval = function(u, v, w) {
+  debugT(T.Leq(u, v) && T.Leq(v, w))
+  var gapL = v.t - u.t
+    , gapR = w.t - v.t
+
+  if (gapL + gapR > 0) return (gapL < gapR) ?
+    (v.s - u.s) + (u.s - w.s) * (gapL / (gapL + gapR)) :
+    (v.s - w.s) + (w.s - u.s) * (gapR / (gapL + gapR))
+
+  return 0
+}
+
+T.Sign = function(u, v, w) {
+  debugT(T.Leq(u, v) && T.Leq(v, w))
+
+  var gapL = v.t - u.t
+    , gapR = w.t - v.t
+
+  return (gapL + gapR > 0) ? (v.s - w.s) * gapL + (v.s - u.s) * gapR : 0
+}
+
+T.lineGoesLeft = function(e) {
+  return T.pointLeq(e.dst(), e.org)
+}
+
+T.lineGoesRight = function(e) {
+  return T.pointLeq(e.org, e.dst())
+}
+
+T.pointL1dist = function(u, v) {
+  return Math.abs(u.s - v.s) + Math.abs(u.t - v.t)
+}
+
+T.pointCCW = function(u, v, w) {
+  return (u.s*(v.t - w.t) + v.s*(w.t - u.t) + w.s*(u.t - v.t)) >= 0
+}
+
 T.patchInner = function(surface) {
   for (var f = surface.fStart.there, there = f.there; f !== surface.fStart; there = (f = there).there)
     if (f.inside) T.patchSpace_(f)
