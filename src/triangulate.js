@@ -731,6 +731,498 @@ T.patchSpace_ = function(face) {
   }
 }
 
+T.surface = function() {}
+
+T.surface.makeLine = function(surface) {
+  var e = T.surface.makeLinePair_(surface.eStart)
+  T.surface.makepoint_(e, surface.vStart)
+  T.surface.makepoint_(e.sym, surface.vStart )
+  T.surface.makeFace_(e, surface.fStart)
+
+  return e
+}
+
+T.surface.surfaceSplit = function(eOrg, eDst) {
+  var joiningLoops = false
+  var joiningPoints = false
+
+  if (eOrg === eDst) return
+
+  if (eDst.org !== eOrg.org) {
+    joiningPoints = true
+    T.surface.killpoint_(eDst.org, eOrg.org)
+  }
+
+  if (eDst.lFace !== eOrg.lFace) {
+    joiningLoops = true
+    T.surface.killFace_(eDst.lFace, eOrg.lFace)
+  }
+
+  T.surface.split_(eDst, eOrg)
+
+  if (!joiningPoints) {
+    T.surface.makepoint_(eDst, eOrg.org)
+    eOrg.org.anLine = eOrg
+  }
+
+  if (!joiningLoops) {
+    T.surface.makeFace_(eDst, eOrg.lFace)
+    eOrg.lFace.anLine = eOrg
+  }
+}
+
+
+T.surface.killLine = function(eDel) {
+  var eDelSym = eDel.sym
+  var joiningLoops = false
+
+  if (eDel.lFace !== eDel.rFace()) {
+    joiningLoops = true
+    T.surface.killFace_(eDel.lFace, eDel.rFace())
+  }
+
+  if (eDel.oThere === eDel) T.surface.killpoint_(eDel.org, null)
+  else {
+    eDel.rFace().anLine = eDel.oPrev()
+    eDel.org.anLine = eDel.oThere
+
+    T.surface.split_(eDel, eDel.oPrev())
+
+    if (!joiningLoops) T.surface.makeFace_(eDel, eDel.lFace)
+  }
+
+  if (eDelSym.oThere === eDelSym ) {
+    T.surface.killpoint_(eDelSym.org, null)
+    T.surface.killFace_(eDelSym.lFace, null)
+  } else {
+    eDel.lFace.anLine = eDelSym.oPrev()
+    eDelSym.org.anLine = eDelSym.oThere
+    T.surface.split_(eDelSym, eDelSym.oPrev())
+  }
+
+  T.surface.killLine_(eDel)
+}
+
+T.surface.addLinepoint = function(eOrg) {
+  var eNew = T.surface.makeLinePair_(eOrg)
+  var eNewSym = eNew.sym
+
+  T.surface.split_(eNew, eOrg.lThere)
+  eNew.org = eOrg.dst()
+  T.surface.makepoint_(eNewSym, eNew.org )
+
+  eNew.lFace = eNewSym.lFace = eOrg.lFace
+
+  return eNew
+}
+
+T.surface.splitLine = function(eOrg) {
+  var tempHalfLine = T.surface.addLinepoint(eOrg)
+  var eNew = tempHalfLine.sym
+
+  T.surface.split_(eOrg.sym, eOrg.sym.oPrev())
+  T.surface.split_(eOrg.sym, eNew)
+
+  eOrg.sym.org = eNew.org
+  eNew.dst().anLine = eNew.sym
+  eNew.sym.lFace = eOrg.rFace()
+  eNew.follow = eOrg.follow
+  eNew.sym.follow = eOrg.sym.follow
+
+  return eNew
+}
+
+T.surface.connect = function(eOrg, eDst) {
+  var joiningLoops = false
+  var eNew = T.surface.makeLinePair_(eOrg)
+  var eNewSym = eNew.sym
+
+  if (eDst.lFace !== eOrg.lFace) {
+    joiningLoops = true
+    T.surface.killFace_(eDst.lFace, eOrg.lFace)
+  }
+
+  T.surface.split_(eNew, eOrg.lThere)
+  T.surface.split_(eNewSym, eDst)
+
+  eNew.org = eOrg.dst()
+  eNewSym.org = eDst.org
+  eNew.lFace = eNewSym.lFace = eOrg.lFace
+
+
+  eOrg.lFace.anLine = eNewSym
+
+  if (!joiningLoops) T.surface.makeFace_(eNew, eOrg.lFace )
+  return eNew
+}
+
+T.surface.zapFace = function(fZap) {
+  var eStart = fZap.anLine
+    , eThere = eStart.lThere
+    , e
+
+  do {
+    e = eThere
+    eThere = e.lThere
+    e.lFace = null
+
+    if (e.rFace() === null) {
+      if (e.oThere === e) T.surface.killpoint_(e.org, null)
+      else {
+        e.org.anLine = e.oThere
+        T.surface.split_(e, e.oPrev())
+      }
+
+      var eSym = e.sym
+      if (eSym.oThere === eSym) T.surface.killpoint_(eSym.org, null)
+      else {
+        eSym.org.anLine = eSym.oThere
+        T.surface.split_(eSym, eSym.oPrev())
+      }
+      T.surface.killLine_(e)
+    }
+  } while(e !== eStart)
+
+  var fPrev = fZap.prev
+  var fThere = fZap.there
+  fThere.prev = fPrev
+  fPrev.there = fThere
+}
+
+T.surface.surfaceUnion = function(surface1, surface2) {
+  var f1 = surface1.fStart
+  var v1 = surface1.vStart
+  var e1 = surface1.eStart
+
+  var f2 = surface2.fStart
+  var v2 = surface2.vStart
+  var e2 = surface2.eStart
+
+  if (f2.there !== f2) {
+    f1.prev.there = f2.there
+    f2.there.prev = f1.prev
+    f2.prev.there = f1
+    f1.prev = f2.prev
+  }
+
+  if (v2.there !== v2) {
+    v1.prev.there = v2.there
+    v2.there.prev = v1.prev
+    v2.prev.there = v1
+    v1.prev = v2.prev
+  }
+
+  if (e2.there !== e2) {
+    e1.sym.there.sym.there = e2.there
+    e2.there.sym.there = e1.sym.there
+    e2.sym.there.sym.there = e1
+    e1.sym.there = e2.sym.there
+  }
+
+  return surface1
+}
+
+T.surface.killSurface = function(surface) {}
+
+
+T.surface.makeLinePair_ = function(eThere) {
+  var e = new T.HalfLine()
+  var eSym = new T.HalfLine()
+  var ePrev = eThere.sym.there
+  eSym.there = ePrev
+  ePrev.sym.there = e
+  e.there = eThere
+  eThere.sym.there = eSym
+
+  e.sym = eSym
+  e.oThere = e
+  e.lThere = eSym
+
+  eSym.sym = e
+  eSym.oThere = eSym
+  eSym.lThere = e
+
+  return e
+}
+
+T.surface.split_ = function(a, b) {
+  var aOThere = a.oThere
+  var bOThere = b.oThere
+  aOThere.sym.lThere = b
+  bOThere.sym.lThere = a
+  a.oThere = bOThere
+  b.oThere = aOThere
+}
+
+T.surface.makepoint_ = function(eOrig, vThere) {
+  var vPrev = vThere.prev
+  var vNew = new T.point(vThere, vPrev)
+  vPrev.there = vNew
+  vThere.prev = vNew
+  vNew.anLine = eOrig
+  var e = eOrig
+
+  do {
+    e.org = vNew
+    e = e.oThere
+  } while(e !== eOrig)
+}
+
+T.surface.makeFace_ = function(eOrig, fThere) {
+  var fPrev = fThere.prev
+  var fNew = new T.Face(fThere, fPrev)
+
+
+  fPrev.there = fNew
+  fThere.prev = fNew
+  fNew.anLine = eOrig
+  fNew.inside = fThere.inside
+
+  var e = eOrig
+  do {
+    e.lFace = fNew
+    e = e.lThere
+  } while(e !== eOrig)
+}
+
+T.surface.killLine_ = function(eDel) {
+  var eThere = eDel.there
+  var ePrev = eDel.sym.there
+  eThere.sym.there = ePrev
+  ePrev.sym.there = eThere
+}
+
+T.surface.killpoint_ = function(vDel, newOrg) {
+  var eStart = vDel.anLine
+  var e = eStart
+  do {
+    e.org = newOrg
+    e = e.oThere
+  } while(e !== eStart)
+
+  var vPrev = vDel.prev
+  var vThere = vDel.there
+  vThere.prev = vPrev
+  vPrev.there = vThere
+}
+
+T.surface.killFace_ = function(fDel, newLFace) {
+  var eStart = fDel.anLine
+  var e = eStart
+  do {
+    e.lFace = newLFace
+    e = e.lThere
+  } while(e !== eStart)
+
+  var fPrev = fDel.prev
+  var fThere = fDel.there
+  fThere.prev = fPrev
+  fPrev.there = fThere
+}
+
+
+T.Face = function(opt_thereFace, opt_prevFace) {
+    this.there = opt_thereFace || this
+    this.prev = opt_prevFace || this
+    this.anLine = null
+    this.stat = null
+    this.trail = null
+    this.marked = false
+    this.inside = false
+}
+
+T.HalfLine = function(opt_thereLine) {
+    this.there = opt_thereLine || this
+    this.sym = null
+    this.oThere = null
+    this.lThere = null
+    this.org = null
+    this.lFace = null
+    this.region = null
+    this.follow = 0
+}
+
+T.HalfLine.prototype.rFace = function() {
+  return this.sym.lFace
+}
+
+T.HalfLine.prototype.dst = function() {
+  return this.sym.org
+}
+
+T.HalfLine.prototype.oPrev = function() {
+  return this.sym.lThere
+}
+
+T.HalfLine.prototype.lPrev = function() {
+  return this.oThere.sym
+}
+
+T.HalfLine.prototype.dPrev = function() {
+  return this.lThere.sym
+}
+
+T.HalfLine.prototype.rPrev = function() {
+  return this.sym.oThere
+}
+
+T.HalfLine.prototype.dThere = function() {
+  return this.rPrev().sym
+}
+
+T.HalfLine.prototype.rThere = function() {
+  return this.oPrev().sym
+}
+
+T.point = function(opt_therepoint, opt_prevpoint) {
+    this.there = opt_therepoint || this
+    this.prev = opt_prevpoint || this
+    this.anLine = null
+    this.stat = null
+    this.xys = [0, 0, 0]
+    this.s = 0
+    this.t = 0
+    this.pqHandle = null
+}
+
+T.Surface = function() {
+  this.vStart = new T.point()
+  this.fStart = new T.Face()
+  this.eStart = new T.HalfLine()
+  this.eStartSym = new T.HalfLine()
+  this.eStart.sym = this.eStartSym
+  this.eStartSym.sym = this.eStart
+}
+
+T.Surface.prototype.fixSurface = function() {
+  var fStart = this.fStart
+  var vStart = this.vStart
+  var eStart = this.eStart
+  var e
+  var f
+  var fPrev = fStart
+
+  for (fPrev = fStart; (f = fPrev.there) !== fStart; fPrev = f) {
+    debugT(f.prev === fPrev)
+    e = f.anLine
+    do {
+      debugT(e.sym !== e)
+      debugT(e.sym.sym === e)
+      debugT(e.lThere.oThere.sym === e)
+      debugT(e.oThere.sym.lThere === e)
+      debugT(e.lFace === f)
+      e = e.lThere
+    } while(e !== f.anLine)
+  }
+  debugT(f.prev === fPrev && f.anLine === null && f.stat === null)
+
+  var v
+  var vPrev = vStart
+  for (vPrev = vStart; (v = vPrev.there) !== vStart; vPrev = v) {
+    debugT(v.prev === vPrev)
+    e = v.anLine
+    do {
+      debugT(e.sym !== e)
+      debugT(e.sym.sym === e)
+      debugT(e.lThere.oThere.sym === e)
+      debugT(e.oThere.sym.lThere === e)
+      debugT(e.org === v)
+      e = e.oThere
+    } while(e !== v.anLine)
+  }
+  debugT(v.prev === vPrev && v.anLine === null && v.stat === null)
+
+  var ePrev = eStart
+  for (ePrev = eStart; (e = ePrev.there) !== eStart; ePrev = e) {
+    debugT(e.sym.there === ePrev.sym)
+    debugT(e.sym !== e)
+    debugT(e.sym.sym === e)
+    debugT(e.org !== null)
+    debugT(e.dst() !== null)
+    debugT(e.lThere.oThere.sym === e)
+    debugT(e.oThere.sym.lThere === e)
+  }
+  debugT(e.sym.there === ePrev.sym &&
+         e.sym === this.eStartSym &&
+         e.sym.sym === e &&
+         e.org === null && e.dst() === null &&
+         e.lFace === null && e.rFace() === null)
+}
+
+T.SENTINEL_XY_ = 4 * T.MAX_XY
+T.EPSILON_NONZERO_ = false
+
+T.computeInner = function(mala) {
+  mala.fatalFailure = false
+  T.removeDeadLines_(mala)
+  T.initPriorityQ_(mala)
+  T.initLineDict_(mala)
+  var v
+  while ((v = mala.pq.extractMin()) !== null) {
+    for ( ;; ) {
+      var vThere = (mala.pq.minimum())
+      if (vThere === null || !T.pointEq(vThere, v)) break
+
+      vThere = (mala.pq.extractMin())
+      T.splitMergePoints_(mala, v.anLine, vThere.anLine)
+    }
+    T.sweepEvent_(mala, v)
+  }
+  var swapReg = (mala.dict.Min().Key())
+  mala.event = swapReg.eUp.org
+  T.sweepDebugEvent(mala)
+  T.doneLineDict_(mala)
+  T.done(mala)
+
+  T.removeDeadFaces_(mala.surface)
+  mala.surface.fixSurface()
+}
+
+
+T.addFollow_ = function(eDst, eSrc) {
+  eDst.follow += eSrc.follow
+  eDst.sym.follow += eSrc.sym.follow
+}
+
+T.lineLeq_ = function(mala, reg1, reg2) {
+  var event = mala.event
+  var e1 = reg1.eUp
+  var e2 = reg2.eUp
+
+  if (e1.dst() === event) {
+    if (e2.dst() === event) {
+      if (T.pointLeq(e1.org, e2.org)) return T.lineSign(e2.dst(), e1.org, e2.org) <= 0
+      return T.lineSign(e1.dst(), e2.org, e1.org) >= 0
+    }
+
+    return T.lineSign(e2.dst(), event, e2.org) <= 0
+  }
+
+  if (e2.dst() === event) return T.lineSign(e1.dst(), event, e1.org) >= 0
+
+  var t1 = T.lineEval(e1.dst(), event, e1.org)
+  var t2 = T.lineEval(e2.dst(), event, e2.org)
+  return (t1 >= t2)
+}
+
+T.killSpace_ = function(mala, reg) {
+  if (reg.fixUpperLine) debugT(reg.eUp.follow === 0)
+
+  reg.eUp.region = null
+
+  mala.dict.killN(reg.nUp)
+  reg.nUp = null
+}
+
+T.fixUpperLine_ = function(reg, newLine) {
+  debugT(reg.fixUpperLine)
+  T.surface.killLine(reg.eUp)
+
+  reg.fixUpperLine = false
+  reg.eUp = newLine
+  newLine.region = reg
+}
+
 T.patchInner = function(surface) {
   for (var f = surface.fStart.there, there = f.there; f !== surface.fStart; there = (f = there).there)
     if (f.inside) T.patchSpace_(f)
