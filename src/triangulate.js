@@ -1223,6 +1223,159 @@ T.fixUpperLine_ = function(reg, newLine) {
   newLine.region = reg
 }
 
+
+
+T.topLeftSpace_ = function(reg) {
+  var org = reg.eUp.org
+  do {
+    reg = reg.spaceAbove()
+  } while (reg.eUp.org === org)
+
+  if (reg.fixUpperLine) {
+    var e = T.surface.connect(reg.spaceBelow().eUp.sym, reg.eUp.lThere)
+    T.fixUpperLine_(reg, e)
+    reg = reg.spaceAbove()
+  }
+
+  return reg
+}
+
+T.topRightSpace_ = function(reg) {
+  var dst = reg.eUp.dst()
+
+  do {
+    reg = reg.spaceAbove()
+  } while (reg.eUp.dst() === dst)
+
+  return reg
+}
+
+T.addSpaceBelow_ = function(mala, regAbove, eNewUp) {
+  var regNew = new T.Region()
+
+  regNew.eUp = eNewUp
+  regNew.nUp = mala.dict.addBefore(regAbove.nUp, regNew)
+  eNewUp.region = regNew
+
+  return regNew
+}
+
+T.isFollowInside_ = function(mala, n) {
+  switch(mala.command) {
+    case T.command.COMM_ODD: return ((n & 1) !== 0)
+    case T.command.COMM_NONZERO: return (n !== 0)
+    case T.command.COMM_POSITIVE: return (n > 0)
+    case T.command.COMM_NEGATIVE: return (n < 0)
+    case T.command.COMM_ABS_GEQ_TWO: return (n >= 2) || (n <= -2)
+  }
+
+  debugT(false)
+  return false
+}
+
+T.computeFollow_ = function(mala, reg) {
+  reg.followId = reg.spaceAbove().followId + reg.eUp.follow
+  reg.inside = T.isFollowInside_(mala, reg.followId)
+}
+
+T.finishSpace_ = function(mala, reg) {
+  var e = reg.eUp
+  var f = e.lFace
+
+  f.inside = reg.inside
+  f.anLine = e
+  T.killSpace_(mala, reg)
+}
+
+T.finishLeftSpaces_ = function(mala, regFirst, regLast) {
+  var regPrev = regFirst
+  var ePrev = regFirst.eUp
+  while (regPrev !== regLast) {
+    regPrev.fixUpperLine = false
+    var reg = regPrev.spaceBelow()
+    var e = reg.eUp
+    if (e.org !== ePrev.org) {
+      if (!reg.fixUpperLine) {
+        T.finishSpace_(mala, regPrev)
+        break
+      }
+
+      e = T.surface.connect(ePrev.lPrev(), e.sym)
+      T.fixUpperLine_(reg, e)
+    }
+
+    if (ePrev.oThere !== e) {
+      T.surface.surfaceSplit(e.oPrev(), e)
+      T.surface.surfaceSplit(ePrev, e)
+    }
+
+    T.finishSpace_(mala, regPrev)
+    ePrev = reg.eUp
+    regPrev = reg
+  }
+
+  return ePrev
+}
+
+T.addRightLines_ = function(mala, regUp, eFirst, eLast, eTopLeft, cleanUp) {
+  var firstTime = true
+  var e = eFirst
+  do {
+    debugT(T.pointLeq(e.org, e.dst()))
+    T.addSpaceBelow_(mala, regUp, e.sym)
+    e = e.oThere
+  } while (e !== eLast)
+  if (eTopLeft === null) eTopLeft = regUp.spaceBelow().eUp.rPrev()
+  var regPrev = regUp
+  var ePrev = eTopLeft
+  var reg
+  for( ;; ) {
+    reg = regPrev.spaceBelow()
+    e = reg.eUp.sym
+    if (e.org !== ePrev.org) break
+
+    if (e.oThere !== ePrev) {
+      T.surface.surfaceSplit(e.oPrev(), e)
+      T.surface.surfaceSplit(ePrev.oPrev(), e)
+    }
+    reg.followId = regPrev.followId - e.follow
+    reg.inside = T.isFollowInside_(mala, reg.followId)
+    regPrev.dirty = true
+    if (!firstTime && T.fixForRightSplit_(mala, regPrev)) {
+      T.addFollow_(e, ePrev)
+      T.killSpace_(mala, regPrev)
+      T.surface.killLine(ePrev)
+    }
+    firstTime = false
+    regPrev = reg
+    ePrev = e
+  }
+
+  regPrev.dirty = true
+  debugT(regPrev.followId - e.follow === reg.followId)
+
+  if (cleanUp) T.walkDirtySpaces_(mala, regPrev)
+}
+
+T.Combine_ = function(mala, isect, stat, depths, needed) {
+  var xys = [
+    isect.xys[0],
+    isect.xys[1],
+    isect.xys[2]
+  ]
+
+  isect.stat = null
+  isect.stat = mala.CombineOrCombineStat(xys, stat, depths)
+  if (isect.stat === null) {
+    if (!needed) {
+      isect.stat = stat[0]
+    } else if (!mala.fatalFailure) {
+      mala.FailureOrFailureStat(T.failureType.NEED_COMBINE_BACK)
+      mala.fatalFailure = true
+    }
+  }
+}
+
 T.patchInner = function(surface) {
   for (var f = surface.fStart.there, there = f.there; f !== surface.fStart; there = (f = there).there)
     if (f.inside) T.patchSpace_(f)
