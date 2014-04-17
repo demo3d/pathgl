@@ -142,7 +142,7 @@ T.prototype.point = function(xys, stat) {
   if (tooBig) this.FailureOrFailureStat(T.failureType.XY_TOO_BIG)
 
   if (this.surface === null) {
-    if (this.storeCount < T.MALA_MAX_STORE) return this.storepoint_(clamped, stat)
+    if (this.storeCount < T.MALA_MAX_STORE) return this.sp(clamped, stat)
     this.emptyStore_()
   }
 
@@ -266,7 +266,7 @@ T.prototype.addpoint_ = function(xys, stat) {
   this.lastLine_ = e
 }
 
-T.prototype.storepoint_ = function(xys, stat) {
+T.prototype.sp = function(xys, stat) {
   var v = this.store[this.storeCount]
   v.stat = stat
   v.xys[0] = xys[0]
@@ -477,7 +477,7 @@ T.Heap.prototype.minimum = function() {
   return this.handles_[this.ns_[1].handle].key
 }
 
-T.Heap.prototype.extractMin = function() {
+T.Heap.prototype.findMin = function() {
   var n = this.ns_
   var h = this.handles_
   var hMin = n[1].handle
@@ -630,13 +630,13 @@ T.PriorityQ.prototype.keyGreaterThan_ = function(x, y) {
   return !this.leq_(keyX, keyY)
 }
 
-T.PriorityQ.prototype.extractMin = function() {
-  if (this.size_ === 0) return this.heap_.extractMin()
+T.PriorityQ.prototype.findMin = function() {
+  if (this.size_ === 0) return this.heap_.findMin()
 
   var sortMin = this.keys_[this.order_[this.size_-1]]
   if (!this.heap_.isEmpty()) {
     var heapMin = this.heap_.minimum()
-    if (this.leq_(heapMin, sortMin)) return this.heap_.extractMin()
+    if (this.leq_(heapMin, sortMin)) return this.heap_.findMin()
   }
 
   do {
@@ -1157,12 +1157,12 @@ T.computeInner = function(mala) {
   T.initPriorityQ_(mala)
   T.initLineDict_(mala)
   var v
-  while ((v = mala.pq.extractMin()) !== null) {
+  while ((v = mala.pq.findMin()) !== null) {
     for ( ;; ) {
       var vThere = (mala.pq.minimum())
       if (vThere === null || !T.pointEq(vThere, v)) break
 
-      vThere = (mala.pq.extractMin())
+      vThere = (mala.pq.findMin())
       T.splitMergePoints_(mala, v.anLine, vThere.anLine)
     }
     T.sweepEvent_(mala, v)
@@ -1398,7 +1398,7 @@ T.pointDepths_ = function(isect, org, dst, depths, depthIndex) {
   isect.xys[2] += depths[i0]*org.xys[2] + depths[i1]*dst.xys[2]
 }
 
-T.IntersectStat_ = function(mala, isect, orgUp, dstUp, orgLo, dstLo) {
+T.WriteStat_ = function(mala, isect, orgUp, dstUp, orgLo, dstLo) {
   var depths = [0, 0, 0, 0]
   var stat = [
     orgUp.stat,
@@ -1468,7 +1468,7 @@ T.fixForLeftSplit_ = function(mala, regUp) {
   return true
 }
 
-T.fixForIntersect_ = function(mala, regUp) {
+T.fixForWrite_ = function(mala, regUp) {
   var regLo = regUp.spaceBelow()
   var eUp = regUp.eUp
   var eLo = regLo.eUp
@@ -1499,7 +1499,7 @@ T.fixForIntersect_ = function(mala, regUp) {
 
   T.sweepDebugEvent(mala)
 
-  T.lineIntersect(dstUp, orgUp, dstLo, orgLo, isect)
+  T.lineWrite(dstUp, orgUp, dstLo, orgLo, isect)
 
 
   debugT(Math.min(orgUp.t, dstUp.t) <= isect.t)
@@ -1570,7 +1570,7 @@ T.fixForIntersect_ = function(mala, regUp) {
   eUp.org.s = isect.s
   eUp.org.t = isect.t
   eUp.org.pqHandle = mala.pq.add(eUp.org)
-  T.IntersectStat_(mala, eUp.org, orgUp, dstUp, orgLo, dstLo)
+  T.WriteStat_(mala, eUp.org, orgUp, dstUp, orgLo, dstLo)
   regUp.spaceAbove().dirty = regUp.dirty = regLo.dirty = true
 
   return false
@@ -1614,7 +1614,7 @@ T.walkDirtySpaces_ = function(mala, regUp) {
     if (eUp.org !== eLo.org) {
       if (eUp.dst() !== eLo.dst() && !regUp.fixUpperLine && !regLo.fixUpperLine &&
           (eUp.dst() === mala.event || eLo.dst() === mala.event)) {
-        if (T.fixForIntersect_(mala, regUp)) return
+        if (T.fixForWrite_(mala, regUp)) return
       } else T.fixForRightSplit_(mala, regUp)
     }
 
@@ -1634,7 +1634,7 @@ T.connecTghtpoint_ = function(mala, regUp, eBottomLeft) {
     , eLo = regLo.eUp
     , dead = false
 
-  if (eUp.dst() !== eLo.dst()) T.fixForIntersect_(mala, regUp)
+  if (eUp.dst() !== eLo.dst()) T.fixForWrite_(mala, regUp)
 
   if (T.pointEq(eUp.org, mala.event)) {
     T.surface.surfaceSplit(eTopLeft.oPrev(), eUp)
@@ -1955,7 +1955,7 @@ T.fTrail_ = function(t) {
 }
 
 T.maximumFan_ = function(eOrig) {
-  var newFace = new T.FaceCount(0, null, T.drawFan_)
+  var newFace = new T.Count(0, null, T.drawFan_)
     , trail = null
     , e
 
@@ -1979,7 +1979,7 @@ T.maximumFan_ = function(eOrig) {
 }
 
 T.maximumSTp_ = function(eOrig) {
-  var newFace = new T.FaceCount(0, null, T.drawSTp_)
+  var newFace = new T.Count(0, null, T.drawSTp_)
   var startSize = 0, tailSize = startSize
   var trail = null
   var e
@@ -2078,9 +2078,22 @@ T.drawTangle_ = function(mala, e, size) {
   e.lFace.marked = true
 }
 
+
+T.Eval = function(u, v, w) {
+  debugT(T.Leq(u, v) && T.Leq(v, w))
+  var gapL = v.t - u.t
+    , gapR = w.t - v.t
+
+  if (gapL + gapR > 0) return (gapL < gapR) ?
+    (v.s - u.s) + (u.s - w.s) * (gapL / (gapL + gapR)) :
+    (v.s - w.s) + (w.s - u.s) * (gapR / (gapL + gapR))
+
+  return 0
+}
+
 T.drawMaximumFaceGroup_ = function(mala, fOrig) {
   var e = fOrig.anLine
-    , max = new T.FaceCount(1, e, T.drawTangle_)
+    , max = new T.Count(1, e, T.drawTangle_)
     , newFace
 
   if (!mala.flagLine) {
@@ -2184,7 +2197,7 @@ T.computePerp_ = function(mala, norm, fix) {
   return sign
 }
 
-T.FaceCount = function(size, eStart, drawFunction) {
+T.Count = function(size, eStart, drawFunction) {
   this.size = size
   this.eStart = eStart
   this.draw = drawFunction
@@ -2224,18 +2237,6 @@ T.Leq = function(u, v) {
   return (u.t < v.t) || (u.t === v.t && u.s <= v.s)
 }
 
-T.Eval = function(u, v, w) {
-  debugT(T.Leq(u, v) && T.Leq(v, w))
-  var gapL = v.t - u.t
-    , gapR = w.t - v.t
-
-  if (gapL + gapR > 0) return (gapL < gapR) ?
-    (v.s - u.s) + (u.s - w.s) * (gapL / (gapL + gapR)) :
-    (v.s - w.s) + (w.s - u.s) * (gapR / (gapL + gapR))
-
-  return 0
-}
-
 T.Sign = function(u, v, w) {
   debugT(T.Leq(u, v) && T.Leq(v, w))
 
@@ -2271,7 +2272,7 @@ T.merge_ = function(a, x, b, y) {
     y + (x-y) * (b/(a+b))
 }
 
-T.lineIntersect = function(o1, d1, o2, d2, v) {
+T.lineWrite = function(o1, d1, o2, d2, v) {
   var z1, z2
   var swap
 
