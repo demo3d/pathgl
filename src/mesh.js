@@ -21,9 +21,10 @@ function Mesh (gl, options, attr) {
   , boundingBox: boundingBox
   }
 
-  function alloc() {
+  function alloc(n) {
     //if (options.primitive == 'triangles')
     //return count = 1e5
+    if (n) count = n
     return count += options.primitive == 'points' ? 1
                   : options.primitive == 'lines' ? 2
                   : 3
@@ -73,7 +74,8 @@ function Mesh (gl, options, attr) {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
     //bindMaterial()
-    gl.drawArrays(primitive, offset, 1e5)
+    if(Math.random() > .99) console.log(count)
+    gl.drawArrays(primitive, offset, count)
   }
 
   function set () {}

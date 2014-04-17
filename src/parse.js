@@ -24,8 +24,8 @@ function parsePath(str) {
   var off = this.mesh.tessOffset
   this.posBuffer.set(buffer, off)
   this.indices = buffer.map(function (d, i) { return (off + i) / 2 })
-
   this.mesh.tessOffset += buffer.length
+  this.mesh.alloc(this.mesh.tessOffset)
 }
 
 function applyCSSRules () {

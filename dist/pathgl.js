@@ -5193,8 +5193,8 @@ function parsePath(str) {
   var off = this.mesh.tessOffset
   this.posBuffer.set(buffer, off)
   this.indices = buffer.map(function (d, i) { return (off + i) / 2 })
-
   this.mesh.tessOffset += buffer.length
+  this.mesh.alloc(this.mesh.tessOffset)
 }
 
 function applyCSSRules () {
@@ -5266,9 +5266,10 @@ function addEvenLtistener (evt, listener, capture) {
   , boundingBox: boundingBox
   }
 
-  function alloc() {
+  function alloc(n) {
     //if (options.primitive == 'triangles')
     //return count = 1e5
+    if (n) count = n
     return count += options.primitive == 'points' ? 1
                   : options.primitive == 'lines' ? 2
                   : 3
@@ -5318,7 +5319,8 @@ function addEvenLtistener (evt, listener, capture) {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
     //bindMaterial()
-    gl.drawArrays(primitive, offset, 1e5)
+    if(Math.random() > .99) console.log(count)
+    gl.drawArrays(primitive, offset, count)
   }
 
   function set () {}
