@@ -1,3 +1,5 @@
+//based roughly on triangle.h by jonathan shewchuk
+
 function triangulate(curves) {
   triangulator.Perp(0, 0, 1)
   var t = []
@@ -16,10 +18,26 @@ function triangulate(curves) {
 }
 
 var debugT = function (cond) { debug(cond, 'Could not Triangulate...') }
+
+function T() {
+  this.state = T.cond.T_SLEEP
+  this.perp = [0, 0, 0]
+  this.s = [0, 0, 0]
+  this.t = [0, 0, 0]
+
+  this.relEpsilon = T._EPSILON
+  this.command = T.command.COMM_ODD
+  this.storeCount = 0
+  this.store = new Array(T.MALA_MAX_STORE)
+
+  for (var i = 0; i < T.MALA_MAX_STORE;  i++)
+    this.store[i] = new T.storepoint()
+}
+
 T.sweepDebugEvent = function(mala) {}
 T.MAX_XY = 1e150
 T.MALA_MAX_STORE = 100
-T.DEFAULT_EPSILON = 0
+T.EPSILON = 0
 T.S__X_ = 1
 T.S__Y_ = 0
 T.SIGN_INCONSISTENT_ = 2
@@ -74,21 +92,6 @@ T.storepoint = function() {
   this.xys = [0, 0, 0]
 }
 
-function T() {
-  this.state = T.cond.T_SLEEP
-  this.perp = [0, 0, 0]
-  this.s = [0, 0, 0]
-  this.t = [0, 0, 0]
-
-  this.relEpsilon = T._EPSILON
-  this.command = T.command.COMM_ODD
-  this.storeCount = 0
-  this.store = new Array(T.MALA_MAX_STORE)
-
-  for (var i = 0; i < T.MALA_MAX_STORE;  i++)
-    this.store[i] = new T.storepoint()
-}
-
 T.prototype.Perp = function(x, y, z) {
   this.perp[0] = x
   this.perp[1] = y
@@ -99,7 +102,7 @@ T.prototype.on = function (w, fn) {
   fn = fn || null
 
   if (T.opt.START)  this.Start_ = (fn)
-  if (w == T.opt.START_STAT)  this.StartStat_ =(fn)
+  if (w == T.opt.START_STAT)  this.StartStat_ = (fn)
   if (w == T.opt.LINE_FLAG) this.flagLine = (!!fn)
   if (w == T.opt.LINE_FLAG_STAT) this.flagLine = (!!fn)
   if (w == T.opt.POINT)  this.point_ = (fn)
@@ -110,7 +113,7 @@ T.prototype.on = function (w, fn) {
   if (w == T.opt.FAILURE_STAT)  this.FailureStat_ = (fn)
   if (w == T.opt.COMBINE)  this.Combine_ = (fn)
   if (w == T.opt.COMBINE_STAT)  this.CombineStat_ = (fn)
-  if (w == T.opt.SURFACE)  this.Surface_ = (fn)
+  if (w == T.opt.SURFACE)  this.layer_ = (fn)
 
   return this
 }
@@ -121,8 +124,8 @@ T.prototype.point = function(xys, stat) {
 
   this.requireState_(T.cond.T_IN_CURVE)
 
-  if (this.emptyStore) {
-    this.emptyStore_()
+  if (this.es) {
+    this.empty_store()
     this.lastLine_ = null
   }
 
@@ -143,7 +146,7 @@ T.prototype.point = function(xys, stat) {
 
   if (this.surface === null) {
     if (this.storeCount < T.MALA_MAX_STORE) return this.sp(clamped, stat)
-    this.emptyStore_()
+    this.empty_store()
   }
 
   this.addpoint_(clamped, stat)
@@ -154,7 +157,7 @@ T.prototype.StartShape = function(stat) {
 
   this.state = T.cond.T_IN_SHAPE
   this.storeCount = 0
-  this.emptyStore = false
+  this.es = false
   this.surface = null
 
   this.shapeStat_ = stat
@@ -164,7 +167,7 @@ T.prototype.StartCurve = function() {
   this.requireState_(T.cond.T_IN_SHAPE)
   this.state = T.cond.T_IN_CURVE
   this.lastLine_ = null
-  if (this.storeCount > 0) this.emptyStore = true
+  if (this.storeCount > 0) this.es = true
 }
 
 T.prototype.EndCurve = function() {
@@ -177,8 +180,8 @@ T.prototype.EndShape = function() {
   this.state = T.cond.T_SLEEP
 
   if (this.surface === null) {
-    if (!this.flagLine && !this.Surface_ && T.drawStore(this)) return this.shapeStat_ = null
-    this.emptyStore_()
+    if (!this.flagLine && !this.layer_ && T.drawStore(this)) return this.shapeStat_ = null
+    this.empty_store()
   }
   T.projectShape(this)
   T.computeInner(this)
@@ -188,7 +191,7 @@ T.prototype.EndShape = function() {
       T.FollowId(this.surface, 1, true) :
       T.patchInner(this.surface)
 
-    this.surface.fixSurface()
+    this.surface.fixlayer()
 
     if (this.Start_ || this.End_ || this.point_ ||
         this.LineFlag_ || this.StartStat_ || this.EndStat_ ||
@@ -196,24 +199,24 @@ T.prototype.EndShape = function() {
 
       this.lineOnly ?
         T.drawLine(this, this.surface) :
-        T.drawSurface(this, this.surface)
+        T.drawlayer(this, this.surface)
     }
 
-    if (this.Surface_) {
+    if (this.layer_) {
       T.discardOuter(this.surface)
-      this.Surface_(this.surface)
+      this.layer_(this.surface)
       this.surface = null
       return this.shapeStat_ = null
     }
   }
 
-  T.surface.killSurface(this.surface)
+  T.surface.killlayer(this.surface)
   this.shapeStat_ = null
   this.surface = null
 }
 
 T.prototype.makeSleep_ = function() {
-  if (this.surface) T.surface.killSurface(this.surface)
+  if (this.surface) T.surface.killlayer(this.surface)
   this.state = T.cond.T_SLEEP
   this.lastLine_ = null
   this.surface = null
@@ -275,14 +278,14 @@ T.prototype.sp = function(xys, stat) {
   ++this.storeCount
 }
 
-T.prototype.emptyStore_ = function() {
-  this.surface = new T.Surface()
+T.prototype.empty_store = function() {
+  this.surface = new T.layer()
   for (var i = 0; i < this.storeCount; i++) {
     var v = this.store[i]
     this.addpoint_(v.xys, v.stat)
   }
   this.storeCount = 0
-  this.emptyStore = false
+  this.es = false
 }
 
 T.prototype.StartOrStartStat = function(type) {
@@ -921,7 +924,7 @@ T.surface.surfaceUnion = function(surface1, surface2) {
   return surface1
 }
 
-T.surface.killSurface = function(surface) {}
+T.surface.killlayer = function(surface) {}
 
 
 T.surface.makeLinePair_ = function(eThere) {
@@ -1084,7 +1087,7 @@ T.point = function(opt_therepoint, opt_prevpoint) {
     this.pqHandle = null
 }
 
-T.Surface = function() {
+T.layer = function() {
   this.vStart = new T.point()
   this.fStart = new T.Face()
   this.eStart = new T.HalfLine()
@@ -1093,7 +1096,7 @@ T.Surface = function() {
   this.eStartSym.sym = this.eStart
 }
 
-T.Surface.prototype.fixSurface = function() {
+T.layer.prototype.fixlayer = function() {
   var fStart = this.fStart
   var vStart = this.vStart
   var eStart = this.eStart
@@ -1174,7 +1177,7 @@ T.computeInner = function(mala) {
   T.done(mala)
 
   T.removeDeadFaces_(mala.surface)
-  mala.surface.fixSurface()
+  mala.surface.fixlayer()
 }
 
 
@@ -1627,7 +1630,7 @@ T.walkDirtySpaces_ = function(mala, regUp) {
   }
 }
 
-T.connecTghtpoint_ = function(mala, regUp, eBottomLeft) {
+T.connectightpoint_ = function(mala, regUp, eBottomLeft) {
   var eTopLeft = eBottomLeft.oThere
     , regLo = regUp.spaceBelow()
     , eUp = regUp.eUp
@@ -1750,7 +1753,7 @@ T.sweepEvent_ = function(mala, vEvent) {
     , eBottomLeft = T.finishLeftSpaces_(mala, reg, null)
 
   eBottomLeft.oThere === eTopLeft ?
-    T.connecTghtpoint_(mala, regUp, eBottomLeft) :
+    T.connectightpoint_(mala, regUp, eBottomLeft) :
     T.addRightLines_(mala, regUp, eBottomLeft.oThere, eTopLeft, eTopLeft, true)
 }
 
@@ -1864,7 +1867,7 @@ T.Region.prototype.spaceAbove = function() {
   return (this.nUp.Succ().Key())
 }
 
-T.drawSurface = function(mala, surface) {
+T.drawlayer = function(mala, surface) {
   mala.lonelyTList = null
   var f
   for(f = surface.fStart.there; f !== surface.fStart; f = f.there) {
@@ -1899,15 +1902,15 @@ T.drawLine = function(mala, surface) {
 
 T.drawStore = function(mala) {
   if (mala.storeCount < 3) return true
-  var norm = [0, 0, 0]
-  norm[0] = mala.perp[0]
-  norm[1] = mala.perp[1]
-  norm[2] = mala.perp[2]
+  var n = [0, 0, 0]
+  n[0] = mala.perp[0]
+  n[1] = mala.perp[1]
+  n[2] = mala.perp[2]
 
-  if (norm[0] === 0 && norm[1] === 0 && norm[2] === 0)
-    T.computePerp_(mala, norm, false)
+  if (n[0] === 0 && n[1] === 0 && n[2] === 0)
+    T.computePerp_(mala, n, false)
 
-  var sign = T.computePerp_(mala, norm, true)
+  var sign = T.computePerp_(mala, n, true)
   if (sign === T.SIGN_INCONSISTENT_) return false
   if (sign === 0) return true
 
@@ -2142,9 +2145,9 @@ T.drawLonelyTangles_ = function(mala, start) {
   mala.EndOrEndStat()
 }
 
-T.computePerp_ = function(mala, norm, fix) {
+T.computePerp_ = function(mala, n, fix) {
   if (!fix)
-    norm[0] = norm[1] = norm[2] = 0
+    n[0] = n[1] = n[2] = 0
   var v0 = 0
   var vn = v0 + mala.storeCount
   var vc = v0 + 1
@@ -2170,16 +2173,16 @@ T.computePerp_ = function(mala, norm, fix) {
     n[1] = zp*xc - xp*zc
     n[2] = xp*yc - yp*xc
 
-    var dot = n[0]*norm[0] + n[1]*norm[1] + n[2]*norm[2]
+    var dot = n[0]*n[0] + n[1]*n[1] + n[2]*n[2]
     if (!fix) {
       if (dot >= 0) {
-        norm[0] += n[0]
-        norm[1] += n[1]
-        norm[2] += n[2]
+        n[0] += n[0]
+        n[1] += n[1]
+        n[2] += n[2]
       } else {
-        norm[0] -= n[0]
-        norm[1] -= n[1]
-        norm[2] -= n[2]
+        n[0] -= n[0]
+        n[1] -= n[1]
+        n[2] -= n[2]
       }
     } else if (dot !== 0) {
       if (dot > 0) {
@@ -2345,35 +2348,35 @@ T.lineWrite = function(o1, d1, o2, d2, v) {
 
 T.projectShape = function(mala) {
   var computedPerp = false
-    , norm = [0, 0, 0]
-  norm[0] = mala.perp[0]
-  norm[1] = mala.perp[1]
-  norm[2] = mala.perp[2]
-  if (norm[0] === 0 && norm[1] === 0 && norm[2] === 0) {
-    T.computePerp_(mala, norm)
+    , n = [0, 0, 0]
+  n[0] = mala.perp[0]
+  n[1] = mala.perp[1]
+  n[2] = mala.perp[2]
+  if (n[0] === 0 && n[1] === 0 && n[2] === 0) {
+    T.computePerp_(mala, n)
     computedPerp = true
   }
 
   var s = mala.s
   var t = mala.t
-  var i = T.longAxis_(norm)
+  var i = T.longAxis_(n)
 
   if (T.TRUE_PROJECT) {
-    T.perpize_(norm)
+    T.perpize_(n)
 
     s[i] = 0
     s[(i+1)%3] = T.S__X_
     s[(i+2)%3] = T.S__Y_
 
-    var w = T.dot_(s, norm)
-    s[0] -= w * norm[0]
-    s[1] -= w * norm[1]
-    s[2] -= w * norm[2]
+    var w = T.dot_(s, n)
+    s[0] -= w * n[0]
+    s[1] -= w * n[1]
+    s[2] -= w * n[2]
     T.perpize_(s)
 
-    t[0] = norm[1]*s[2] - norm[2]*s[1]
-    t[1] = norm[2]*s[0] - norm[0]*s[2]
-    t[2] = norm[0]*s[1] - norm[1]*s[0]
+    t[0] = n[1]*s[2] - n[2]*s[1]
+    t[1] = n[2]*s[0] - n[0]*s[2]
+    t[2] = n[0]*s[1] - n[1]*s[0]
     T.perpize_(t)
 
   } else {
@@ -2382,8 +2385,8 @@ T.projectShape = function(mala) {
     s[(i+2)%3] = T.S__Y_
 
     t[i] = 0
-    t[(i+1)%3] = (norm[i] > 0) ? -T.S__Y_ : T.S__Y_
-    t[(i+2)%3] = (norm[i] > 0) ? T.S__X_ : -T.S__X_
+    t[(i+1)%3] = (n[i] > 0) ? -T.S__Y_ : T.S__Y_
+    t[(i+2)%3] = (n[i] > 0) ? T.S__X_ : -T.S__X_
   }
 
   var vStart = mala.surface.vStart
@@ -2400,7 +2403,7 @@ T.dot_ = function(u, v) {
 
 T.perpize_ = function(v) {
   var len = v[0]*v[0] + v[1]*v[1] + v[2]*v[2]
-  debugT(len > 0) 
+  debugT(len > 0)
   len = Math.sqrt(len)
   v[0] /= len
   v[1] /= len
@@ -2414,22 +2417,20 @@ T.longAxis_ = function(v) {
   return i
 }
 
-T.computePerp_ = function(mala, norm) {
+T.computePerp_ = function(mala, n) {
   var maxVal = [0, 0, 0]
-  var minVal = [0, 0, 0]
-  var d1 = [0, 0, 0]
-  var d2 = [0, 0, 0]
-  var tNorm = [0, 0, 0]
+    , minVal = [0, 0, 0]
+    , d1 = [0, 0, 0]
+    , d2 = [0, 0, 0]
+    , tN = [0, 0, 0]
 
   maxVal[0] = maxVal[1] = maxVal[2] = -2 * T.MAX_XY
   minVal[0] = minVal[1] = minVal[2] = 2 * T.MAX_XY
 
   var maxPoint = new Array(3)
-  var minPoint = new Array(3)
-
-  var i
-  var v
-  var vStart = mala.surface.vStart
+  , minPoint = new Array(3)
+  , vStart = mala.surface.vStart
+  , i, v
   for (v = vStart.there; v !== vStart; v = v.there) {
     for (i = 0; i < 3; ++i) {
       var c = v.xys[i]
@@ -2442,7 +2443,7 @@ T.computePerp_ = function(mala, norm) {
 
   if (maxVal[1] - minVal[1] > maxVal[0] - minVal[0]) i = 1
   if (maxVal[2] - minVal[2] > maxVal[i] - minVal[i]) i = 2
-  if (minVal[i] >= maxVal[i]) return norm[0] = 0; norm[1] = 0; norm[2] = 1
+  if (minVal[i] >= maxVal[i]) return n[0] = 0; n[1] = 0; n[2] = 1
 
   var maxLen2 = 0
   var v1 = minPoint[i]
@@ -2454,21 +2455,21 @@ T.computePerp_ = function(mala, norm) {
     d2[0] = v.xys[0] - v2.xys[0]
     d2[1] = v.xys[1] - v2.xys[1]
     d2[2] = v.xys[2] - v2.xys[2]
-    tNorm[0] = d1[1]*d2[2] - d1[2]*d2[1]
-    tNorm[1] = d1[2]*d2[0] - d1[0]*d2[2]
-    tNorm[2] = d1[0]*d2[1] - d1[1]*d2[0]
-    var tLen2 = tNorm[0]*tNorm[0] + tNorm[1]*tNorm[1] + tNorm[2]*tNorm[2]
+    tN[0] = d1[1]*d2[2] - d1[2]*d2[1]
+    tN[1] = d1[2]*d2[0] - d1[0]*d2[2]
+    tN[2] = d1[0]*d2[1] - d1[1]*d2[0]
+    var tLen2 = tN[0]*tN[0] + tN[1]*tN[1] + tN[2]*tN[2]
     if (tLen2 > maxLen2) {
       maxLen2 = tLen2
-      norm[0] = tNorm[0]
-      norm[1] = tNorm[1]
-      norm[2] = tNorm[2]
+      n[0] = tN[0]
+      n[1] = tN[1]
+      n[2] = tN[2]
     }
   }
 
   if (maxLen2 <= 0) {
-    norm[0] = norm[1] = norm[2] = 0
-    norm[T.longAxis_(d1)] = 1
+    n[0] = n[1] = n[2] = 0
+    n[T.longAxis_(d1)] = 1
   }
 }
 
@@ -2489,6 +2490,6 @@ T.FollowId = function(surface, value, keepOnlyLine) {
 }
 
 var triangulator = new T()
-                   .on(T.opt.POINT_STAT, function (d, poly) { poly.push(d[0], d[1]) })
-                   .on(T.opt.COMBINE, function (d) { return d.slice(0, 2) })
-                   .on(T.opt.LINE_FLAG, noop)
+      .on(T.opt.POINT_STAT, function (d, poly) { poly.push(d[0], d[1]) })
+      .on(T.opt.COMBINE, function (d) { return d.slice(0, 2) })
+      .on(T.opt.LINE_FLAG, noop)
