@@ -59,17 +59,17 @@ function draw_world(err, us) {
               .attr('width', 960)
               .node()
 
-  // var heat = createWebGLHeatmap({canvas:  canv})
+  var heat = createWebGLHeatmap({canvas:  canv})
 
-  // setInterval(function () {
-  //   heat.multiply(0.91)
-  //   heat.update()
-  //   heat.display()
-  //   heat.addPoints(birds[i = 1 + i % 364])
-  //   heat.blur()
-  // }, 16)
-  // heat.update()
-  // heat.display()
+  setInterval(function () {
+    heat.multiply(0.91)
+    heat.update()
+    heat.display()
+    heat.addPoints(birds[i = 1 + i % 364])
+    heat.blur()
+  }, 16)
+  heat.update()
+  heat.display()
 
 }
 
