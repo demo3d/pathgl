@@ -24,7 +24,7 @@ function Mesh (gl, options, attr) {
   function alloc(n) {
     //if (options.primitive == 'triangles')
     //return count = 1e5
-    if (n) count = n
+    //if (n) count = n
     return count += options.primitive == 'points' ? 1
                   : options.primitive == 'lines' ? 2
                   : 3
@@ -74,7 +74,6 @@ function Mesh (gl, options, attr) {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
     //bindMaterial()
-    if(Math.random() > .99) console.log(count)
     gl.drawArrays(primitive, offset, count)
   }
 
@@ -147,7 +146,7 @@ function buildBuffers(gl, types) {
   pointMesh.bind(types.circle)
   pointMesh.bind(types.rect)
 
-  var lineMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 1 } })
+  var lineMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 2 } })
   lineMesh.bind(types.line)
 
   var triangleMesh = new Mesh(gl, { primitive: 'triangles', pos: { size: 2 } })

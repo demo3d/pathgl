@@ -29,11 +29,13 @@ function mouseover(d) {
 function draw_world(err, world) {
   if (err) return
 
-  webgl.append("path")
+  d3.select('svg')
+//  webgl
+  .append("path")
   .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a == b && a.id !== 10 }))
   .attr({ class: 'world'
         , d: path
-        , fill: 'pink'
+        , fill: 'none'
         , 'stroke': 'grey'
         })
 }
