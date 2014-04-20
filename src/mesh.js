@@ -22,8 +22,8 @@ function Mesh (gl, options, attr) {
   }
 
   function alloc(n) {
-    //if (options.primitive == 'triangles')
-    //return count = 1e5
+    if (options.primitive == 'triangles')
+      return count = 1e5
     //if (n) count = n
     return count += options.primitive == 'points' ? 1
                   : options.primitive == 'lines' ? 2
