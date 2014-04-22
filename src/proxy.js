@@ -7,7 +7,7 @@ function SVGProxy () {
              self.attr = {}
              return self
            }
-           extend(type.prototype, baseProto, proto[type.name])
+           extend(type.prototype, baseProto, proto[type.name], {tagName: type.name})
            return a
          }, {})
 }
@@ -36,19 +36,16 @@ var proto = {
 
           , stroke: function (v) {
               this.colorBuffer[this.indices[0]] = parseColor(v)
-            },
-            tagName: 'circle'
-          , schema: 'cx cy r cz'.split(' ')
+            }
           }
 
 
 , ellipse: { init: function () {},
-             tagName: 'ellipse'
-           , cx: noop, cy: noop, rx: noop, ry: noop }
+             cx: noop, cy: noop, rx: noop, ry: noop }
 , rect: { init: function (i) {
             this.fBuffer[i * 4] = 0
             this.indices = [i * 4]
-          }, tagName: 'rect'
+          }
         , fill: function (v) {
             this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
           }
@@ -67,15 +64,12 @@ var proto = {
         , rx: noop,
           ry:  noop
         }
-, image: { init: function () {
-
-
-           }, tagName: 'image'
+, image: { init: function () { }
          , 'xlink:href': noop, height: noop, width: noop, x: noop, y: noop }
 
 , line: { init: function (i) {
             this.indices = [i * 2, i * 2 + 1]
-          }, tagName: 'line'
+          }
         , x1: function (v) { this.posBuffer[this.indices[0] * 2] = v }
         , y1: function (v) { this.posBuffer[this.indices[0] * 2 + 1] = v }
         , x2: function (v) { this.posBuffer[this.indices[1] * 2] = v }
@@ -89,7 +83,7 @@ var proto = {
         }
 , path: { init: function () {
             this.indices = []
-          }, tagName: 'path'
+          }
         , d: buildPath
         , pathLength: noop
         , fill: function (v) {
@@ -100,19 +94,16 @@ var proto = {
           }
         }
 , polygon: { init: function () {
-             }, tagName: 'polygon'
+             }
            , points: noop }
 , polyline: { init: function (i) {
                 this.indices = [i * 2, i * 2 + 1]
-              }, tagName: 'polyline'
+              }
           , points: noop }
-, g: { init: function () {
-
-       }, tagName: 'g'
-     , appendChild: function (tag) { this.children.push(appendChild(tag)) },  ctr: function () { this.children = [] } }
-, text: { init: function () {
-
-          }, tagName: 'text'
+, g: { init: function () { }
+     , appendChild: function (tag) { this.children.push(appendChild(tag)) }
+     ,  ctr: function () { this.children = [] } }
+, text: { init: function () {}
         , x: noop, y: noop, dx: noop, dy: noop }
 }
 

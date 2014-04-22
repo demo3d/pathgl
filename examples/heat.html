@@ -49,7 +49,8 @@
 		<div class="blurb"></div>
 		<canvas width="960" height="500"></canvas>
 		<svg></svg>
-		<script>var RTT = pathgl.texture().repeat()
+		<script>
+var RTT = pathgl.texture().repeat()
 
 var disco = d3.select(RTT)
 .selectAll('circle')
@@ -76,6 +77,7 @@ d3.select('canvas')
 .attr('cx', function (d) { return 100 * (d % 10) })
 .attr('cy', function (d) { return 100 * ~~(d / 10) })
 .attr('fill', RTT)
+
 </script>
   </div>
 </body>

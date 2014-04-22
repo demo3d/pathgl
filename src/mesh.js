@@ -25,6 +25,7 @@ function Mesh (gl, options, attr) {
     if (options.primitive == 'triangles')
       return count = 1e5
     //if (n) count = n
+    //if (n > count) allocate 10x
     return count += options.primitive == 'points' ? 1
                   : options.primitive == 'lines' ? 2
                   : 3

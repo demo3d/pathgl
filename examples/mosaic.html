@@ -49,7 +49,8 @@
 		<div class="blurb"></div>
 		<canvas width="960" height="500"></canvas>
 		<svg></svg>
-		<script>d3.json('https://api.imgur.com/3/gallery/r/foodporn/top/1')
+		<script>
+d3.json('https://api.imgur.com/3/gallery/r/foodporn/top/1')
 .header("Authorization", 'Client-Id 9e7ab6a35eb2f7a')
 .header("Accept", 'application/json')
 .get(function (err, data) {
@@ -113,6 +114,7 @@ function getWebcam() {
     , s = c.canvas.width = c.canvas.height = 1024
 
   return video
-}</script>
+}
+</script>
   </div>
 </body>
