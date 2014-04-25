@@ -1,3 +1,8 @@
+.map canvas, .map svg {
+    position: absolute;
+}
+
+
 * {
     box-sizing: border-box;
 }
@@ -26,6 +31,14 @@ body {
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.6),0 0 1px 1px rgba(80,84,92,0.1),0 1px 2px rgba(80,84,92,0.2);
 }
 
+svg {
+    display: none;
+}
+
+.map svg{
+    display: block;
+}
+
 h3 {
     margin: 18px 0 7px;
     text-transform: uppercase;
@@ -34,9 +47,8 @@ h3 {
     color: #9ca5b5;
 }
 
-.edit, canvas, svg {
+canvas, svg {
     padding-left: 1px;
-    position: absolute;
     height: 89%;
     width: 100%;
 }

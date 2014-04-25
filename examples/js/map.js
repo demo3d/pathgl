@@ -17,8 +17,6 @@ var svg = d3.select(selector)
 var webgl = d3.select('canvas').attr(size).attr('class', 'no-click')
 var p = d3.select('.blurb')
 
-d3.select('.blurb').text('Click circles for more information.')
-
 d3.json('data/world-50m.json', draw_world)
 d3.csv('data/hist.csv', draw_history)
 
