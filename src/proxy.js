@@ -114,6 +114,7 @@ var baseProto = {
 , previousSibling: function () { canvas.scene[canvas.__scene__.indexOf(this) - 1] }
 , nextSibling: function () { canvas.scene[canvas.__scene__.indexOf()  + 1] }
 , parent: function () { return __scene__ }
+, parentNode: {insertBefore: function () {}}
 , opacity: function (v) {
     this.fBuffer[this.indices[0] + 1] = 256 - (v * 256)
   }

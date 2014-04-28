@@ -5589,6 +5589,7 @@ var baseProto = {
 , previousSibling: function () { canvas.scene[canvas.__scene__.indexOf(this) - 1] }
 , nextSibling: function () { canvas.scene[canvas.__scene__.indexOf()  + 1] }
 , parent: function () { return __scene__ }
+, parentNode: {insertBefore: function () {}}
 , opacity: function (v) {
     this.fBuffer[this.indices[0] + 1] = 256 - (v * 256)
   }
@@ -5890,12 +5891,11 @@ var particleShader = [
         , 'vec4 data = texture2D(texture, (gl_FragCoord.xy) / dimensions);'
         , 'vec2 pos = data.xy;'
         , 'vec2 vel = data.zw;'
-        , 'if (pos.x > 1. || pos.x < 0.) { vel *= -1.; }'
-        , 'if (pos.y > 1. || pos.y < 0.) { vel *= -1.; }'
+        , 'if (pos.x > 1. || pos.x < 0. || pos.y > 1. || pos.y < 0.) vel *= -1.; '
         , 'pos += inertia  * vel;'
         , 'vel += gravity * normalize(TARGET - pos);'
         , 'vel *= drag;'
-        , 'gl_FragColor = vec4(pos, vel);'
+        , 'gl_FragColor = vec4(clamp(pos, 0., 1.), vel);'
      , '}'
 ].join('\n')
 //float checkBounds () { return vec}
