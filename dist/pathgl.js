@@ -5895,7 +5895,7 @@ var particleShader = [
         , 'pos += inertia  * vel;'
         , 'vel += gravity * normalize(TARGET - pos);'
         , 'vel *= drag;'
-        , 'gl_FragColor = vec4(clamp(pos, 0., 1.), vel);'
+        , 'gl_FragColor = vec4(pos, vel);'
      , '}'
 ].join('\n')
 //float checkBounds () { return vec}
