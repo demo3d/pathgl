@@ -61,89 +61,68 @@
 
       <section class="examples">
         <div class="container">
-          <div class="example-block">
+
+          <div class="example-block row">
             <div class="description">
               <h3>Use familiar D3 concepts, like selections and databinding</h3>
               <p>
-                
+                Tame the wild power of webgl with a declarative abstraction. 
               </p>
-            </div>
-            <div class="row">
               <div class="col-sm-8">
-                <div class="highlight"><pre><code class="bash hljs ">hello </code></pre></div>
+                <div class="highlight"><pre><code class="bash hljs ">
+                      d3.select('.one').selectAll('circle')
+                      .data(d3.range(100))
+                      .enter()
+                      .append('circle')
+                      .attr('cx', function (d) { return d * 2})
+                      .attr('cy', function (d) { return d * 2})
+                      .attr('r', 5)
+                      .attr('fill', 'pink')
+                      .attr('stroke', 'blue')
+								</code></pre></div>
               </div>
               <div class="col-sm-4">
-                <svg class="one"></svg>
+                <canvas class="one"></svg>
               </div>
             </div>
           </div>
 
-
-          <div class="example-block">
-            <div class="description row">
-              <div class="col-sm-offset-4 col-sm-8">
-                <h3>Exploit </h3>
+          <div class="example-block row">
+            <div class="description">
+              <div class="col-sm-4">
+                <canvas class="two">
+                </svg>
+              </div>
+              <div class="col-sm-8">
+                <h3>Bring Angular apps to life with Famo.us animations</h3>
                 <p>
-                  Easily add animations to Famo.us objects declaratively, imperatively, or both.
+                  Easily add animations to Famo.us objects declaratively, imperatively, or
+                  both.
                 </p>
-                <div class="highlight"><pre><code class="bash hljs ">aoeunaotheu</code></pre></div>          
-
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-sm-4">
-                <svg class="two"></svg>
-              </div>
-            </div>
-          </div>
-
-          <div class="example-block">
-            <div class="description">
-              <h3></h3>
-              <p>
-                Use data binding to build 
-              </p>
-            </div>
-            <div class="row">
-              <div class="col-sm-8">
-                <div class="highlight"><pre><code class="bash hljs">var x = function () {}</code></pre></div>
-              </div>
-              <div class="col-sm-4">
-                <svg class="three"></svg>
+                <div class="highlight">
+                  <pre><code class="bash hljs">
+                      d3.select('.two').selectAll('circle')
+                      .data(d3.range(100))
+                      .enter()
+                      .append('circle')
+                      .attr('cx', function (d) { return d * 2})
+                      .attr('cy', function (d) { return d * 2})
+                      .attr('r', 5)
+                      .attr('fill', 'pink')
+                      .attr('stroke', 'blue')									
+                  </code></pre>
+                </div>
               </div>
             </div>
           </div>
-
-
-          <!-- <div class="example-block"> -->
-          <!--   <div class="description row"> -->
-          <!--     <div class="col-sm-offset-4 col-sm-8"> -->
-          <!--       <h3>Combine Angular bindings with Famo.us attributes</h3> -->
-          <!--       <p> -->
-          <!--         Allow users to easily dictate surface sizes and translation distances by leveraging Angular bindings. -->
-          <!--       </p> -->
-          <!--       <div class="highlight"><pre><code class="bash hljs ">aoeunaotheu</code></pre></div> -->
-          <!--     </div> -->
-          <!--   </div> -->
-          <!--   <div class="row"> -->
-          <!--     <div class="col-sm-4"> -->
-          <!--       <svg class="four"></svg> -->
-          <!--     </div> -->
-          <!--   </div> -->
-          <!-- </div> -->
-
-          <div class="example-block">
-            <div class="description">
-              <h3>Check out the <a href="/documentation/start.html">docs</a> to learn more.</h3>
-            </div>
-          </div>
-
         </div>
       </section>
       <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-
+      <script src="/dist/pathgl.js"></script>
       <script>
-        d3.select('.one').append('circle').attr('r', '10')
+        d3.selectAll('.bash').each(function (d) {
+			  eval(this.textContent)
+			  })
       </script>
   </body>
 </html>

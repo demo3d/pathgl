@@ -3351,6 +3351,37 @@ T.Dict.prototype.Max = function() {
 }
 
 
+T.PQN = function() {
+    this.handle = 0
+}
+
+T.PQN.renew = function(oldArray, size) {
+  var newArray = new Array(size)
+  var index = 0
+
+  if (oldArray !== null)
+    for (;index < oldArray.length; index++) newArray[index] = oldArray[index]
+
+  for (;index < size; index++) newArray[index] = new T.PQN()
+
+  return newArray
+}
+T.PQHandleElem = function() {
+    this.key = null
+    this.n = 0
+}
+
+T.PQHandleElem.renew = function(oldArray, size) {
+  var newArray = new Array(size)
+  var index = 0
+  if (oldArray !== null)
+    for (;index < oldArray.length; index++) newArray[index] = oldArray[index]
+
+  for (;index < size; index++) newArray[index] = new T.PQHandleElem()
+
+  return newArray
+}
+
 T.fixOrientation_ = function(mala) {
   var area = 0
   var fStart = mala.surface.fStart
@@ -4499,7 +4530,7 @@ T.removeDeadLines_ = function(mala) {
 }
 
 T.initPriorityQ_ = function(mala) {
-  var pq = new PriorityQ((T.pointLeq))
+  var pq = new T.PriorityQ((T.pointLeq))
   mala.pq = pq
   var vStart = mala.surface.vStart
 

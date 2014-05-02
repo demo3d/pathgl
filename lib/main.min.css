@@ -8,6 +8,10 @@ body {
     font-family: OpenSans!important;
 }
 
+svg {
+height: 250px;
+}
+
 @media (max-width:769px) {
     h1 {
         font-size: 28px;
