@@ -59,64 +59,64 @@
 
       </section>
 
-      <!-- <section class="examples"> -->
-      <!--   <div class="container"> -->
+      <section class="examples">
+        <div class="container">
 
-      <!--     <div class="example-block row"> -->
-      <!--       <div class="description"> -->
-      <!--         <h3>Use familiar D3 concepts, like selections and databinding</h3> -->
-      <!--         <p> -->
-      <!--           Tame the wild power of webgl with a declarative abstraction.  -->
-      <!--         </p> -->
-      <!--         <div class="col-sm-8"> -->
-      <!--           <div class="highlight"><pre><code class="bash hljs "> -->
-      <!--                 d3.select('.one').selectAll('circle') -->
-      <!--                 .data(d3.range(100)) -->
-      <!--                 .enter() -->
-      <!--                 .append('circle') -->
-      <!--                 .attr('cx', function (d) { return d * 2}) -->
-      <!--                 .attr('cy', function (d) { return d * 2}) -->
-      <!--                 .attr('r', 5) -->
-      <!--                 .attr('fill', 'pink') -->
-      <!--                 .attr('stroke', 'blue') -->
-			<!-- 					</code></pre></div> -->
-      <!--         </div> -->
-      <!--         <div class="col-sm-4"> -->
-      <!--           <canvas class="one"></canvas> -->
-      <!--         </div> -->
-      <!--       </div> -->
-      <!--     </div> -->
+          <div class="example-block row">
+            <div class="description">
+              <h3>Use familiar D3 concepts, like selections and databinding</h3>
+              <p>
+                Tame the wild power of webgl with a declarative abstraction.
+              </p>
+              <div class="col-sm-8">
+                <div class="highlight"><pre><code class="bash hljs ">
+d3.select('canvas')
+.selectAll('circle')
+.data(d3.range(1e4))
+.enter().append('circle')
+.attr('fill', function () { return "hsl("+Math.random()*360+",100%,50%)"})
+.attr('cx', function (d, i) { return d % 1000 })
+.attr('r', function (d, i) { return 2 })
+.shader({ cx: 'resolution.x / 2. + cos(pos.x + clock / 1000.) * pos.x;'
+       , cy: 'resolution.y / 2. + sin(pos.x + clock / 1000.) * pos.x;'
+})
+								</code></pre></div>
+              </div>
+              <div class="col-sm-4">
+                <canvas class="one"></canvas>
+              </div>
+            </div>
+          </div>
 
-      <!--     <div class="example-block row"> -->
-      <!--       <div class="description"> -->
-      <!--         <div class="col-sm-4"> -->
-      <!--           <canvas class="two"> -->
-      <!--           </canvas> -->
-      <!--         </div> -->
-      <!--         <div class="col-sm-8"> -->
-      <!--           <h3>Bring Angular apps to life with Famo.us animations</h3> -->
-      <!--           <p> -->
-      <!--             Easily add animations to Famo.us objects declaratively, imperatively, or -->
-      <!--             both. -->
-      <!--           </p> -->
-      <!--           <div class="highlight"> -->
-      <!--             <pre><code class="bash hljs"> -->
-      <!--                 d3.select('.two').selectAll('circle') -->
-      <!--                 .data(d3.range(100)) -->
-      <!--                 .enter() -->
-      <!--                 .append('circle') -->
-      <!--                 .attr('cx', function (d) { return d * 2}) -->
-      <!--                 .attr('cy', function (d) { return d * 2}) -->
-      <!--                 .attr('r', 5) -->
-      <!--                 .attr('fill', 'pink') -->
-      <!--                 .attr('stroke', 'blue')									 -->
-      <!--             </code></pre> -->
-      <!--           </div> -->
-      <!--         </div> -->
-      <!--       </div> -->
-      <!--     </div> -->
-      <!--   </div> -->
-      <!-- </section> -->
+          <div class="example-block row"> 
+            <div class="description"> 
+              <div class="col-sm-4"> 
+                <canvas class="two"> 
+                </canvas> 
+              </div> 
+              <div class="col-sm-8"> 
+                <h3>Bring Angular apps to life with Famo.us animations</h3> 
+                <p> 
+                  Easily add animations to Famo.us objects declaratively, imperatively, or 
+                  both. 
+                </p> 
+                <div class="highlight"> 
+                  <pre><code class="bash hljs"> 
+                      d3.select('.two').selectAll('circle') 
+                      .data(d3.range(100)) 
+                      .enter() 
+                      .append('circle') 
+                      .attr('cx', function (d) { return d * 2}) 
+                      .attr('cy', function (d) { return d * 2}) 
+                      .attr('r', 5) 
+                      .attr('stroke', 'blue')									 
+                  </code></pre> 
+                </div> 
+              </div> 
+            </div> 
+          </div> 
+        </div> 
+      </section> 
       <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
       <script src="/dist/pathgl.js"></script>
       <script>
