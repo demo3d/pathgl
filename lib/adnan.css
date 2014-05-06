@@ -21,3 +21,17 @@ body {
 .no-scroll {
     position: fixed;
 }
+
+
+.no-scroll ul {
+    border-bottom: white 1px solid;
+}
+
+.list-group-item {
+    border: none;
+    background: none;
+}
+
+.list-group-item a {
+    color: white;
+}
