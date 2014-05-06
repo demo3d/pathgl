@@ -4530,7 +4530,7 @@ T.removeDeadLines_ = function(mala) {
 }
 
 T.initPriorityQ_ = function(mala) {
-  var pq = new T.PriorityQ((T.pointLeq))
+  var pq = new PriorityQ((T.pointLeq))
   mala.pq = pq
   var vStart = mala.surface.vStart
 
