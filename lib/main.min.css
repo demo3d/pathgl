@@ -186,7 +186,6 @@ height: 250px;
 }
 
 .home .examples {
-    padding-top: 50px;
     background-color: #f7f7f7;
 }
 
@@ -194,10 +193,6 @@ height: 250px;
     .home .examples .container {
         width: 1000px;
     };
-}
-
-.home .examples .example-block {
-    margin: 100px 0;
 }
 
 .home .examples .example-block input {

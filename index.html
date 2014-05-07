@@ -88,27 +88,66 @@ d3.select('canvas')
           </div>
 
           <div class="example-block row"> 
+            <div class="description row">
+              <div class="col-sm-offset-4 col-sm-8">
+                <h3>Supercharge your visualization with shaders</h3> 
+                <p> 
+                  Calculate data processing, simulation, layout, and post processing
+                  effects on a separate thread without any copying.
+                </p> 
+              </div>
+            </div>
             <div class="description"> 
               <div class="col-sm-4"> 
                 <canvas class="two"> 
                 </canvas> 
               </div> 
               <div class="col-sm-8"> 
-                <h3>Bring Angular apps to life with Famo.us animations</h3> 
-                <p> 
-                  Easily add animations to Famo.us objects declaratively, imperatively, or 
-                  both. 
-                </p> 
+
                 <div class="highlight"> 
                   <pre><code class="bash hljs"> 
-                      d3.select('.two').selectAll('circle') 
-                      .data(d3.range(100)) 
-                      .enter() 
-                      .append('circle') 
-                      .attr('cx', function (d) { return d * 2}) 
-                      .attr('cy', function (d) { return d * 2}) 
-                      .attr('r', 5) 
-                      .attr('stroke', 'blue')									 
+var width = 960,
+    height = 500;
+
+var vertices = d3.range(100).map(function(d) {
+  return [Math.random() * width, Math.random() * height];
+});
+
+var voronoi = d3.geom.voronoi()
+    .clipExtent([[0, 0], [width, height]]);
+
+var svg = d3.select(".two")
+    .attr("width", width)
+    .attr("height", height)
+//    .on("mousemove", function() { vertices[0] = d3.mouse(this); redraw(); });
+
+var path = svg.selectAll("path");
+
+svg.selectAll("circle")
+    .data(vertices.slice(1))
+  .enter().append("circle")
+    .attr("transform", function(d) { return "translate(" + d + ")"; })
+    .attr("r", 1.5);
+
+redraw();
+
+function redraw() {
+  path = path
+      .data(voronoi(vertices), polygon);
+
+  path.exit().remove();
+
+  path.enter().append("path")
+      .attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
+      .attr("d", polygon)
+.attr('fill', function () { return "hsl("+Math.random()*360+",100%,50%)"})
+
+  path.order();
+}
+
+function polygon(d) {
+  return "M" + d.join("L") + "Z";
+}
                   </code></pre> 
                 </div> 
               </div> 
