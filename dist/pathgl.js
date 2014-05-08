@@ -45,8 +45,8 @@ function mock (obj, meth) {
   obj[meth] = function () { (obj[meth] = save).call(this, arguments) }
 }
 ;function PriorityQ (leq) {
-  this.keys_ = PriorityQ.prototype.PQKeyRenew_(null, PriorityQ.INIT_SIZE_)
-  this.order_ = null
+  this.keys_ = PriorityQ.prototype.PQKeyRenew_(false, PriorityQ.INIT_SIZE_)
+  this.order_ = false
   this.size_ = 0
   this.max_ = PriorityQ.INIT_SIZE_
   this.initialized_ = false
@@ -94,11 +94,11 @@ PriorityQ.prototype.add = function(keyNew) {
 PriorityQ.prototype.PQKeyRenew_ = function(oldArray, size) {
   var newArray = new Array(size)
   var index = 0
-  if (oldArray !== null)
+  if (oldArray !== false)
     for (; index < oldArray.length; index++)
       newArray[index] = oldArray[index]
 
-  for (; index < size; index++) newArray[index] = null
+  for (; index < size; index++) newArray[index] = false
 
   return newArray
 }
@@ -126,7 +126,7 @@ PriorityQ.prototype.findMin = function() {
 
   do {
     --this.size_
-  } while(this.size_ > 0 && this.keys_[this.order_[this.size_-1]] === null)
+  } while(this.size_ > 0 && this.keys_[this.order_[this.size_-1]] === false)
 
   return sortMin
 }
@@ -151,17 +151,17 @@ PriorityQ.prototype.remove = function(now) {
 
   now = -(now+1)
 
-  debugT(now < this.max_ && this.keys_[now] !== null)
+  debugT(now < this.max_ && this.keys_[now] !== false)
 
-  this.keys_[now] = null
-  while(this.size_ > 0 && this.keys_[this.order_[this.size_-1]] === null)
+  this.keys_[now] = false
+  while(this.size_ > 0 && this.keys_[this.order_[this.size_-1]] === false)
     --this.size_
 }
 
 
 function Heap(leq) {
-  this.ns_ = PQN.renew(null, Heap.INIT_SIZE_ + 1)
-  this.handles_ = PQHandleElem.renew(null, Heap.INIT_SIZE_ + 1)
+  this.ns_ = PQN.renew(false, Heap.INIT_SIZE_ + 1)
+  this.handles_ = PQHandleElem.renew(false, Heap.INIT_SIZE_ + 1)
   this.size_ = 0
   this.max_ = Heap.INIT_SIZE_
   this.fList_ = 0
@@ -173,8 +173,8 @@ function Heap(leq) {
 Heap.INIT_SIZE_ = 32
 
 Heap.prototype.killHeap = function() {
-  this.handles_ = null
-  this.ns_ = null
+  this.handles_ = false
+  this.ns_ = false
 }
 
 Heap.prototype.init = function() {
@@ -225,7 +225,7 @@ Heap.prototype.findMin = function() {
     n[1].handle = n[this.size_].handle
     h[n[1].handle].n = 1
 
-    h[hMin].key = null
+    h[hMin].key = false
     h[hMin].n = this.fList_
     this.fList_ = hMin
 
@@ -239,7 +239,7 @@ Heap.prototype.remove = function(hNow) {
   var n = this.ns_
   var h = this.handles_
 
-  debugT(hNow >= 1 && hNow <= this.max_ && h[hNow].key !== null)
+  debugT(hNow >= 1 && hNow <= this.max_ && h[hNow].key !== false)
 
   var now = h[hNow].n
   n[now].handle = n[this.size_].handle
@@ -251,7 +251,7 @@ Heap.prototype.remove = function(hNow) {
       this.floatUp_(now)
   }
 
-  h[hNow].key = null
+  h[hNow].key = false
   h[hNow].n = this.fList_
   this.fList_ = hNow
 }
@@ -305,7 +305,7 @@ PQN.renew = function(oldArray, size) {
   var newArray = new Array(size)
   var index = 0
 
-  if (oldArray !== null)
+  if (oldArray !== false)
     for (;index < oldArray.length; index++) newArray[index] = oldArray[index]
 
   for (;index < size; index++) newArray[index] = new PQN()
@@ -314,7 +314,7 @@ PQN.renew = function(oldArray, size) {
 }
 
 function PQHandleElem() {
-  this.key = null
+  this.key = false
   this.n = 0
 }
 
@@ -322,7 +322,7 @@ PQHandleElem.renew = function(oldArray, size) {
   var newArray = new Array(size)
     , index = 0
 
-  if (oldArray !== null)
+  if (oldArray !== false)
     for (;index < oldArray.length; index++) newArray[index] = oldArray[index]
 
   for (;index < size; index++) newArray[index] = new PQHandleElem()
@@ -3058,7 +3058,7 @@ T.prototype.Perp = function(x, y, z) {
 }
 
 T.prototype.on = function (w, fn) {
-  fn = fn || null
+  fn = fn || false
 
   if (T.opt.START)  this.Start_ = (fn)
   if (w == T.opt.START_STAT)  this.StartStat_ = (fn)
@@ -3085,7 +3085,7 @@ T.prototype.point = function(xys, stat) {
 
   if (this.es) {
     this.empty_store()
-    this.lastLine_ = null
+    this.lastLine_ = false
   }
 
   for (var i = 0; i < 3; ++i) {
@@ -3103,7 +3103,7 @@ T.prototype.point = function(xys, stat) {
 
   if (tooBig) this.FailureOrFailureStat(T.failureType.XY_TOO_BIG)
 
-  if (this.surface === null) {
+  if (this.surface === false) {
     if (this.storeCount < T.MALA_MAX_STORE) return this.sp(clamped, stat)
     this.empty_store()
   }
@@ -3117,7 +3117,7 @@ T.prototype.StartShape = function(stat) {
   this.state = T.cond.T_IN_SHAPE
   this.storeCount = 0
   this.es = false
-  this.surface = null
+  this.surface = false
 
   this.shapeStat_ = stat
 }
@@ -3125,7 +3125,7 @@ T.prototype.StartShape = function(stat) {
 T.prototype.StartCurve = function() {
   this.requireState_(T.cond.T_IN_SHAPE)
   this.state = T.cond.T_IN_CURVE
-  this.lastLine_ = null
+  this.lastLine_ = false
   if (this.storeCount > 0) this.es = true
 }
 
@@ -3138,8 +3138,8 @@ T.prototype.EndShape = function() {
   this.requireState_(T.cond.T_IN_SHAPE)
   this.state = T.cond.T_SLEEP
 
-  if (this.surface === null) {
-    if (!this.flagLine && !this.layer_ && T.drawStore(this)) return this.shapeStat_ = null
+  if (this.surface === false) {
+    if (!this.flagLine && !this.layer_ && T.drawStore(this)) return this.shapeStat_ = false
     this.empty_store()
   }
   T.projectShape(this)
@@ -3164,21 +3164,21 @@ T.prototype.EndShape = function() {
     if (this.layer_) {
       T.discardOuter(this.surface)
       this.layer_(this.surface)
-      this.surface = null
-      return this.shapeStat_ = null
+      this.surface = false
+      return this.shapeStat_ = false
     }
   }
 
   T.surface.killlayer(this.surface)
-  this.shapeStat_ = null
-  this.surface = null
+  this.shapeStat_ = false
+  this.surface = false
 }
 
 T.prototype.makeSleep_ = function() {
   if (this.surface) T.surface.killlayer(this.surface)
   this.state = T.cond.T_SLEEP
-  this.lastLine_ = null
-  this.surface = null
+  this.lastLine_ = false
+  this.surface = false
 }
 
 T.prototype.requireState_ = function(state) {
@@ -3191,7 +3191,7 @@ T.prototype.gotoState_ = function(newState) {
       switch (this.state) {
         case T.cond.T_SLEEP:
           this.FailureOrFailureStat(T.failureType.MISSING_START_SHAPE)
-          return this.StartShape(null)
+          return this.StartShape(false)
         case T.cond.T_IN_SHAPE:
           this.FailureOrFailureStat(T.failureType.MISSING_START_CURVE)
           return this.StartCurve()
@@ -3211,7 +3211,7 @@ T.prototype.gotoState_ = function(newState) {
 
 T.prototype.addpoint_ = function(xys, stat) {
   var e = this.lastLine_
-  if (e === null) {
+  if (e === false) {
     e = T.surface.makeLine(this.surface)
     T.surface.surfaceSplit(e, e.sym)
   } else {
@@ -3275,7 +3275,7 @@ T.prototype.CombineOrCombineStat = function(xys, stat, depth) {
   var interpStat = this.CombineStat_ ?
     this.CombineStat_(xys, stat, depth, this.shapeStat_) :
     this.Combine_(xys, stat, depth)
-  return interpStat === undefined ?  interpStat = null :  interpStat
+  return interpStat === undefined ?  interpStat = false :  interpStat
 }
 
 T.prototype.FailureOrFailureStat = function(errno) {
@@ -3285,9 +3285,9 @@ T.prototype.FailureOrFailureStat = function(errno) {
 }
 
 T.DictN = function() {
-    this.key = null
-    this.there = null
-    this.prev = null
+    this.key = false
+    this.there = false
+    this.prev = false
 }
 
 T.DictN.prototype.Key = function() {
@@ -3313,7 +3313,7 @@ T.Dict = function(frame, leq) {
 T.Dict.prototype.addBefore = function(n, key) {
   do {
     n = n.prev
-  } while(n.key !== null && !this.leq_(this.frame, n.key, key))
+  } while(n.key !== false && !this.leq_(this.frame, n.key, key))
 
   var newN = new T.DictN()
   newN.key = key
@@ -3337,7 +3337,7 @@ T.Dict.prototype.search = function(key) {
   var n = this.start
   do {
     n = n.there
-  } while(n.key !== null && !this.leq_(this.frame, key, n.key))
+  } while(n.key !== false && !this.leq_(this.frame, key, n.key))
   return n
 }
 
@@ -3359,7 +3359,7 @@ T.PQN.renew = function(oldArray, size) {
   var newArray = new Array(size)
   var index = 0
 
-  if (oldArray !== null)
+  if (oldArray !== false)
     for (;index < oldArray.length; index++) newArray[index] = oldArray[index]
 
   for (;index < size; index++) newArray[index] = new T.PQN()
@@ -3367,14 +3367,14 @@ T.PQN.renew = function(oldArray, size) {
   return newArray
 }
 T.PQHandleElem = function() {
-    this.key = null
+    this.key = false
     this.n = 0
 }
 
 T.PQHandleElem.renew = function(oldArray, size) {
   var newArray = new Array(size)
   var index = 0
-  if (oldArray !== null)
+  if (oldArray !== false)
     for (;index < oldArray.length; index++) newArray[index] = oldArray[index]
 
   for (;index < size; index++) newArray[index] = new T.PQHandleElem()
@@ -3489,7 +3489,7 @@ T.surface.killLine = function(eDel) {
     T.surface.killFace_(eDel.lFace, eDel.rFace())
   }
 
-  if (eDel.oThere === eDel) T.surface.killpoint_(eDel.org, null)
+  if (eDel.oThere === eDel) T.surface.killpoint_(eDel.org, false)
   else {
     eDel.rFace().anLine = eDel.oPrev()
     eDel.org.anLine = eDel.oThere
@@ -3500,8 +3500,8 @@ T.surface.killLine = function(eDel) {
   }
 
   if (eDelSym.oThere === eDelSym ) {
-    T.surface.killpoint_(eDelSym.org, null)
-    T.surface.killFace_(eDelSym.lFace, null)
+    T.surface.killpoint_(eDelSym.org, false)
+    T.surface.killFace_(eDelSym.lFace, false)
   } else {
     eDel.lFace.anLine = eDelSym.oPrev()
     eDelSym.org.anLine = eDelSym.oThere
@@ -3572,17 +3572,17 @@ T.surface.zapFace = function(fZap) {
   do {
     e = eThere
     eThere = e.lThere
-    e.lFace = null
+    e.lFace = false
 
-    if (e.rFace() === null) {
-      if (e.oThere === e) T.surface.killpoint_(e.org, null)
+    if (e.rFace() === false) {
+      if (e.oThere === e) T.surface.killpoint_(e.org, false)
       else {
         e.org.anLine = e.oThere
         T.surface.split_(e, e.oPrev())
       }
 
       var eSym = e.sym
-      if (eSym.oThere === eSym) T.surface.killpoint_(eSym.org, null)
+      if (eSym.oThere === eSym) T.surface.killpoint_(eSym.org, false)
       else {
         eSym.org.anLine = eSym.oThere
         T.surface.split_(eSym, eSym.oPrev())
@@ -3732,21 +3732,21 @@ T.surface.killFace_ = function(fDel, newLFace) {
 T.Face = function(opt_thereFace, opt_prevFace) {
     this.there = opt_thereFace || this
     this.prev = opt_prevFace || this
-    this.anLine = null
-    this.stat = null
-    this.trail = null
+    this.anLine = false
+    this.stat = false
+    this.trail = false
     this.marked = false
     this.inside = false
 }
 
 T.HalfLine = function(opt_thereLine) {
     this.there = opt_thereLine || this
-    this.sym = null
-    this.oThere = null
-    this.lThere = null
-    this.org = null
-    this.lFace = null
-    this.region = null
+    this.sym = false
+    this.oThere = false
+    this.lThere = false
+    this.org = false
+    this.lFace = false
+    this.region = false
     this.follow = 0
 }
 
@@ -3785,12 +3785,12 @@ T.HalfLine.prototype.rThere = function() {
 T.point = function(opt_therepoint, opt_prevpoint) {
     this.there = opt_therepoint || this
     this.prev = opt_prevpoint || this
-    this.anLine = null
-    this.stat = null
+    this.anLine = false
+    this.stat = false
     this.xys = [0, 0, 0]
     this.s = 0
     this.t = 0
-    this.pqHandle = null
+    this.pqHandle = false
 }
 
 T.layer = function() {
@@ -3822,7 +3822,7 @@ T.layer.prototype.fixlayer = function() {
       e = e.lThere
     } while(e !== f.anLine)
   }
-  debugT(f.prev === fPrev && f.anLine === null && f.stat === null)
+  debugT(f.prev === fPrev && f.anLine === false && f.stat === false)
 
   var v
   var vPrev = vStart
@@ -3838,23 +3838,23 @@ T.layer.prototype.fixlayer = function() {
       e = e.oThere
     } while(e !== v.anLine)
   }
-  debugT(v.prev === vPrev && v.anLine === null && v.stat === null)
+  debugT(v.prev === vPrev && v.anLine === false && v.stat === false)
 
   var ePrev = eStart
   for (ePrev = eStart; (e = ePrev.there) !== eStart; ePrev = e) {
     debugT(e.sym.there === ePrev.sym)
     debugT(e.sym !== e)
     debugT(e.sym.sym === e)
-    debugT(e.org !== null)
-    debugT(e.dst() !== null)
+    debugT(e.org !== false)
+    debugT(e.dst() !== false)
     debugT(e.lThere.oThere.sym === e)
     debugT(e.oThere.sym.lThere === e)
   }
   debugT(e.sym.there === ePrev.sym &&
          e.sym === this.eStartSym &&
          e.sym.sym === e &&
-         e.org === null && e.dst() === null &&
-         e.lFace === null && e.rFace() === null)
+         e.org === false && e.dst() === false &&
+         e.lFace === false && e.rFace() === false)
 }
 
 T.SENTINEL_XY_ = 4 * T.MAX_XY
@@ -3866,10 +3866,10 @@ T.computeInner = function(mala) {
   T.initPriorityQ_(mala)
   T.initLineDict_(mala)
   var v
-  while ((v = mala.pq.findMin()) !== null) {
+  while ((v = mala.pq.findMin()) !== false) {
     for ( ;; ) {
       var vThere = (mala.pq.minimum())
-      if (vThere === null || !T.pointEq(vThere, v)) break
+      if (vThere === false || !T.pointEq(vThere, v)) break
 
       vThere = (mala.pq.findMin())
       T.splitMergePoints_(mala, v.anLine, vThere.anLine)
@@ -3916,10 +3916,10 @@ T.lineLeq_ = function(mala, reg1, reg2) {
 T.killSpace_ = function(mala, reg) {
   if (reg.fixUpperLine) debugT(reg.eUp.follow === 0)
 
-  reg.eUp.region = null
+  reg.eUp.region = false
 
   mala.dict.killN(reg.nUp)
-  reg.nUp = null
+  reg.nUp = false
 }
 
 T.fixUpperLine_ = function(reg, newLine) {
@@ -4033,7 +4033,7 @@ T.addRightLines_ = function(mala, regUp, eFirst, eLast, eTopLeft, cleanUp) {
     T.addSpaceBelow_(mala, regUp, e.sym)
     e = e.oThere
   } while (e !== eLast)
-  if (eTopLeft === null) eTopLeft = regUp.spaceBelow().eUp.rPrev()
+  if (eTopLeft === false) eTopLeft = regUp.spaceBelow().eUp.rPrev()
   var regPrev = regUp
   var ePrev = eTopLeft
   var reg
@@ -4072,9 +4072,9 @@ T.Combine_ = function(mala, isect, stat, depths, needed) {
     isect.xys[2]
   ]
 
-  isect.stat = null
+  isect.stat = false
   isect.stat = mala.CombineOrCombineStat(xys, stat, depths)
-  if (isect.stat === null) {
+  if (isect.stat === false) {
     if (!needed) {
       isect.stat = stat[0]
     } else if (!mala.fatalFailure) {
@@ -4086,7 +4086,7 @@ T.Combine_ = function(mala, isect, stat, depths, needed) {
 
 
 T.splitMergePoints_ = function(mala, e1, e2) {
-  var stat = [null, null, null, null]
+  var stat = [false, false, false, false]
   var depths = [0.5, 0.5, 0, 0]
 
   stat[0] = e1.org.stat
@@ -4252,7 +4252,7 @@ T.fixForWrite_ = function(mala, regUp) {
       regUp = T.topRightSpace_(regUp)
       var e = regUp.spaceBelow().eUp.rPrev()
       regLo.eUp = eLo.oPrev()
-      eLo = T.finishLeftSpaces_(mala, regLo, null)
+      eLo = T.finishLeftSpaces_(mala, regLo, false)
       T.addRightLines_(mala, regUp, eLo.oThere, eUp.rPrev(), e, true)
       return true
     }
@@ -4296,7 +4296,7 @@ T.walkDirtySpaces_ = function(mala, regUp) {
     if (!regUp.dirty) {
       regLo = regUp
       regUp = regUp.spaceAbove()
-      if (regUp === null || !regUp.dirty) return
+      if (regUp === false || !regUp.dirty) return
     }
 
     regUp.dirty = false
@@ -4355,7 +4355,7 @@ T.connectightpoint_ = function(mala, regUp, eBottomLeft) {
 
   if (T.pointEq(eLo.org, mala.event)) {
     T.surface.surfaceSplit(eBottomLeft, eLo.oPrev())
-    eBottomLeft = T.finishLeftSpaces_(mala, regLo, null)
+    eBottomLeft = T.finishLeftSpaces_(mala, regLo, false)
     dead = true
   }
 
@@ -4406,7 +4406,7 @@ T.connectLeftDead_ = function(mala, regUp, vEvent) {
   }
 
   T.surface.surfaceSplit(vEvent.anLine, eTopRight)
-  if (!T.lineGoesLeft(eTopLeft)) eTopLeft = null
+  if (!T.lineGoesLeft(eTopLeft)) eTopLeft = false
 
   T.addRightLines_(mala, regUp, eTopRight.oThere, eLast, eTopLeft, true)
 }
@@ -4418,7 +4418,7 @@ T.connectLeftpoint_ = function(mala, vEvent) {
     , regLo = regUp.spaceBelow()
     , eUp = regUp.eUp
     , eLo = regLo.eUp
-      , eNew
+    , eNew
 
   if (T.lineSign(eUp.dst(), vEvent, eUp.org) === 0)
     return T.connectLeftDead_(mala, regUp, vEvent)
@@ -4438,7 +4438,7 @@ T.connectLeftpoint_ = function(mala, vEvent) {
 
     T.sweepEvent_(mala, vEvent)
   } else
-    T.addRightLines_(mala, regUp, vEvent.anLine, vEvent.anLine, null, true)
+    T.addRightLines_(mala, regUp, vEvent.anLine, vEvent.anLine, false, true)
 
 }
 
@@ -4448,7 +4448,7 @@ T.sweepEvent_ = function(mala, vEvent) {
 
   var e = vEvent.anLine
 
-  while (e.region === null) {
+  while (e.region === false) {
     e = e.oThere
     if (e === vEvent.anLine) return T.connectLeftpoint_(mala, vEvent)
   }
@@ -4456,7 +4456,7 @@ T.sweepEvent_ = function(mala, vEvent) {
   var regUp = T.topLeftSpace_(e.region)
     , reg = regUp.spaceBelow()
     , eTopLeft = reg.eUp
-    , eBottomLeft = T.finishLeftSpaces_(mala, reg, null)
+    , eBottomLeft = T.finishLeftSpaces_(mala, reg, false)
 
   eBottomLeft.oThere === eTopLeft ?
     T.connectightpoint_(mala, regUp, eBottomLeft) :
@@ -4490,7 +4490,7 @@ T.initLineDict_ = function(mala) {
 T.doneLineDict_ = function(mala) {
   var fixedLines = 0
     , reg
-  while ((reg = (mala.dict.Min().Key())) !== null) {
+  while ((reg = (mala.dict.Min().Key())) !== false) {
     if (!reg.sentinel) {
       debugT(reg.fixUpperLine)
       debugT(++fixedLines === 1)
@@ -4499,7 +4499,7 @@ T.doneLineDict_ = function(mala) {
     T.killSpace_(mala, reg)
   }
 
-  mala.dict = null
+  mala.dict = false
 }
 
 T.removeDeadLines_ = function(mala) {
@@ -4539,7 +4539,7 @@ T.initPriorityQ_ = function(mala) {
 }
 
 T.done = function(mala) {
-  mala.pq = null
+  mala.pq = false
 }
 
 T.removeDeadFaces_ = function(surface) {
@@ -4556,8 +4556,8 @@ T.removeDeadFaces_ = function(surface) {
 }
 
 T.Region = function() {
-    this.eUp = null
-    this.nUp = null
+    this.eUp = false
+    this.nUp = false
     this.followId = 0
     this.inside = false
     this.sentinel = false
@@ -4574,7 +4574,7 @@ T.Region.prototype.spaceAbove = function() {
 }
 
 T.drawlayer = function(mala, surface) {
-  mala.lonelyTList = null
+  mala.lonelyTList = false
   var f
   for(f = surface.fStart.there; f !== surface.fStart; f = f.there) {
     f.marked = false
@@ -4585,9 +4585,9 @@ T.drawlayer = function(mala, surface) {
       debugT(f.marked)
     }
   }
-  if (mala.lonelyTList !== null) {
+  if (mala.lonelyTList !== false) {
     T.drawLonelyTangles_(mala, mala.lonelyTList)
-    mala.lonelyTList = null
+    mala.lonelyTList = false
   }
 }
 
@@ -4659,13 +4659,13 @@ T.marked_ = function(f) {
 }
 
 T.fTrail_ = function(t) {
-  while (t !== null)
+  while (t !== false)
     t.marked = false, t = t.trail
 }
 
 T.maximumFan_ = function(eOrig) {
-  var newFace = new T.Count(0, null, T.drawFan_)
-    , trail = null
+  var newFace = new T.Count(0, false, T.drawFan_)
+    , trail = false
     , e
 
   for(e = eOrig; !T.marked_(e.lFace); e = e.oThere) {
@@ -4688,9 +4688,9 @@ T.maximumFan_ = function(eOrig) {
 }
 
 T.maximumSTp_ = function(eOrig) {
-  var newFace = new T.Count(0, null, T.drawSTp_)
+  var newFace = new T.Count(0, false, T.drawSTp_)
   var startSize = 0, tailSize = startSize
-  var trail = null
+  var trail = false
   var e
   var eTail
   var eStart
@@ -4832,7 +4832,7 @@ T.drawLonelyTangles_ = function(mala, start) {
   var lineState = -1
   var f = start
   mala.StartOrStartStat(primitive.TRIANGLES)
-  for(; f !== null; f = f.trail) {
+  for(; f !== false; f = f.trail) {
     var e = f.anLine
     do {
       if (mala.flagLine) {

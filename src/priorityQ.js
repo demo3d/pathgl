@@ -1,6 +1,6 @@
 function PriorityQ (leq) {
-  this.keys_ = PriorityQ.prototype.PQKeyRenew_(null, PriorityQ.INIT_SIZE_)
-  this.order_ = null
+  this.keys_ = PriorityQ.prototype.PQKeyRenew_(false, PriorityQ.INIT_SIZE_)
+  this.order_ = false
   this.size_ = 0
   this.max_ = PriorityQ.INIT_SIZE_
   this.initialized_ = false
@@ -48,11 +48,11 @@ PriorityQ.prototype.add = function(keyNew) {
 PriorityQ.prototype.PQKeyRenew_ = function(oldArray, size) {
   var newArray = new Array(size)
   var index = 0
-  if (oldArray !== null)
+  if (oldArray !== false)
     for (; index < oldArray.length; index++)
       newArray[index] = oldArray[index]
 
-  for (; index < size; index++) newArray[index] = null
+  for (; index < size; index++) newArray[index] = false
 
   return newArray
 }
@@ -80,7 +80,7 @@ PriorityQ.prototype.findMin = function() {
 
   do {
     --this.size_
-  } while(this.size_ > 0 && this.keys_[this.order_[this.size_-1]] === null)
+  } while(this.size_ > 0 && this.keys_[this.order_[this.size_-1]] === false)
 
   return sortMin
 }
@@ -105,17 +105,17 @@ PriorityQ.prototype.remove = function(now) {
 
   now = -(now+1)
 
-  debugT(now < this.max_ && this.keys_[now] !== null)
+  debugT(now < this.max_ && this.keys_[now] !== false)
 
-  this.keys_[now] = null
-  while(this.size_ > 0 && this.keys_[this.order_[this.size_-1]] === null)
+  this.keys_[now] = false
+  while(this.size_ > 0 && this.keys_[this.order_[this.size_-1]] === false)
     --this.size_
 }
 
 
 function Heap(leq) {
-  this.ns_ = PQN.renew(null, Heap.INIT_SIZE_ + 1)
-  this.handles_ = PQHandleElem.renew(null, Heap.INIT_SIZE_ + 1)
+  this.ns_ = PQN.renew(false, Heap.INIT_SIZE_ + 1)
+  this.handles_ = PQHandleElem.renew(false, Heap.INIT_SIZE_ + 1)
   this.size_ = 0
   this.max_ = Heap.INIT_SIZE_
   this.fList_ = 0
@@ -127,8 +127,8 @@ function Heap(leq) {
 Heap.INIT_SIZE_ = 32
 
 Heap.prototype.killHeap = function() {
-  this.handles_ = null
-  this.ns_ = null
+  this.handles_ = false
+  this.ns_ = false
 }
 
 Heap.prototype.init = function() {
@@ -179,7 +179,7 @@ Heap.prototype.findMin = function() {
     n[1].handle = n[this.size_].handle
     h[n[1].handle].n = 1
 
-    h[hMin].key = null
+    h[hMin].key = false
     h[hMin].n = this.fList_
     this.fList_ = hMin
 
@@ -193,7 +193,7 @@ Heap.prototype.remove = function(hNow) {
   var n = this.ns_
   var h = this.handles_
 
-  debugT(hNow >= 1 && hNow <= this.max_ && h[hNow].key !== null)
+  debugT(hNow >= 1 && hNow <= this.max_ && h[hNow].key !== false)
 
   var now = h[hNow].n
   n[now].handle = n[this.size_].handle
@@ -205,7 +205,7 @@ Heap.prototype.remove = function(hNow) {
       this.floatUp_(now)
   }
 
-  h[hNow].key = null
+  h[hNow].key = false
   h[hNow].n = this.fList_
   this.fList_ = hNow
 }
@@ -259,7 +259,7 @@ PQN.renew = function(oldArray, size) {
   var newArray = new Array(size)
   var index = 0
 
-  if (oldArray !== null)
+  if (oldArray !== false)
     for (;index < oldArray.length; index++) newArray[index] = oldArray[index]
 
   for (;index < size; index++) newArray[index] = new PQN()
@@ -268,7 +268,7 @@ PQN.renew = function(oldArray, size) {
 }
 
 function PQHandleElem() {
-  this.key = null
+  this.key = false
   this.n = 0
 }
 
@@ -276,7 +276,7 @@ PQHandleElem.renew = function(oldArray, size) {
   var newArray = new Array(size)
     , index = 0
 
-  if (oldArray !== null)
+  if (oldArray !== false)
     for (;index < oldArray.length; index++) newArray[index] = oldArray[index]
 
   for (;index < size; index++) newArray[index] = new PQHandleElem()

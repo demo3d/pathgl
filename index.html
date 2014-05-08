@@ -92,7 +92,7 @@ d3.select('canvas')
               <div class="col-sm-offset-4 col-sm-8">
                 <h3>Supercharge your visualization with shaders</h3> 
                 <p> 
-                  Calculate data processing, simulation, layout, and post processing
+                  Calculate expensive queries, simulation, layout, and post processing
                   effects on a separate thread without any copying.
                 </p> 
               </div>
@@ -106,43 +106,38 @@ d3.select('canvas')
 
                 <div class="highlight"> 
                   <pre><code class="bash hljs"> 
-var width = 960,
-    height = 500;
 
 var vertices = d3.range(100).map(function(d) {
-  return [Math.random() * width, Math.random() * height];
+  return [Math.random() * 250, Math.random() * 250];
 });
 
 var voronoi = d3.geom.voronoi()
-    .clipExtent([[0, 0], [width, height]]);
+    .clipExtent([[0, 0], [250, 250]]);
 
 var svg = d3.select(".two")
-    .attr("width", width)
-    .attr("height", height)
-//    .on("mousemove", function() { vertices[0] = d3.mouse(this); redraw(); });
+//.on("mousemove", function() { vertices[0] = d3.mouse(this); redraw(); })
 
 var path = svg.selectAll("path");
 
 svg.selectAll("circle")
-    .data(vertices.slice(1))
-  .enter().append("circle")
-    .attr("transform", function(d) { return "translate(" + d + ")"; })
-    .attr("r", 1.5);
+.data(vertices.slice(1))
+.enter().append("circle")
+.attr("transform", function(d) { return "translate(" + d + ")"; })
+.attr("r", 1.5);
 
 redraw();
 
 function redraw() {
-  path = path
-      .data(voronoi(vertices), polygon);
+  path = path.data(voronoi(vertices), polygon);
 
   path.exit().remove();
 
   path.enter().append("path")
-      .attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
-      .attr("d", polygon)
-.attr('fill', function () { return "hsl("+Math.random()*360+",100%,50%)"})
+  .attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
+  .attr("d", polygon)
+  .attr('fill', function () { return "hsl("+Math.random()*360+",100%,50%)"})
 
-  path.order();
+  //path.order();
 }
 
 function polygon(d) {
