@@ -49,7 +49,7 @@
 			
 			<div class="right col-xs-12 col-sm-9">
 				<div class="blurb"><!--blurb--></div>
-				<canvas width="960" height="500"></canvas>
+				<canvas width="760" height="500"></canvas>
 				<svg></svg>
 				<script src="js/map.js"></script><p>Map of historical events throughout time. Scraped from wikipedia. click on a circle
 for deets. 
@@ -82,14 +82,12 @@ function mouseover(d) {
 function draw_world(err, world) {
   if (err) return
 
-  d3.select('svg')
-//  webgl
+  d3.select('canvas')
   .append("path")
   .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a == b && a.id !== 10 }))
   .attr({ class: 'world'
         , d: path
-        , fill: 'none'
-        , 'stroke': 'grey'
+        , fill: 'grey'
         })
 }
 
