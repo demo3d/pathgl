@@ -5199,10 +5199,7 @@ var triangulator = new T()
       .on(T.opt.POINT_STAT, function (d, poly) { poly.push(d[0], d[1]) })
       .on(T.opt.COMBINE, function (d) { return d.slice(0, 2) })
       .on(T.opt.LINE_FLAG, noop)
-;
-window.parsePath = parsePath
-
-function parsePath(str) {
+;function parsePath(str) {
   var buffer = []
     , pos = [0, 0]
     , origin = [0, 0]
@@ -5217,6 +5214,7 @@ function parsePath(str) {
         c == 'l' ? buffer.push(pos[0], pos[1], x, y) && (pos = [x, y]) :
         c == 'z' ? buffer.push(pos[0], pos[1], origin[0], origin[1]) && (pos = origin) :
         console.log('%d method is not supported malformed path:', c)
+      if (c === NaN) debugger
     }
   })
 
@@ -5621,7 +5619,10 @@ var baseProto = {
 , previousSibling: function () { canvas.scene[canvas.__scene__.indexOf(this) - 1] }
 , nextSibling: function () { canvas.scene[canvas.__scene__.indexOf()  + 1] }
 , parent: function () { return __scene__ }
-, parentNode: {insertBefore: function () {}}
+, parentNode: baseProto
+, removeChild: function (child) {
+    __scene__.splice(child.indexOf(child)), 1
+  }
 , opacity: function (v) {
     this.fBuffer[this.indices[0] + 1] = 256 - (v * 256)
   }

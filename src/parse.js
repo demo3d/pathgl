@@ -1,6 +1,3 @@
-
-window.parsePath = parsePath
-
 function parsePath(str) {
   var buffer = []
     , pos = [0, 0]
@@ -16,6 +13,7 @@ function parsePath(str) {
         c == 'l' ? buffer.push(pos[0], pos[1], x, y) && (pos = [x, y]) :
         c == 'z' ? buffer.push(pos[0], pos[1], origin[0], origin[1]) && (pos = origin) :
         console.log('%d method is not supported malformed path:', c)
+      if (c === NaN) debugger
     }
   })
 
