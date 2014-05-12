@@ -2976,7 +2976,9 @@ function triangulate(curves) {
   return t
 }
 
-var debugT = function (cond) { debug(cond, 'Could not Triangulate...') }
+var debugT = function (cond) {
+  debugger
+  debug(cond, 'Could not Triangulate...') }
 
 function T() {
   this.state = T.cond.T_SLEEP
@@ -3288,18 +3290,6 @@ T.DictN = function() {
     this.key = false
     this.there = false
     this.prev = false
-}
-
-T.DictN.prototype.Key = function() {
-  return this.key
-}
-
-T.DictN.prototype.Succ = function() {
-  return this.there
-}
-
-T.DictN.prototype.Pred = function() {
-  return this.prev
 }
 
 T.Dict = function(frame, leq) {
@@ -3876,7 +3866,7 @@ T.computeInner = function(mala) {
     }
     T.sweepEvent_(mala, v)
   }
-  var swapReg = (mala.dict.Min().Key())
+  var swapReg = (mala.dict.Min().key)
   mala.event = swapReg.eUp.org
   T.sweepDebugEvent(mala)
   T.doneLineDict_(mala)
@@ -4414,7 +4404,7 @@ T.connectLeftDead_ = function(mala, regUp, vEvent) {
 T.connectLeftpoint_ = function(mala, vEvent) {
   var swap = new T.Region()
   swap.eUp = vEvent.anLine.sym
-  var regUp = (mala.dict.search(swap).Key())
+  var regUp = (mala.dict.search(swap).key)
     , regLo = regUp.spaceBelow()
     , eUp = regUp.eUp
     , eLo = regLo.eUp
@@ -4490,7 +4480,7 @@ T.initLineDict_ = function(mala) {
 T.doneLineDict_ = function(mala) {
   var fixedLines = 0
     , reg
-  while ((reg = (mala.dict.Min().Key())) !== false) {
+  while ((reg = (mala.dict.Min().key)) !== false) {
     if (!reg.sentinel) {
       debugT(reg.fixUpperLine)
       debugT(++fixedLines === 1)
@@ -4566,11 +4556,11 @@ T.Region = function() {
 }
 
 T.Region.prototype.spaceBelow = function() {
-  return (this.nUp.Pred().Key())
+  return (this.nUp.prev.key)
 }
 
 T.Region.prototype.spaceAbove = function() {
-  return (this.nUp.Succ().Key())
+  return (this.nUp.there.key)
 }
 
 T.drawlayer = function(mala, surface) {
