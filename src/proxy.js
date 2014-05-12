@@ -110,13 +110,13 @@ var baseProto = {
 , querySelectorAll: querySelectorAll
 , createElementNS: identity
 , insertBefore: noop
-, ownerDocument: { createElementNS: function (_, x) { debugger ;return x } }
-, previousSibling: function () { canvas.scene[canvas.__scene__.indexOf(this) - 1] }
-, nextSibling: function () { canvas.scene[canvas.__scene__.indexOf()  + 1] }
-, parent: function () { return __scene__ }
-, parentNode: baseProto
+, ownerDocument: { createElementNS: function (_, x) { return x } }
+, previousSibling: function () { canvas.__scene__[canvas.__scene__.indexOf(this) - 1] }
+, nextSibling: function () { canvas.__scene__[canvas.__scene__.indexOf()  + 1] }
+, parentNode: false //delegate to self
 , removeChild: function (child) {
-    __scene__.splice(child.indexOf(child)), 1
+    var s = canvas.__scene__
+    s.splice(s.indexOf(child), 1)
   }
 , opacity: function (v) {
     this.fBuffer[this.indices[0] + 1] = 256 - (v * 256)
@@ -140,6 +140,7 @@ var baseProto = {
 , ownerSVGElement: { createSVGPoint: noop }
 }
 
+baseProto.parentNode = baseProto
 var types = [
   function circle () {}
 , function rect() {}

@@ -1043,7 +1043,7 @@ T.finishLeftSpaces_ = function(mala, regFirst, regLast) {
     regPrev.fixUpperLine = false
     var reg = regPrev.spaceBelow()
     var e = reg.eUp
-    if (e.org !== ePrev.org) {
+    if (e && e.org !== ePrev.org) {
       if (!reg.fixUpperLine) {
         T.finishSpace_(mala, regPrev)
         break

@@ -4002,7 +4002,7 @@ T.finishLeftSpaces_ = function(mala, regFirst, regLast) {
     regPrev.fixUpperLine = false
     var reg = regPrev.spaceBelow()
     var e = reg.eUp
-    if (e.org !== ePrev.org) {
+    if (e && e.org !== ePrev.org) {
       if (!reg.fixUpperLine) {
         T.finishSpace_(mala, regPrev)
         break
@@ -5206,15 +5206,15 @@ var triangulator = new T()
 
   var contours = []
   contours.push([])
-  str.match(/[a-z][^a-z]*/ig).forEach(function (segment, i, match) {
+  str.match(/[mzlhvcsqta][^a-z]*/ig).forEach(function (segment, i, match) {
     var points = segment.slice(1).trim().split(/,| /g), c = segment[0].toLowerCase(), j = 0
     while(j < points.length) {
       var x = points[j++], y = points[j++]
       c == 'm' ? (contours.push(buffer = []) ,(origin = pos = [x, y])) :
         c == 'l' ? buffer.push(pos[0], pos[1], x, y) && (pos = [x, y]) :
         c == 'z' ? buffer.push(pos[0], pos[1], origin[0], origin[1]) && (pos = origin) :
-        console.log('%d method is not supported malformed path:', c)
-      if (c === NaN) debugger
+        console.log('%s method is not supported malformed path:', c)
+      if(c == 'e') debugge
     }
   })
 
@@ -5615,13 +5615,13 @@ var baseProto = {
 , querySelectorAll: querySelectorAll
 , createElementNS: identity
 , insertBefore: noop
-, ownerDocument: { createElementNS: function (_, x) { debugger ;return x } }
-, previousSibling: function () { canvas.scene[canvas.__scene__.indexOf(this) - 1] }
-, nextSibling: function () { canvas.scene[canvas.__scene__.indexOf()  + 1] }
-, parent: function () { return __scene__ }
-, parentNode: baseProto
+, ownerDocument: { createElementNS: function (_, x) { return x } }
+, previousSibling: function () { canvas.__scene__[canvas.__scene__.indexOf(this) - 1] }
+, nextSibling: function () { canvas.__scene__[canvas.__scene__.indexOf()  + 1] }
+, parentNode: false //delegate to self
 , removeChild: function (child) {
-    __scene__.splice(child.indexOf(child)), 1
+    var s = canvas.__scene__
+    s.splice(s.indexOf(child), 1)
   }
 , opacity: function (v) {
     this.fBuffer[this.indices[0] + 1] = 256 - (v * 256)
@@ -5645,6 +5645,7 @@ var baseProto = {
 , ownerSVGElement: { createSVGPoint: noop }
 }
 
+baseProto.parentNode = baseProto
 var types = [
   function circle () {}
 , function rect() {}

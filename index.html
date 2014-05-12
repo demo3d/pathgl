@@ -106,7 +106,6 @@ d3.select('canvas')
 
                 <div class="highlight"> 
                   <pre><code class="bash hljs"> 
-
 var vertices = d3.range(100).map(function(d) {
   return [Math.random() * 250, Math.random() * 250];
 });
@@ -133,11 +132,10 @@ function redraw() {
   path.exit().remove();
 
   path.enter().append("path")
-  .attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
-  .attr("d", polygon)
-  .attr('fill', function () { return "hsl("+Math.random()*360+",100%,50%)"})
+    .attr("d", polygon)
+   .attr('fill', function (d, i) { return "hsl(" + (i % 6)* 60 + ",100%,50%)"})
 
-  //path.order();
+  path.order();
 }
 
 function polygon(d) {
@@ -150,11 +148,11 @@ function polygon(d) {
           </div> 
         </div> 
       </section> 
-      <script src="http://d3js.org/d3.v3.js" charset="utf-8"></script>
+      <script src="/lib/d3.js" charset="utf-8"></script>
       <script src="/dist/pathgl.js"></script>
       <script>
         d3.selectAll('.bash').each(function (d) {
-	      eval(this.textContent)
+	        eval(this.textContent)
 	      })
       </script>
   </body>

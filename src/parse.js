@@ -5,15 +5,15 @@ function parsePath(str) {
 
   var contours = []
   contours.push([])
-  str.match(/[a-z][^a-z]*/ig).forEach(function (segment, i, match) {
+  str.match(/[mzlhvcsqta][^a-z]*/ig).forEach(function (segment, i, match) {
     var points = segment.slice(1).trim().split(/,| /g), c = segment[0].toLowerCase(), j = 0
     while(j < points.length) {
       var x = points[j++], y = points[j++]
       c == 'm' ? (contours.push(buffer = []) ,(origin = pos = [x, y])) :
         c == 'l' ? buffer.push(pos[0], pos[1], x, y) && (pos = [x, y]) :
         c == 'z' ? buffer.push(pos[0], pos[1], origin[0], origin[1]) && (pos = origin) :
-        console.log('%d method is not supported malformed path:', c)
-      if (c === NaN) debugger
+        console.log('%s method is not supported malformed path:', c)
+      if(c == 'e') debugge
     }
   })
 
