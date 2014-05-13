@@ -126,21 +126,21 @@ svg.selectAll("circle")
 
 redraw();
 
+var line = d3.svg.line()
+line.interpolate('cardinal');
+
 function redraw() {
-  path = path.data(voronoi(vertices), polygon);
+  path = path.data(voronoi(vertices), String);
 
   path.exit().remove();
 
   path.enter().append("path")
-    .attr("d", polygon)
+    .attr("d", line)
    .attr('fill', function (d, i) { return "hsl(" + (i % 6)* 60 + ",80%,50%)"})
 
   path.order();
 }
 
-function polygon(d) {
-  return "M" + d.join("L") + "Z";
-}
                   </code></pre> 
                 </div> 
               </div> 

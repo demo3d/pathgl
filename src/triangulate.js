@@ -18,7 +18,7 @@ function triangulate(curves) {
 }
 
 var debugT = function (cond) {
-  debugger
+  //debugger
   debug(cond, 'Could not Triangulate...') }
 
 function T() {
@@ -371,16 +371,6 @@ T.Dict.prototype.search = function(key) {
   } while(n.key !== false && !this.leq_(this.frame, key, n.key))
   return n
 }
-
-
-T.Dict.prototype.Min = function() {
-  return this.start.there
-}
-
-T.Dict.prototype.Max = function() {
-  return this.start.prev
-}
-
 
 T.PQN = function() {
     this.handle = 0
@@ -907,7 +897,7 @@ T.computeInner = function(mala) {
     }
     T.sweepEvent_(mala, v)
   }
-  var swapReg = (mala.dict.Min().key)
+  var swapReg = (mala.dict.start.there.key)
   mala.event = swapReg.eUp.org
   T.sweepDebugEvent(mala)
   T.doneLineDict_(mala)
@@ -1521,7 +1511,7 @@ T.initLineDict_ = function(mala) {
 T.doneLineDict_ = function(mala) {
   var fixedLines = 0
     , reg
-  while ((reg = (mala.dict.Min().key)) !== false) {
+  while ((reg = (mala.dict.start.there.key)) !== false) {
     if (!reg.sentinel) {
       debugT(reg.fixUpperLine)
       debugT(++fixedLines === 1)
