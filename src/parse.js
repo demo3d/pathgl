@@ -10,8 +10,10 @@ function parsePath(str) {
     while(j < points.length) {
       var x = points[j++], y = points[j++]
       c == 'm' ? (contours.push(buffer = []) ,(origin = pos = [x, y])) :
-        c == 'l' ? buffer.push(pos[0], pos[1], x, y) && (pos = [x, y]) :
-        c == 'z' ? buffer.push(pos[0], pos[1], origin[0], origin[1]) && (pos = origin) :
+        c == 'l' ? buffer.push(x, y) && (pos = [x, y]) :
+        c == 'z' ? buffer.push(origin[0], origin[1]) && (pos = origin) :
+        c == 'h' ? buffer.push(y) && (pos = [x, y]) :
+        c == 'v' ? buffer.push() && (pos = [x, y]) :
         console.log('%s method is not supported malformed path:', c)
       if(c == 'e') debugge
     }

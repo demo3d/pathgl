@@ -36,7 +36,7 @@ var i = 0
 function draw_world(err, us) {
   if (err) throw err
   //var states = topojson.feature(us, us.objects.counties).features
-  var states = topojson.feature(us, us.objects.states).features
+  var states = topojson.feature(us, us.objects.counties).features
                //.filter(function (d) { return d.id !== 2 && d.id !== 15 })
   // var dest = pathgl.texture()
   //var bin = shader
