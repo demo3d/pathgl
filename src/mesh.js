@@ -4,6 +4,7 @@ function Mesh (gl, options, attr) {
     , attrList = options.attrList || ['pos', 'color', 'fugue']
     , primitive = gl[options.primitive.toUpperCase()]
     , material = []
+    , indexPool = []
 
   init()
   return {

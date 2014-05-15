@@ -1,20 +1,19 @@
 var selector = 'svg'
-var size = { width: .85 * innerWidth, height: innerHeight * .9 }
-var width = size.width,
-    height = size.height,
+var width = 760,
+    height = 500,
     rotate = [10, -10],
     velocity = [.03, -.001],
     time = Date.now();
 
 var simplify = d3.geo.transform({ point: function(x, y, z) { this.stream.point(x, y); } })
-var proj = d3.geo.albersUsa().scale(1250).translate([size.width / 2 , size.height / 2])
+var proj = d3.geo.albersUsa().scale(1000).translate([width / 2 , height / 2])
   , path = d3.geo.path().projection(proj)
 
 var svg = d3.select(selector)
           .attr("width", width)
           .attr("height", height)
 
-var webgl = d3.select('canvas').attr(size).attr('class', 'no-click')
+var webgl = d3.select('canvas').attr('class', 'no-click')
 var getDayOfYear = d3.time.format('%j')
 // var dsv = d3.csv('data/birds.csv')
 //           .row(function (d, i) {
@@ -57,10 +56,7 @@ function draw_world(err, us) {
   .attr('fill', function (d, i) { return 'hsl(' + Math.random() *360 + ', 90% , 70%)' })
 
 
-  var canv  = d3.select('.right').append('canvas')
-              .attr('height', 500)
-              .attr('width', 960)
-              .node()
+  var canv  = d3.select('.right')
 
   // var heat = createWebGLHeatmap({canvas:  canv})
 

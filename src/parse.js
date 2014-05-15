@@ -1,5 +1,5 @@
 function parsePath(str) {
-  var buffer = []
+  var buffer  = []
     , pos = [0, 0]
     , origin = [0, 0]
 
@@ -12,10 +12,9 @@ function parsePath(str) {
       c == 'm' ? (contours.push(buffer = []) ,(origin = pos = [x, y])) :
         c == 'l' ? buffer.push(x, y) && (pos = [x, y]) :
         c == 'z' ? buffer.push(origin[0], origin[1]) && (pos = origin) :
-        c == 'h' ? buffer.push(y) && (pos = [x, y]) :
-        c == 'v' ? buffer.push() && (pos = [x, y]) :
+        c == 'h' ? buffer.push(x, pos[1]) && (pos[0] = x) :
+        c == 'v' ? buffer.push(pos[0], x) && (pos[1] = x) :
         console.log('%s method is not supported malformed path:', c)
-      if(c == 'e') debugge
     }
   })
 
@@ -23,8 +22,11 @@ function parsePath(str) {
 
   var off = this.mesh.tessOffset
   this.posBuffer.set(buffer, off)
-  this.indices = buffer.map(function (d, i) { return (off + i) / 2 })
-  this.mesh.tessOffset += buffer.length
+  this.mesh.tessOffset += buffer.length - this.indices.length
+  if (buffer.length > this.indices)
+  this.indices = extend(buffer.map(function (d, i) { return (off + i) >> 1 }), this.indices)
+  else this.indices.length = buffer.length
+
   this.mesh.alloc(this.mesh.tessOffset)
 }
 
@@ -58,10 +60,4 @@ function matchesSelector(selector) {
   if (isFinite(selector.length)) return !!~flatten(selector).indexOf(this)
   for (var selectors = selector.split(','), tokens, dividedTokens; selector = selectors.pop(); tokens = selector.split(tokenizr).slice(0))
     if (interpret.apply(this, q(tokens.pop())) && (!tokens.length || ancestorMatch(this, tokens, selector.match(dividers)))) return true
-}
-
-
-function ppp (a) {
-  console.log(a)
-  return flatten(a)
 }

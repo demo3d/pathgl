@@ -1,16 +1,16 @@
-var selector = 'svg'
-var size = {width: d3.select('canvas').attr('width'), height: innerHeight * .9}
+var size = {width: d3.select('canvas').attr('width'), height: d3.select('canvas').attr('height')}
     rotate = [10, -10],
     velocity = [.03, -.001],
     time = Date.now();
 
 var simplify = d3.geo.transform({ point: function(x, y, z) { this.stream.point(x, y); } })
-var proj = d3.geo.wagner4().scale(225).translate([size.width / 2 - 75, size.height / 2]).precision(.1)
+var proj = d3.geo.wagner4().scale(200).translate([size.width / 2, size.height / 2]).precision(.1)
   , path = d3.geo.path().projection(proj)
 
-var svg = d3.select(selector)
+var svg = d3.select('.right').append('svg')
+          .style('position', 'absolute')
+          .style('top', '0')
           .attr(size)
-
 
 var webgl = d3.select('canvas').attr('class', 'no-click')
 var p = d3.select('.blurb')
@@ -84,12 +84,12 @@ function draw_history(err, hist) {
   var b = svg.append("g")
           .attr("class", "brush")
           .call(brush)
-          .attr('transform', 'translate(' + [0, height * .85] +  ')')
+          .attr('transform', 'translate(' + [0, size.height * .85] +  ')')
 
   b.selectAll("rect")
   .attr('fill', 'pink')
   .attr('opacity', '.7')
-  .attr("height", height * .1)
+  .attr("height", size.height * .1)
   .on('mouseover', function () { this.pause = 1 })
   .on('mouseout', function () { this.pause = 0 })
 
@@ -164,6 +164,8 @@ function draw_history(err, hist) {
           'r': '(pos.w < dates.y && pos.w > dates.x) ? 20. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
         })
  .each(function (d) { return d.node = this })
+   d3.selectAll('line,path').style('display', 'none')
+
 }
 
 function distance (x1, y1, x2, y2) {

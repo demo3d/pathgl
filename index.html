@@ -106,7 +106,7 @@ d3.select('canvas')
 
                 <div class="highlight"> 
                   <pre><code class="bash hljs"> 
-var vertices = d3.range(100).map(function(d) {
+var vertices = d3.range(10).map(function(d) {
   return [Math.random() * 250, Math.random() * 250];
 });
 
@@ -124,10 +124,9 @@ svg.selectAll("circle")
 .attr("transform", function(d) { return "translate(" + d + ")"; })
 .attr("r", 1.5);
 
-redraw();
-
 var line = d3.svg.line()
-line.interpolate('cardinal');
+//line.interpolate('step-after');
+redraw();
 
 function redraw() {
   path = path.data(voronoi(vertices), String);
@@ -135,12 +134,11 @@ function redraw() {
   path.exit().remove();
 
   path.enter().append("path")
-    .attr("d", line)
+    .attr("d", function (d) { return line(d) })
    .attr('fill', function (d, i) { return "hsl(" + (i % 6)* 60 + ",80%,50%)"})
 
   path.order();
 }
-
                   </code></pre> 
                 </div> 
               </div> 
