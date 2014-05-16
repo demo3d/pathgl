@@ -9,7 +9,7 @@ var proj = d3.geo.wagner4().scale(200).translate([size.width / 2, size.height / 
 
 var svg = d3.select('.right').append('svg')
           .style('position', 'absolute')
-          .style('top', '0')
+          .style('top', '0').style('left', '0')
           .attr(size)
 
 var webgl = d3.select('canvas').attr('class', 'no-click')
@@ -165,6 +165,7 @@ function draw_history(err, hist) {
         })
  .each(function (d) { return d.node = this })
    d3.selectAll('line,path').style('display', 'none')
+  d3.selectAll('text').attr('fill', 'white')
 
 }
 

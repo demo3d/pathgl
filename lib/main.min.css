@@ -278,3 +278,8 @@ tive;
     border-top: 3px solid #eee;
 }                                                                                                                                                                                                                   
                      
+
+canvas {
+    width: 400px;
+    height: 300px;
+}

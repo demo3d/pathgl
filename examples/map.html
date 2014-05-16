@@ -52,7 +52,7 @@
 				<canvas width="760" height="500"></canvas>
 				<script src="js/map.js"></script><p>Map of historical events throughout time. Scraped from wikipedia. click on a circle
 for deets. 
-</p><pre><code>var size = {width: d3.select('canvas').attr('width'), height: innerHeight * .9}
+</p><pre><code>var size = {width: d3.select('canvas').attr('width'), height: d3.select('canvas').attr('height')}
     rotate = [10, -10],
     velocity = [.03, -.001],
     time = Date.now();
@@ -62,8 +62,9 @@ var proj = d3.geo.wagner4().scale(200).translate([size.width / 2, size.height / 
   , path = d3.geo.path().projection(proj)
 
 var svg = d3.select('.right').append('svg')
+          .style('position', 'absolute')
+          .style('top', '0').style('left', '0')
           .attr(size)
-
 
 var webgl = d3.select('canvas').attr('class', 'no-click')
 var p = d3.select('.blurb')
@@ -217,6 +218,9 @@ function draw_history(err, hist) {
           'r': '(pos.w < dates.y && pos.w > dates.x) ? 20. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
         })
  .each(function (d) { return d.node = this })
+   d3.selectAll('line,path').style('display', 'none')
+  d3.selectAll('text').attr('fill', 'white')
+
 }
 
 function distance (x1, y1, x2, y2) {

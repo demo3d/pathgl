@@ -71,18 +71,18 @@
                 <div class="highlight"><pre><code class="bash hljs ">
 d3.select('canvas')
 .selectAll('circle')
-.data(d3.range(1e4))
+.data(d3.range(1e3))
 .enter().append('circle')
 .attr('fill', function () { return "hsl("+Math.random()*360+",100%,50%)"})
 .attr('cx', function (d, i) { return d % 1000 })
-.attr('r', function (d, i) { return 2 })
+.attr('r', function (d, i) { return d % 5 * 2 })
 .shader({ cx: 'resolution.x / 2. + cos(pos.x + clock / 1000.) * pos.x;'
        , cy: 'resolution.y / 2. + sin(pos.x + clock / 1000.) * pos.x;'
 })
 								</code></pre></div>
               </div>
               <div class="col-sm-4">
-                <canvas class="one"></canvas>
+                <canvas class="one" width="1200" height="900"></canvas>
               </div>
             </div>
           </div>
@@ -99,19 +99,18 @@ d3.select('canvas')
             </div>
             <div class="description"> 
               <div class="col-sm-4"> 
-                <canvas class="two"> 
-                </canvas> 
+                <canvas class="two" width="1200" height="900"> </canvas> 
               </div> 
               <div class="col-sm-8"> 
 
                 <div class="highlight"> 
                   <pre><code class="bash hljs"> 
 var vertices = d3.range(10).map(function(d) {
-  return [Math.random() * 250, Math.random() * 250];
+  return [Math.random() * 1200, Math.random() * 900];
 });
 
 var voronoi = d3.geom.voronoi()
-    .clipExtent([[0, 0], [250, 250]]);
+    .clipExtent([[0, 0], [1200, 900]]);
 
 var svg = d3.select(".two")
 .on("mousemove", function() { vertices[0] = d3.mouse(this); redraw(); })
