@@ -18,16 +18,7 @@ function parsePath(str) {
     }
   })
 
-  buffer = triangulate(contours)
-
-  var off = this.mesh.tessOffset
-  this.posBuffer.set(buffer, off)
-  this.mesh.tessOffset += buffer.length - this.indices.length
-  if (buffer.length > this.indices)
-  this.indices = extend(buffer.map(function (d, i) { return (off + i) >> 1 }), this.indices)
-  else this.indices.length = buffer.length
-
-  this.mesh.alloc(this.mesh.tessOffset)
+  this.mesh.spread(this.indices, triangulate(contours))
 }
 
 function applyCSSRules () {

@@ -7,7 +7,7 @@ function Mesh (gl, options, attr) {
     , indexPool = []
 
   init()
-  return {
+  var self = {
     init : init
   , free: free
   , tessOffset: 0
@@ -20,16 +20,25 @@ function Mesh (gl, options, attr) {
   , addAttr: addAttr
   , removeAttr: removeAttr
   , boundingBox: boundingBox
+  , spread: spread
   }
 
-  function alloc(n) {
-    if (options.primitive == 'triangles')
-      return count = 1e5
-    //if (n) count = n
-    //if (n > count) allocate 10x
+  return self
+
+  function alloc() {
+    if (options.primitive == 'triangles') return count = 1e5
     return count += options.primitive == 'points' ? 1
                   : options.primitive == 'lines' ? 2
                   : 3
+  }
+
+  function spread(indices, buffer) {
+    self.tessOffset += buffer.length - indices.length
+
+    if (buffer.length > indices.length)
+      push.apply(indices, buffer.slice(indices.length - buffer.length))
+    else
+      push.apply(indexPool, indices.splice(buffer.Length, buffer.length - indices.length))
   }
 
   function init() {
