@@ -79,6 +79,7 @@ d3.select('canvas')
 .shader({ cx: 'resolution.x / 2. + cos(pos.x + clock / 1000.) * pos.x;'
        , cy: 'resolution.y / 2. + sin(pos.x + clock / 1000.) * pos.x;'
 })
+console.log(d3.select('.one').selectAll('[r=3]'))
 								</code></pre></div>
               </div>
               <div class="col-sm-4">
@@ -105,6 +106,7 @@ d3.select('canvas')
 
                 <div class="highlight"> 
                   <pre><code class="bash hljs"> 
+
 var vertices = d3.range(10).map(function(d) {
   return [Math.random() * 1200, Math.random() * 900];
 });

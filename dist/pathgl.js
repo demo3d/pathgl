@@ -5449,19 +5449,19 @@ function leftCheck(doc, symbols, divided, cand) {
 function checkRight(_, tag, classId, attribute, attr, attrCmp, attrVal, _, pseudo, _, pseudoVal, m) {
   return pseudo && pseudos[pseudo] && !pseudos[pseudo](this, pseudoVal)
       || tag && tag !== '*' && this.tag && this.tag.toLowerCase() !== tag
-      || attribute && !checkAttr(attrCmp, this.attr[attr] || '', attrVal)
+      || attribute && !checkAttr(attrCmp, (this.attr[attr] || '').toString(), attrVal)
       || classId && (m = classId.match(/#([\w\-]+)/)) && m[1] !== this.attr.id
       || classId && (classId.match(/\.[\w\-]+/g) || []).some(matchClass.bind(this)) ? 0 : this
 }
 
 function checkAttr(cmp, actual, val) {
-  return actual.match(RegExp({ '='  : val
-                             , '^=' : '^' + clean(val)
-                             , '$=' : clean(val) + '$'
-                             , '*=' : clean(val)
-                             , '~=' : '(?:^|\\s+)' + clean(val) + '(?:\\s+|$)'
-                             , '|=' : '^' + clean(val) + '(-|$)'
-                             }[cmp] || 'adnan^'))
+  return actual.toString().match(RegExp({ '='  : val
+                                        , '^=' : '^' + clean(val)
+                                        , '$=' : clean(val) + '$'
+                                        , '*=' : clean(val)
+                                        , '~=' : '(?:^|\\s+)' + clean(val) + '(?:\\s+|$)'
+                                        , '|=' : '^' + clean(val) + '(-|$)'
+                                        }[cmp] || 'adnan^'))
 }
 
 function chunk(query) { return query.match(chunker) }
