@@ -18,7 +18,10 @@ function parsePath(str) {
     }
   })
 
-  this.mesh.spread(this.indices, triangulate(contours))
+  this.indices = this.mesh.spread(this.indices, triangulate(contours))
+
+  var off = this.mesh.tessOffset
+  this.posBuffer.set(buffer, off)
 }
 
 function applyCSSRules () {

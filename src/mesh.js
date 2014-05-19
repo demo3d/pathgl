@@ -33,12 +33,17 @@ function Mesh (gl, options, attr) {
   }
 
   function spread(indices, buffer) {
+    var off = self.tessOffset
+
     self.tessOffset += buffer.length - indices.length
 
     if (buffer.length > indices.length)
-      push.apply(indices, buffer.slice(indices.length - buffer.length))
+      return extend(buffer.map(function (d, i) { return (off + i) >> 1 }), indices)
     else
-      push.apply(indexPool, indices.splice(buffer.Length, buffer.length - indices.length))
+      return (indices.length = buffer.length), indices
+
+
+      //[].push.apply(indexPool, indices.splice(buffer.Length, buffer.length - indices.length))
   }
 
   function init() {

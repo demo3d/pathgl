@@ -5199,7 +5199,10 @@ var triangulator = new T()
     }
   })
 
-  this.mesh.spread(this.indices, triangulate(contours))
+  this.indices = this.mesh.spread(this.indices, triangulate(contours))
+
+  var off = this.mesh.tessOffset
+  this.posBuffer.set(buffer, off)
 }
 
 function applyCSSRules () {
@@ -5278,12 +5281,17 @@ function addEvenLtistener (evt, listener, capture) {
   }
 
   function spread(indices, buffer) {
+    var off = self.tessOffset
+
     self.tessOffset += buffer.length - indices.length
 
     if (buffer.length > indices.length)
-      push.apply(indices, buffer.slice(indices.length - buffer.length))
+      return extend(buffer.map(function (d, i) { return (off + i) >> 1 }), indices)
     else
-      push.apply(indexPool, indices.splice(buffer.Length, buffer.length - indices.length))
+      return (indices.length = buffer.length), indices
+
+
+      //[].push.apply(indexPool, indices.splice(buffer.Length, buffer.length - indices.length))
   }
 
   function init() {
@@ -5455,13 +5463,14 @@ function checkRight(_, tag, classId, attribute, attr, attrCmp, attrVal, _, pseud
 }
 
 function checkAttr(cmp, actual, val) {
-  return actual.toString().match(RegExp({ '='  : val
-                                        , '^=' : '^' + clean(val)
-                                        , '$=' : clean(val) + '$'
-                                        , '*=' : clean(val)
-                                        , '~=' : '(?:^|\\s+)' + clean(val) + '(?:\\s+|$)'
-                                        , '|=' : '^' + clean(val) + '(-|$)'
-                                        }[cmp] || 'adnan^'))
+  return actual.toString()
+         .match(RegExp({ '='  : val
+                       , '^=' : '^' + clean(val)
+                       , '$=' : clean(val) + '$'
+                       , '*=' : clean(val)
+                       , '~=' : '(?:^|\\s+)' + clean(val) + '(?:\\s+|$)'
+                       , '|=' : '^' + clean(val) + '(-|$)'
+                       }[cmp] || 'adnan^'))
 }
 
 function chunk(query) { return query.match(chunker) }

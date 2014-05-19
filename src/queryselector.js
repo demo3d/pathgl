@@ -33,13 +33,14 @@ function checkRight(_, tag, classId, attribute, attr, attrCmp, attrVal, _, pseud
 }
 
 function checkAttr(cmp, actual, val) {
-  return actual.toString().match(RegExp({ '='  : val
-                                        , '^=' : '^' + clean(val)
-                                        , '$=' : clean(val) + '$'
-                                        , '*=' : clean(val)
-                                        , '~=' : '(?:^|\\s+)' + clean(val) + '(?:\\s+|$)'
-                                        , '|=' : '^' + clean(val) + '(-|$)'
-                                        }[cmp] || 'adnan^'))
+  return actual.toString()
+         .match(RegExp({ '='  : val
+                       , '^=' : '^' + clean(val)
+                       , '$=' : clean(val) + '$'
+                       , '*=' : clean(val)
+                       , '~=' : '(?:^|\\s+)' + clean(val) + '(?:\\s+|$)'
+                       , '|=' : '^' + clean(val) + '(-|$)'
+                       }[cmp] || 'adnan^'))
 }
 
 function chunk(query) { return query.match(chunker) }
