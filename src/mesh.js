@@ -42,7 +42,6 @@ function Mesh (gl, options, attr) {
     else
       return (indices.length = buffer.length), indices
 
-
       //[].push.apply(indexPool, indices.splice(buffer.Length, buffer.length - indices.length))
   }
 

@@ -1,4 +1,4 @@
-var size = {width: d3.select('canvas').attr('width'), height: d3.select('canvas').attr('height')}
+var size = {width: + d3.select('canvas').attr('width'), height: + d3.select('canvas').attr('height')}
     rotate = [10, -10],
     velocity = [.03, -.001],
     time = Date.now();
@@ -93,15 +93,17 @@ function draw_history(err, hist) {
   .on('mouseover', function () { this.pause = 1 })
   .on('mouseout', function () { this.pause = 0 })
 
-
-  setInterval(function () {
+  d3.timer(function () {
     if (b.node().pause) return
     if (brush.empty()) brush.extent([0, 10])
-    var extent = brush.extent().map(function (d) { return d + 1 })
-    if (extent[0] > 2040 || extent[1] > 2040 ) extent = extent.map(function (d) { return d - 2500 })
-    brush.extent(extent).event(b)
+    var extent = brush.extent()
+    extent = (extent[1] < 2040) ?
+      extent.map(function (d) { return d + 1 }) :
+      extent.map(function (d) { return d - 2500 })
+    brush.extent(extent)
+    brush.event(b)
     b.call(brush)
-  }, 16)
+  })
 
   function brushmove() {
     adnan(d3.event.target.extent())
