@@ -26,20 +26,16 @@ var proto = {
           , r: function (v) {
               this.posBuffer[this.indices[0] + 2] = v
             }
-
           , cz: function (v) {
               this.posBuffer[this.indices[0] + 3] = v
             }
           , fill: function (v) {
               this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
             }
-
           , stroke: function (v) {
               this.colorBuffer[this.indices[0]] = parseColor(v)
             }
           }
-
-
 , ellipse: { init: function () {},
              cx: noop, cy: noop, rx: noop, ry: noop }
 , rect: { init: function (i) {

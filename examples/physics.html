@@ -45,8 +45,7 @@
 		</div>
 	</div>
 	<div class="right" id="scroll">
-		<a href="physics.js" target="_wow">View Source</a>
-		<div class="blurb"></div>
+		<div class="blurb"><!--blurb--></div>
 		<canvas width="960" height="500"></canvas>
 		<svg></svg>
 		<script>
@@ -63,5 +62,28 @@ d3.select('canvas').selectAll("circle")
 d3.select('canvas').on('click', particles.reverse)
 
 </script>
+		<code>var particles = pathgl.sim.particles(1e5)
+
+d3.select('canvas').selectAll("circle")
+.data(particles.unwrap())
+.enter().append("circle")
+.attr('r', function (d,i) { return d.z })
+.attr('cx', function (d,i) { return d.x })
+.attr('cy', function (d,i) { return d.y })
+.shader({'stroke': 'texel(pos.xy).xzwy'})
+
+d3.select('canvas').on('click', particles.reverse)
+</code><code>var particles = pathgl.sim.particles(1e5)
+
+d3.select('canvas').selectAll("circle")
+.data(particles.unwrap())
+.enter().append("circle")
+.attr('r', function (d,i) { return d.z })
+.attr('cx', function (d,i) { return d.x })
+.attr('cy', function (d,i) { return d.y })
+.shader({'stroke': 'texel(pos.xy).xzwy'})
+
+d3.select('canvas').on('click', particles.reverse)
+</code>
   </div>
 </body>
