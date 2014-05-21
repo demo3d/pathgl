@@ -2,26 +2,44 @@ function parsePath(str) {
   var buffer  = []
     , pos = [0, 0]
     , origin = [0, 0]
+    , contours = [buffer]
 
-  var contours = []
-  contours.push([])
-  str.match(/[mzlhvcsqta][^a-z]*/ig).forEach(function (segment, i, match) {
-    var points = segment.slice(1).trim().split(/,| /g), c = segment[0].toLowerCase(), j = 0
+  str.slice()
+  .replace(/([MLHVCSQTAZmlhvcsqtaz])/g, '###$1')
+  .split(/###/)
+  .slice(1)
+  .forEach(function (segment, i, match) {
+    var points = segment.slice(1).trim().split(/\s|,|###/), j = 0
     while(j < points.length) {
       var x = points[j++], y = points[j++]
-      c == 'm' ? (contours.push(buffer = []) ,(origin = pos = [x, y])) :
-        c == 'l' ? buffer.push(x, y) && (pos = [x, y]) :
-        c == 'z' ? buffer.push(origin[0], origin[1]) && (pos = origin) :
-        c == 'h' ? buffer.push(x, pos[1]) && (pos[0] = x) :
-        c == 'v' ? buffer.push(pos[0], x) && (pos[1] = x) :
-        console.log('%s method is not supported malformed path:', c)
-    }
-  })
-
+      //todo handle relative coordinates
+      switch (segment[0].toLowerCase()) {
+        case 'm':
+          buffer.push(origin[0], origin[1])
+          origin = pos = [x, y]
+          contours.push(buffer = [])
+          buffer.push(pos[0], pos[1])
+          break
+        case'l':
+          buffer.push(x, y)
+          pos = [x, y]
+          break
+        case 'z':
+          pos = origin
+          buffer.push(pos[0], pos[1])
+          break
+        // case 'h':
+        //   pos[0] = x
+        //   buffer.push(pos[0], pos[1])
+        //   break
+        // case 'v':
+        //   pos[1] = x
+        //   buffer.push(pos[0], pos[1])
+        //   break
+        }
+      }
+    })
   this.indices = this.mesh.spread(this.indices, triangulate(contours))
-
-  var off = this.mesh.tessOffset
-  this.posBuffer.set(buffer, off)
 }
 
 function applyCSSRules () {

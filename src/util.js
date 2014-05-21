@@ -26,9 +26,13 @@ function svgToClipSpace(pos) { return [2 * (pos[0] / 960) - 1, 1 - (pos[1] / 500
 
 function append () { [].forEach.call(arguments, push, this) }
 
-function range(a, b) { return Array(Math.abs(b - a)).join().split(',').map(function (d, i) { return i + a }) }
-
 function hash(str) { return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0) }
+
+function range(start, end) {
+  var len = end - start, result = new Array(len), i = 0
+  while(i < len) result[i] = start + i++
+  return result
+}
 
 function mipmappable() {
   return  powerOfTwo(this.height)

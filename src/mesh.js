@@ -4,7 +4,7 @@ function Mesh (gl, options, attr) {
     , attrList = options.attrList || ['pos', 'color', 'fugue']
     , primitive = gl[options.primitive.toUpperCase()]
     , material = []
-    , indexPool = []
+    , indexPool = range(0, 1e6)
 
   init()
   var self = {
@@ -33,16 +33,16 @@ function Mesh (gl, options, attr) {
   }
 
   function spread(indices, buffer) {
-    var off = self.tessOffset
-
-    self.tessOffset += buffer.length - indices.length
-
-    if (buffer.length > indices.length)
-      return extend(buffer.map(function (d, i) { return (off + i) >> 1 }), indices)
+    var dx = buffer.length - indices.length
+    if (dx > 0)
+      indices = indices.concat(indexPool.splice(0, dx))
     else
-      return (indices.length = buffer.length), indices
-
-      //[].push.apply(indexPool, indices.splice(buffer.Length, buffer.length - indices.length))
+      indexPool = indexPool.concat(indices.splice(0, - dx))
+    var posBuffer = attributes.pos.array
+    indices.forEach(function (i) {
+      posBuffer[i] = buffer[i]
+    })
+    return indices
   }
 
   function init() {

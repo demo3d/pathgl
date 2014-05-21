@@ -357,9 +357,13 @@ function svgToClipSpace(pos) { return [2 * (pos[0] / 960) - 1, 1 - (pos[1] / 500
 
 function append () { [].forEach.call(arguments, push, this) }
 
-function range(a, b) { return Array(Math.abs(b - a)).join().split(',').map(function (d, i) { return i + a }) }
-
 function hash(str) { return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0) }
+
+function range(start, end) {
+  var len = end - start, result = new Array(len), i = 0
+  while(i < len) result[i] = start + i++
+  return result
+}
 
 function mipmappable() {
   return  powerOfTwo(this.height)
@@ -5183,26 +5187,44 @@ var triangulator = new T()
   var buffer  = []
     , pos = [0, 0]
     , origin = [0, 0]
+    , contours = [buffer]
 
-  var contours = []
-  contours.push([])
-  str.match(/[mzlhvcsqta][^a-z]*/ig).forEach(function (segment, i, match) {
-    var points = segment.slice(1).trim().split(/,| /g), c = segment[0].toLowerCase(), j = 0
+  str.slice()
+  .replace(/([MLHVCSQTAZmlhvcsqtaz])/g, '###$1')
+  .split(/###/)
+  .slice(1)
+  .forEach(function (segment, i, match) {
+    var points = segment.slice(1).trim().split(/\s|,|###/), j = 0
     while(j < points.length) {
       var x = points[j++], y = points[j++]
-      c == 'm' ? (contours.push(buffer = []) ,(origin = pos = [x, y])) :
-        c == 'l' ? buffer.push(x, y) && (pos = [x, y]) :
-        c == 'z' ? buffer.push(origin[0], origin[1]) && (pos = origin) :
-        c == 'h' ? buffer.push(x, pos[1]) && (pos[0] = x) :
-        c == 'v' ? buffer.push(pos[0], x) && (pos[1] = x) :
-        console.log('%s method is not supported malformed path:', c)
-    }
-  })
-
+      //todo handle relative coordinates
+      switch (segment[0].toLowerCase()) {
+        case 'm':
+          buffer.push(origin[0], origin[1])
+          origin = pos = [x, y]
+          contours.push(buffer = [])
+          buffer.push(pos[0], pos[1])
+          break
+        case'l':
+          buffer.push(x, y)
+          pos = [x, y]
+          break
+        case 'z':
+          pos = origin
+          buffer.push(pos[0], pos[1])
+          break
+        // case 'h':
+        //   pos[0] = x
+        //   buffer.push(pos[0], pos[1])
+        //   break
+        // case 'v':
+        //   pos[1] = x
+        //   buffer.push(pos[0], pos[1])
+        //   break
+        }
+      }
+    })
   this.indices = this.mesh.spread(this.indices, triangulate(contours))
-
-  var off = this.mesh.tessOffset
-  this.posBuffer.set(buffer, off)
 }
 
 function applyCSSRules () {
@@ -5252,7 +5274,7 @@ function addEvenLtistener (evt, listener, capture) {
     , attrList = options.attrList || ['pos', 'color', 'fugue']
     , primitive = gl[options.primitive.toUpperCase()]
     , material = []
-    , indexPool = []
+    , indexPool = range(0, 1e6)
 
   init()
   var self = {
@@ -5281,16 +5303,16 @@ function addEvenLtistener (evt, listener, capture) {
   }
 
   function spread(indices, buffer) {
-    var off = self.tessOffset
-
-    self.tessOffset += buffer.length - indices.length
-
-    if (buffer.length > indices.length)
-      return extend(buffer.map(function (d, i) { return (off + i) >> 1 }), indices)
+    var dx = buffer.length - indices.length
+    if (dx > 0)
+      indices = indices.concat(indexPool.splice(0, dx))
     else
-      return (indices.length = buffer.length), indices
-
-      //[].push.apply(indexPool, indices.splice(buffer.Length, buffer.length - indices.length))
+      indexPool = indexPool.concat(indices.splice(0, - dx))
+    var posBuffer = attributes.pos.array
+    indices.forEach(function (i) {
+      posBuffer[i] = buffer[i]
+    })
+    return indices
   }
 
   function init() {
