@@ -2849,6 +2849,7 @@ function mergify(vs1, fs1, subst1) {
     return createProgram(this.gl, vs2, fs2)
   }
 };function init(c) {
+  pathgl.options = pathgl.options || {}
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
@@ -2929,8 +2930,10 @@ var appendable = {
 }
 
 function initContext(canvas) {
-  var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+  var gl = canvas.getContext('webgl', pathgl.options) || canvas.getContext('experimental-webgl', pathgl.options)
   return gl && extend(gl, { viewportWidth: canvas.width, viewportHeight: canvas.height })
+
+
 }
 
 function d3_vAttr(attr, fn) {
@@ -5449,7 +5452,8 @@ function initFbo(texture) {
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture.texture, null)
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
   return fbo
-};//regexes sourced from sizzle
+}
+;//regexes sourced from sizzle
 function querySelector(s) { return this.querySelectorAll(s)[0] }
 function querySelectorAll(selector, r) {
   return selector.replace(/^\s+|\s*([,\s\+\~>]|$)\s*/g, '$1').split(',')

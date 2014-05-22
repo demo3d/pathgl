@@ -1,4 +1,5 @@
 function init(c) {
+  pathgl.options = pathgl.options || {}
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
@@ -79,8 +80,10 @@ var appendable = {
 }
 
 function initContext(canvas) {
-  var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+  var gl = canvas.getContext('webgl', pathgl.options) || canvas.getContext('experimental-webgl', pathgl.options)
   return gl && extend(gl, { viewportWidth: canvas.width, viewportHeight: canvas.height })
+
+
 }
 
 function d3_vAttr(attr, fn) {
