@@ -138,6 +138,9 @@ var baseProto = {
 , addEventListener: addEventListener
 , style: { setProperty: noop }
 , ownerSVGElement: { createSVGPoint: noop }
+, trigger: function (evt) {
+    console.log(evt)
+  }
 }
 
 baseProto.parentNode = baseProto

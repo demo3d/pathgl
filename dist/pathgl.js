@@ -2849,7 +2849,8 @@ function mergify(vs1, fs1, subst1) {
     return createProgram(this.gl, vs2, fs2)
   }
 };function init(c) {
-  pathgl.options = pathgl.options || {}
+    pathgl.options = pathgl.options || {}
+    //{preserveDrawingBuffer: true}
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
@@ -2895,7 +2896,11 @@ function clicked () {}
 
 function mousemoved(e) {
   var rect = canvas.getBoundingClientRect()
-  pathgl.uniform('mouse', [ e.clientX - rect.left - canvas.clientLeft, e.clientY - rect.top - canvas.clientTop ])
+  var x =e.clientX - rect.left - canvas.clientLeft
+    , y = e.clientY - rect.top - canvas.clientTop
+
+  pathgl.uniform('mouse', [x, y])
+  pick(x | 0, y | 0)
 }
 
 function touchmoved(e) {
@@ -5265,13 +5270,18 @@ function matchesSelector(selector) {
 //offscreen render color test
 
 var pickings  = {}
-
-function addEvenLtistener (evt, listener, capture) {
-  //oaaa
-  (pickings[this.attr.cx] = (pickings[this.attr.cx] || {}))
-  [this.attr.cy] = this
+window.p = pickings
+function addEventListener(evt, listener, capture) {
+  (pickings[this.attr.cx | 0] = (pickings[this.attr.cx | 0] || {})
+  )[this.attr.cy | 0] = this
   this.mouseover = listener
-};function Mesh (gl, options, attr) {
+}
+
+function pick (x, y) {
+  if (pickings[x] && pickings[x][y])
+    pickings[x][y].trigger('mousemove')
+}
+;function Mesh (gl, options, attr) {
   var attributes = {}
     , count = options.count || 0
     , attrList = options.attrList || ['pos', 'color', 'fugue']
@@ -5442,7 +5452,6 @@ function buildBuffers(gl, types) {
 
   return [triangleMesh, pointMesh, lineMesh]
 }
-
 
 function initFbo(texture) {
   var fbo = gl.createFramebuffer()
@@ -5657,6 +5666,9 @@ var baseProto = {
 , addEventListener: addEventListener
 , style: { setProperty: noop }
 , ownerSVGElement: { createSVGPoint: noop }
+, trigger: function (evt) {
+    console.log(evt)
+  }
 }
 
 baseProto.parentNode = baseProto

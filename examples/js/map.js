@@ -1,19 +1,18 @@
 var size = {width: + d3.select('canvas').attr('width'), height: + d3.select('canvas').attr('height')}
-    rotate = [10, -10],
-    velocity = [.03, -.001],
-    time = Date.now();
+rotate = [10, -10],
+velocity = [.03, -.001],
+time = Date.now();
 
 var simplify = d3.geo.transform({ point: function(x, y, z) { this.stream.point(x, y); } })
 var proj = d3.geo.wagner4().scale(200).translate([size.width / 2, size.height / 2]).precision(.1)
   , path = d3.geo.path().projection(proj)
 
-var svg = d3.select('.right').append('svg')
-          .style('position', 'absolute')
-          .style('top', '0').style('left', '0')
-          .attr(size)
+// var svg = d3.select('.right').append('svg')
+//           .style('position', 'absolute')
+//           .style('top', '0').style('left', '0')
+//           .attr(size)
 
-var webgl = d3.select('canvas').attr('class', 'no-click')
-var p = d3.select('.blurb')
+var webgl = d3.select('canvas')
 
 d3.json('data/world-50m.json', draw_world)
 d3.csv('data/hist.csv', draw_history)
@@ -59,62 +58,64 @@ function draw_history(err, hist) {
               .scale(x)
               .orient("bottom")
 
-  svg.selectAll('rect')
-  .data(gram).enter()
-  .append('rect')
-  .attr('fill', 'indianred')
-  .attr('width', 4)
-  .attr('height', function (d) { return y(d.y)  })
-  .attr('x', function (d, i) { return x(d.x)  })
-  .attr('y', function (d) { return size.height - y(d.y) - 30 })
+  // svg.selectAll('rect')
+  // .data(gram).enter()
+  // .append('rect')
+  // .attr('fill', 'indianred')
+  // .attr('width', 4)
+  // .attr('height', function (d) { return y(d.y)  })
+  // .attr('x', function (d, i) { return x(d.x)  })
+  // .attr('y', function (d) { return size.height - y(d.y) - 30 })
 
   var axis = d3.svg.axis()
              .scale(x)
              .orient("bottom")
 
-  svg.append("g")
-  .attr("class", "x axis")
-  .attr("transform", "translate(0," + (size.height - 30) + ")")
-  .call(xAxis)
+  // svg.append("g")
+  // .attr("class", "x axis")
+  // .attr("transform", "translate(0," + (size.height - 30) + ")")
+  // .call(xAxis)
 
-  svg
-  .on('click', function () { from = ~~ x.invert(+d3.mouse(this)[0]) })
+  // svg
+  // .on('click', function () { from = ~~ x.invert(+d3.mouse(this)[0]) })
   var brush = d3.svg.brush().x(x).on("brush", brushmove).extent([-500, -400])
 
-  var b = svg.append("g")
-          .attr("class", "brush")
-          .call(brush)
-          .attr('transform', 'translate(' + [0, size.height * .85] +  ')')
+  // var b = svg.append("g")
+  //         .attr("class", "brush")
+  //         .call(brush)
+  //         .attr('transform', 'translate(' + [0, size.height * .85] +  ')')
 
-  b.selectAll("rect")
-  .attr('fill', 'pink')
-  .attr('opacity', '.7')
-  .attr("height", size.height * .1)
-  .on('mouseover', function () { this.pause = 1 })
-  .on('mouseout', function () { this.pause = 0 })
+  // b.selectAll("rect")
+  // .attr('fill', 'pink')
+  // .attr('opacity', '.7')
+  // .attr("height", size.height * .1)
+  // .on('mouseover', function () { this.pause = 1 })
+  // .on('mouseout', function () { this.pause = 0 })
 
-  d3.timer(function () {
-    if (b.node().pause) return
-    if (brush.empty()) brush.extent([0, 10])
-    var extent = brush.extent()
-    extent = (extent[1] < 2040) ?
-      extent.map(function (d) { return d + 1 }) :
-      extent.map(function (d) { return d - 2500 })
-    brush.extent(extent)
-    brush.event(b)
-    b.call(brush)
-  })
+  // d3.timer(function () {
+  //   if (b.node().pause) return
+  //   if (brush.empty()) brush.extent([0, 10])
+  //   var extent = brush.extent()
+  //   extent = (extent[1] < 2040) ?
+  //     extent.map(function (d) { return d + 1 }) :
+  //   extent.map(function (d) { return d - 2500 })
+  //   brush.extent(extent)
+  //   brush.event(b)
+  //   b.call(brush)
+  // })
 
   function brushmove() {
     adnan(d3.event.target.extent())
   }
 
-  var tip = d3.tip().attr('class', 'd3-tip').html(function(d) { return d.event })
+  var tip = d3.tip().attr('class', 'd3-tip')
+            .html(function(d) { return 'hello' })
 
   function adnan (s) {
     pathgl.uniform('dates', s)
     document.title = s.map(Math.round)
     d3.select('.current_year').text(from < 0 ? '' + Math.abs(+from) + ' BC' : from)
+    return
     svg.on('click', function () {
       var x = d3.event.x, y = d3.event.y
 
@@ -126,7 +127,7 @@ function draw_history(err, hist) {
                     return e
                   })
                   .sort(function (a, b) { return a.dist - b.dist })
-      p.text(event.length && event[0].event)
+
     })
   }
   adnan([-500, -400])
@@ -153,7 +154,7 @@ function draw_history(err, hist) {
   .selectAll('circle')
   .data(hist)
   .enter()
-  .append('circle').call(tip)
+  .append('circle')
   .attr({ class:'event'
         , stroke: function(d){ return d3.hsl(Math.random()*120 + 120, .8, 0.5) }
         , cx: function(d){ return d.location[0] }
@@ -162,13 +163,15 @@ function draw_history(err, hist) {
         , r: 5
         , opacity: .9
         })
-        .shader({
-          'r': '(pos.w < dates.y && pos.w > dates.x) ? 20. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
-        })
- .each(function (d) { return d.node = this })
-   d3.selectAll('line,path').style('display', 'none')
-  d3.selectAll('text').attr('fill', 'white')
+  .shader({
+    'r': '(pos.w < dates.y && pos.w > dates.x) ? 20. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
+  })
+  .each(function (d) { return d.node = this })
+  .on('mouseover', tip.show)
+  .on('mouseout', tip.hide)
 
+  d3.selectAll('line,path').style('display', 'none')
+  d3.selectAll('text').attr('fill', 'white')
 }
 
 function distance (x1, y1, x2, y2) {

@@ -1,5 +1,6 @@
 function init(c) {
-  pathgl.options = pathgl.options || {}
+    pathgl.options = pathgl.options || {}
+    //{preserveDrawingBuffer: true}
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
@@ -45,7 +46,11 @@ function clicked () {}
 
 function mousemoved(e) {
   var rect = canvas.getBoundingClientRect()
-  pathgl.uniform('mouse', [ e.clientX - rect.left - canvas.clientLeft, e.clientY - rect.top - canvas.clientTop ])
+  var x =e.clientX - rect.left - canvas.clientLeft
+    , y = e.clientY - rect.top - canvas.clientTop
+
+  pathgl.uniform('mouse', [x, y])
+  pick(x | 0, y | 0)
 }
 
 function touchmoved(e) {

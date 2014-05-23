@@ -170,7 +170,6 @@ function buildBuffers(gl, types) {
   return [triangleMesh, pointMesh, lineMesh]
 }
 
-
 function initFbo(texture) {
   var fbo = gl.createFramebuffer()
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)

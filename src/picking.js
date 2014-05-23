@@ -2,10 +2,14 @@
 //offscreen render color test
 
 var pickings  = {}
-
-function addEvenLtistener (evt, listener, capture) {
-  //oaaa
-  (pickings[this.attr.cx] = (pickings[this.attr.cx] || {}))
-  [this.attr.cy] = this
+window.p = pickings
+function addEventListener(evt, listener, capture) {
+  (pickings[this.attr.cx | 0] = (pickings[this.attr.cx | 0] || {})
+  )[this.attr.cy | 0] = this
   this.mouseover = listener
+}
+
+function pick (x, y) {
+  if (pickings[x] && pickings[x][y])
+    pickings[x][y].trigger('mousemove')
 }
