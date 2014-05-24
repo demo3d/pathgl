@@ -7,7 +7,7 @@ var simplify = d3.geo.transform({ point: function(x, y, z) { this.stream.point(x
 var proj = d3.geo.wagner4().scale(200).translate([size.width / 2, size.height / 2]).precision(.1)
   , path = d3.geo.path().projection(proj)
 
-// var svg = d3.select('.right').append('svg')
+// var svg` = d3.select('.right').append('svg')
 //           .style('position', 'absolute')
 //           .style('top', '0').style('left', '0')
 //           .attr(size)
