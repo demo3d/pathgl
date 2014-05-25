@@ -50,8 +50,12 @@
 			<div class="right col-xs-12 col-sm-9">
 				<div class="blurb"><!--blurb--></div>
 				<canvas width="760" height="500"></canvas>
-				<script src="js/map.js"></script><p>Map of historical events throughout time. Scraped from wikipedia. click on a circle
-for deets. 
+				<script src="js/map.js"></script><p>Here is a bubble map of historical events scraped from wikipedia. When displaying a
+slice of a large data set, it can be more efficient  to dump all points onto the screen and
+then hide the data outside the selection using a shader. This allows the animation
+to happen entirely on the gpu, freeing up the UI thread to handle user input.
+Updating large selections in javascript would cause the UI to feel sluggish, and add
+lag to the user's touch and mouse events. 
 </p><pre><code>var size = {width: + d3.select('canvas').attr('width'), height: + d3.select('canvas').attr('height')}
 rotate = [10, -10],
 velocity = [.03, -.001],
@@ -61,7 +65,7 @@ var simplify = d3.geo.transform({ point: function(x, y, z) { this.stream.point(x
 var proj = d3.geo.wagner4().scale(200).translate([size.width / 2, size.height / 2]).precision(.1)
   , path = d3.geo.path().projection(proj)
 
-// var svg = d3.select('.right').append('svg')
+// var svg` = d3.select('.right').append('svg')
 //           .style('position', 'absolute')
 //           .style('top', '0').style('left', '0')
 //           .attr(size)

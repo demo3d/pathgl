@@ -26,10 +26,7 @@ var particleShader = [
         , 'gl_FragColor = vec4(pos, vel);'
      , '}'
 ].join('\n')
-//float checkBounds () { return vec}
-//if pos(0. > pos.x || pos.x > 1.) vel.x *= -1;
-//if pos(0. > pos.y || pos.y > 1.) vel.y *= -1;
-//pos = clamp(pos, 0., 1.);
+
 var since = Date.now()
 pathgl.sim.particles = function (s) {
   var size  = nextSquare(s)

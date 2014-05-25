@@ -2849,7 +2849,8 @@ function mergify(vs1, fs1, subst1) {
     return createProgram(this.gl, vs2, fs2)
   }
 };function init(c) {
-    pathgl.options = pathgl.options || {}
+  pathgl.options = pathgl.options || {}
+
     //{preserveDrawingBuffer: true}
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
@@ -2864,7 +2865,6 @@ function mergify(vs1, fs1, subst1) {
   var main = RenderTarget(canvas)
   main.drawTo(null)
   tasks.push(main.update)
-  gl.clearColor(0,0,0,0)
   flags(gl)
   startDrawLoop()
   tasks.push(function () {
@@ -2874,9 +2874,8 @@ function mergify(vs1, fs1, subst1) {
 }
 
 function flags(gl) {
-  gl.blendEquation(gl.FUNC_ADD)
+  gl.clearColor(0,0,0,0)
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
-  gl.blendColor(1,1,1,1)
 }
 
 function bindEvents(canvas) {
@@ -5421,6 +5420,8 @@ function RenderTarget(screen) {
   function update () {
     if (program != prog) gl.useProgram(program = prog)
     for(var i = -1; ++i < targets.length;) {
+      if (! targets[i]) gl.enable(gl.BLEND)
+      else gl.disable(gl.BLEND)
       gl.bindFramebuffer(gl.FRAMEBUFFER, targets[i])
       setUniforms()
       beforeRender(gl, screen)
@@ -5958,10 +5959,7 @@ var particleShader = [
         , 'gl_FragColor = vec4(pos, vel);'
      , '}'
 ].join('\n')
-//float checkBounds () { return vec}
-//if pos(0. > pos.x || pos.x > 1.) vel.x *= -1;
-//if pos(0. > pos.y || pos.y > 1.) vel.y *= -1;
-//pos = clamp(pos, 0., 1.);
+
 var since = Date.now()
 pathgl.sim.particles = function (s) {
   var size  = nextSquare(s)

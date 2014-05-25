@@ -138,6 +138,8 @@ function RenderTarget(screen) {
   function update () {
     if (program != prog) gl.useProgram(program = prog)
     for(var i = -1; ++i < targets.length;) {
+      if (! targets[i]) gl.enable(gl.BLEND)
+      else gl.disable(gl.BLEND)
       gl.bindFramebuffer(gl.FRAMEBUFFER, targets[i])
       setUniforms()
       beforeRender(gl, screen)
