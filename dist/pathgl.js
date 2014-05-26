@@ -2813,7 +2813,7 @@ function build_vs(src, subst) {
 
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? clamp(texel(pos.xy).w + texel(pos.xy).z, 1., 100.) : (2. * pos.z)'
+    , r: '(pos.z < 0.) ? clamp(texel(pos.xy).w + texel(pos.xy).z, 2., 100.) : (2. * pos.z)'
     , x: '(pos.x < 1.) ? texel(pos.xy).x * resolution.x : pos.x'
     , y: '(pos.y < 1.) ? texel(pos.xy).y * resolution.y : pos.y'
     }, subst)
@@ -2850,8 +2850,7 @@ function mergify(vs1, fs1, subst1) {
   }
 };function init(c) {
   pathgl.options = pathgl.options || {}
-
-    //{preserveDrawingBuffer: true}
+  //{preserveDrawingBuffer: true}
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
@@ -2875,7 +2874,8 @@ function mergify(vs1, fs1, subst1) {
 
 function flags(gl) {
   gl.clearColor(0,0,0,0)
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
+  gl.blendFunc(gl.ONE_MINUS_SRC_ALPHA, gl.ONE)
+  //gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 }
 
 function bindEvents(canvas) {
@@ -5435,7 +5435,7 @@ function RenderTarget(screen) {
   }
 
   function beforeRender(gl, screen) {
-    if (screen == gl.canvas) gl.clear(gl.COLOR_BUFFER_BIT)
+    //if (screen == gl.canvas) gl.clear(gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
 }
@@ -5985,8 +5985,8 @@ pathgl.sim.particles = function (s) {
   function start () {
     pathgl.uniform('dimensions', [width, height])
     pathgl.uniform('gravity', .1)
-    pathgl.uniform('inertia', 0.005)
-    pathgl.uniform('drag', 0.991)
+    pathgl.uniform('inertia', 0.003)
+    pathgl.uniform('drag', 0.996)
     for(var i = -1; ++i < 10;)
       addParticles(size / 10, [1,2].map(Math.random))
   }

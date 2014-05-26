@@ -52,8 +52,8 @@ pathgl.sim.particles = function (s) {
   function start () {
     pathgl.uniform('dimensions', [width, height])
     pathgl.uniform('gravity', .1)
-    pathgl.uniform('inertia', 0.005)
-    pathgl.uniform('drag', 0.991)
+    pathgl.uniform('inertia', 0.003)
+    pathgl.uniform('drag', 0.996)
     for(var i = -1; ++i < 10;)
       addParticles(size / 10, [1,2].map(Math.random))
   }

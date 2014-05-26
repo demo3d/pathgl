@@ -1,7 +1,6 @@
 function init(c) {
   pathgl.options = pathgl.options || {}
-
-    //{preserveDrawingBuffer: true}
+  //{preserveDrawingBuffer: true}
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
@@ -25,7 +24,8 @@ function init(c) {
 
 function flags(gl) {
   gl.clearColor(0,0,0,0)
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
+  gl.blendFunc(gl.ONE_MINUS_SRC_ALPHA, gl.ONE)
+  //gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 }
 
 function bindEvents(canvas) {
