@@ -21,27 +21,27 @@
 		<div class="row">
 			<div class="col-xs-12 col-sm-3">
 				<div class="no-scroll">
-				<a href="http://github.com/adnan-wahab/pathgl">Github Repo</a>
-				<a href="/dist/pathgl.zip">Download</a>
+					<a class="btn btn-default" href="http://github.com/adnan-wahab/pathgl">Github Repo</a>
+					<a class="btn btn-default" href="/dist/pathgl.zip">Download</a>
 
-				<h6>Examples</h6>
-				<ul class="examples list-group">
-					<li class="list-group-item">
-						<a href="/examples/physics.html">Particle Simulation</a>
-					<li class="list-group-item">
-						<a href="/examples/map.html">Map of History</a>
-					<li class="list-group-item">
-						<a href="/examples/music.html">Music Visualizer</a>
-				</ul>
-				
-				<h6>Documentation</h6>
-				<ul class="docs list-group">
-					<li class="list-group-item"><a href="/documentation/start.html">Getting Started</a>
-					<li class="list-group-item"><a href="/documentation/api.html">API Reference</a>
-					<li class="list-group-item"><a href="/documentation/webgl.html">The Graphics Pipeline</a>
-					<li class="list-group-item"><a href="/documentation/svg.html">SVG Differences</a>
-					<li class="list-group-item"><a href="/documentation/gpgpu.html">GPGPU</a>
-				</ul>
+					<h6>Examples</h6>
+					<ul class="examples list-group">
+						<li class="list-group-item">
+							<a href="/examples/physics.html">Particle Simulation</a>
+							<li class="list-group-item">
+								<a href="/examples/map.html">Map of History</a>
+								<li class="list-group-item">
+									<a href="/examples/music.html">Music Visualizer</a>
+					</ul>
+					
+					<h6>Documentation</h6>
+					<ul class="docs list-group">
+						<li class="list-group-item"><a href="/documentation/start.html">Getting Started</a>
+						<li class="list-group-item"><a href="/documentation/api.html">API Reference</a>
+						<li class="list-group-item"><a href="/documentation/webgl.html">The Graphics Pipeline</a>
+						<li class="list-group-item"><a href="/documentation/svg.html">SVG Differences</a>
+						<li class="list-group-item"><a href="/documentation/gpgpu.html">GPGPU</a>
+					</ul>
 					<img class="t" src="data/test.png" style="display:none">
 					<img class="l" src="data/leaves.jpg" style="display:none">
 				</div>
@@ -60,9 +60,7 @@ d3.select('canvas').selectAll("circle")
 .attr('r', 2)
 .attr('cx', function (d,i) { return d.x })
 .attr('cy', function (d,i) { return d.y })
-//.shader({'stroke': 'texel(pos.xy).xzwy'})
-//.shader({'stroke': 'texel(pos.xy).yzwx'})
-.shader({'stroke': 'texel(pos.xy).xxxx'})
+.shader({'stroke': 'vec4(.2, texel(pos.xy).xzy)'})
 
 d3.select('canvas').on('click', particles.reverse)
 </code></pre>
