@@ -2874,8 +2874,7 @@ function mergify(vs1, fs1, subst1) {
 
 function flags(gl) {
   gl.clearColor(0,0,0,0)
-  gl.blendFunc(gl.ONE_MINUS_SRC_ALPHA, gl.ONE)
-  //gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
 }
 
 function bindEvents(canvas) {
@@ -5985,7 +5984,7 @@ pathgl.sim.particles = function (s) {
   function start () {
     pathgl.uniform('dimensions', [width, height])
     pathgl.uniform('gravity', .1)
-    pathgl.uniform('inertia', 0.003)
+    pathgl.uniform('inertia', 0.002)
     pathgl.uniform('drag', 0.996)
     for(var i = -1; ++i < 10;)
       addParticles(size / 10, [1,2].map(Math.random))

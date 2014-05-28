@@ -161,7 +161,7 @@ function draw_history(err, hist) {
         , cy: function(d){ return d.location[1] }
         , cz: function(d){ return + d.year }
         , r: 5
-        , opacity: .9
+        , opacity: .5
         })
   .shader({
     'r': '(pos.w < dates.y && pos.w > dates.x) ? 20. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
