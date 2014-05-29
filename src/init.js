@@ -44,7 +44,7 @@ function clicked () {}
 
 function mousemoved(e) {
   var rect = canvas.getBoundingClientRect()
-  var x =e.clientX - rect.left - canvas.clientLeft
+    , x = e.clientX - rect.left - canvas.clientLeft
     , y = e.clientY - rect.top - canvas.clientTop
 
   pathgl.uniform('mouse', [x, y])
@@ -58,17 +58,19 @@ function touchmoved(e) {
 }
 
 function monkeyPatch(canvas) {
-  if(window.d3)
-    extend(window.d3.selection.prototype, {
-      vAttr: d3_vAttr
-    , shader: d3_shader
-    })
-  if (window.d3)
-    extend(window.d3.transition.prototype, {
-      vAttr: d3_vAttr
-    , shader: d3_shader
-    })
   extend(canvas, appendable).gl = gl
+
+  if(! window.d3) return
+
+  extend(window.d3.selection.prototype, {
+    vAttr: d3_vAttr
+  , shader: d3_shader
+  })
+
+  extend(window.d3.transition.prototype, {
+    vAttr: d3_vAttr
+  , shader: d3_shader
+  })
 }
 
 var appendable = {

@@ -35,7 +35,7 @@ function init(arr) {
   .attr('y', function (d) { return s/2 + s * ~~(d / col) })
   .attr('width', s / 2)
   .filter(function (d, i) { return (d % 30) < 15 })
-  .attr('fill', tiles)
+  .attr('fill', function () { return d3.hsl(Math.random() * 360, .9, .5)})
 
   return
   var mozify = pathgl.shader().matchWith(findAverageHue)

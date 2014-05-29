@@ -161,13 +161,14 @@ function RenderTarget(screen) {
 function buildBuffers(gl, types) {
   var pointMesh = new Mesh(gl, { primitive: 'points' })
   pointMesh.bind(types.circle)
-  pointMesh.bind(types.rect)
+
 
   var lineMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 2 } })
   lineMesh.bind(types.line)
 
   var triangleMesh = new Mesh(gl, { primitive: 'triangles', pos: { size: 2 } })
   triangleMesh.bind(types.path)
+  triangleMesh.bind(types.rect)
 
   return [triangleMesh, pointMesh, lineMesh]
 }
