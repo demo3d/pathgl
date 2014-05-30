@@ -1,50 +1,151 @@
 <!DOCTYPE html>
-<head>
-	<meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-	<title>WebGL Library for Data Visualization and Simulation - PathGL</title>
-	<script src="/lib/d3.js"></script>
-	<script src="/lib/topojson.v1.min.js"></script>
-	<script src="/dist/pathgl.js"></script>
-  <link rel="stylesheet" href="/lib/adnan.css">
-</head>
+<html lang="en">
+  <head>
+    <title>pathGL - webgl data visualisation library</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PATHGL">
 
-<body>
-  <div class="nav">
-    <a href="http://github.com/adnan-wahab/pathgl">Github Repo</a>
-    <a href="/dist/pathgl.zip">Download</a>
+    <link rel="stylesheet" href="lib/bootstrap.min.css">
+    <link href="lib/main.min.css" rel="stylesheet">
+  </head>
+  <body class="docs docs-page docs-api">
 
-		<h3>Examples</h3>
-    <ul class="examples">
-			<li class="mobile-only"><a href="/examples/swarm.html">200k Circles</a>
-      <li class="desktop-only"><a href="/examples/physics.html">Physics Simulation</a>
-      <li><a href="/examples/map.html">Map of History</a>
-      <li><a href="/examples/music.html">Music Visualizer</a>
-    </ul>
-		
-		<h3>Documentation</h3>
-		<ul class="docs">
-      <li><a href="/documentation/start.html">Getting Started</a>
-			<li><a href="/documentation/api.html">API Reference</a>
-      <li><a href="/documentation/webgl.html">The Graphics Pipeline</a>
-			<li><a href="/documentation/svg.html">SVG Differences</a>
-			<li><a href="/documentation/gpgpu.html">GPGPU</a>
-		</ul>
-		<div class="mode">
-			<h3>Rendering Mode</h3>
-			<label for="svg">SVG<input type="radio" name="mode" id="svg"></label>
-			<label for="webgl">WebGL<input type="radio" name="mode" checked="1" id="webgl"></label>
-		</div>
-	</div>
-	<div class="right" id="scroll">
-		<div class="header">
-			<div class="blurb"></div>
-		</div>
-		<svg></svg>
-		<canvas height="500" width="960"></canvas>
-		<script src="/examples/js/physics.js"></script>
-  </div>
-	</div>
-</body>
+    <div class="home">
+      <section class="introduction">
+
+        <div class="container">
+          <img class="home-logo"
+               src="https://camo.githubusercontent.com/3da33aba96e13f6dd2c8b57141defdb53b6ca918/687474703a2f2f64336a732e6f72672f6c6f676f2e737667">
+          <img class="home-logo" src="http://cdn.pcper.com/files/imagecache/article_max_width/news/2013-03-28/webgl_logo.jpg">
+
+          <p class="slogan">
+            D3, meet WebGL.
+          </p>
+          <p class="sub-text">
+            Pathgl offers the best of both worlds: the raw power of webGL, and the
+            elegant interface of D3.
+          </p>
+
+          <div class="button-links">
+            <a href="https://famo.us/integrations/angular/faq">
+              <button class="btn btn-outline-inverse btn-lg">
+                <i class="fa fa-question-circle"></i>
+                FAQ
+              </button>
+            </a>
+            <a href="https://github.com/adnan-wahab/pathgl">
+              <button class="btn btn-outline-inverse btn-lg">
+                <i class="fa fa-github"></i>
+                Github
+              </button>
+            </a>
+            <a href="/documentation/start.html">
+              <button class="btn btn-outline-inverse btn-lg">
+                <i class="fa fa-file-text-o"></i>
+                Docs
+              </button>
+            </a>
+            <a href="https://github.com/mbostock/d3/wiki/API-Reference">
+              <button class="btn btn-outline-inverse btn-lg" style="border-color: #444; color: #444;">
+                <i class="fa fa-code"></i>
+                D3 Docs
+              </button>
+            </a>
+          </div>
+
+        </div>
+
+      </section>
+
+      <section class="examples">
+        <div class="container">
+          <div class="example-block">
+            <div class="description">
+              <h3>Create your webGL app using a PENIS</h3>
+              <p>
+                Bring the benefits of declarative UI authoring to your Famo.us app
+              </p>
+            </div>
+            <div class="row">
+              <div class="col-sm-8">
+                <div class="highlight"><pre><code class="bash hljs ">hello </code></pre></div>
+              </div>
+              <div class="col-sm-4">
+                <svg class="one"></svg>
+              </div>
+            </div>
+          </div>
 
 
+          <div class="example-block">
+            <div class="description row">
+              <div class="col-sm-offset-4 col-sm-8">
+                <h3>Bring Angular apps to life with Famo.us animations</h3>
+                <p>
+                  Easily add animations to Famo.us objects declaratively, imperatively, or both.
+                </p>
+                <div class="highlight"><pre><code class="bash hljs ">aoeunaotheu</code></pre></div>          
+
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm-4">
+                <svg class="two"></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="example-block">
+            <div class="description">
+              <h3>Use familiar Angular concepts, like ng-repeat</h3>
+              <p>
+                Make use of Angular tools to keep MVC logic separated and clean.
+              </p>
+            </div>
+            <div class="row">
+              <div class="col-sm-8">
+                <div class="highlight"><pre><code class="bash hljs">var x = function () {}</code></pre></div>
+              </div>
+              <div class="col-sm-4">
+                <svg class="three"></svg>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- <div class="example-block"> -->
+          <!--   <div class="description row"> -->
+          <!--     <div class="col-sm-offset-4 col-sm-8"> -->
+          <!--       <h3>Combine Angular bindings with Famo.us attributes</h3> -->
+          <!--       <p> -->
+          <!--         Allow users to easily dictate surface sizes and translation distances by leveraging Angular bindings. -->
+          <!--       </p> -->
+          <!--       <div class="highlight"><pre><code class="bash hljs ">aoeunaotheu</code></pre></div> -->
+          <!--     </div> -->
+          <!--   </div> -->
+          <!--   <div class="row"> -->
+          <!--     <div class="col-sm-4"> -->
+          <!--       <svg class="four"></svg> -->
+          <!--     </div> -->
+          <!--   </div> -->
+          <!-- </div> -->
+
+          <div class="example-block">
+            <div class="description">
+              <h3>Check out the <a href="https://famo.us/integrations/angular/docs/api">docs</a> to learn more.</h3>
+            </div>
+          </div>
+
+        </div>
+      </section>
+      <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+      <script>
+        d3.select('.one').append('circle').attr('r', '10')
+      </script>
+      <script src="https://famo.us/integrations/angular/js/highlight.pack.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script>
+  </body>
+</html>
