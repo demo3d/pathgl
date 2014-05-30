@@ -69,16 +69,18 @@
               </p>
               <div class="col-sm-8">
                 <div class="highlight"><pre><code class="bash hljs ">
-d3.select('canvas')
-.selectAll('circle')
-.data(d3.range(1e3))
-.enter().append('circle')
-.attr('fill', function () { return "hsl("+Math.random()*360+",100%,50%)"})
-.attr('cx', function (d, i) { return d % 1000 })
-.attr('r', function (d, i) { return d % 5 * 2 })
-.shader({ cx: 'resolution.x / 2. + cos(pos.x + clock / 1000.) * pos.x;'
-       , cy: 'resolution.y / 2. + sin(pos.x + clock / 1000.) * pos.x;'
+d3.select('.one').selectAll("circle")
+.data(d3.range(5e3, 1e4))
+.enter().append("circle")
+.attr('opacity', .7)
+.attr('fill', function (i) { return d3.hcl(i , 100, 55) })
+.attr('cx', function (i) { return i / 5e6 }) 
+.attr('cy', function (i) { return i % 1e3 })
+.attr('r', function (i) { return i % 10 * 3 })
+.shader({ cx: 'resolution.x / 2. + cos(pos.y + clock * pos.x) * pos.y * 10.'
+        , cy: 'resolution.y / 2. + sin(pos.y + clock * pos.x) * pos.y * 10.'
 })
+
 								</code></pre></div>
               </div>
               <div class="col-sm-4">

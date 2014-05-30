@@ -24,7 +24,7 @@ function mouseover(d) {
 function draw_world(err, world) {
   if (err) return
 
-  d3.select('canvas')
+  webgl
   .append("path")
   .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a == b && a.id !== 10 }))
   .attr({ class: 'world'

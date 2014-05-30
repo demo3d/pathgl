@@ -14,11 +14,10 @@ function clamp(x, min, max) { return Math.min(Math.max(x, min), max) }
 
 function invoke(list, method) { return list.map(function (d) { return d[method]() })  }
 
+//left-top, left-bottom, right-bottom, right-top
 function Quad() { return [-1.0, -1.0, 1.0, -1.0, -1.0,  1.0, 1.0,  1.0] }
 
 function isVideoUrl(url) { return url.split('.').pop().join().match(/mp4|ogg|webm/) }
-
-function uniq(ar) { return ar.filter(function (d, i) { return ar.indexOf(d) == i }) }
 
 function flatten(list){ return list.reduce(function(p,n){ return p.concat(n) }, []) }
 

@@ -345,11 +345,10 @@ function clamp(x, min, max) { return Math.min(Math.max(x, min), max) }
 
 function invoke(list, method) { return list.map(function (d) { return d[method]() })  }
 
+//left-top, left-bottom, right-bottom, right-top
 function Quad() { return [-1.0, -1.0, 1.0, -1.0, -1.0,  1.0, 1.0,  1.0] }
 
 function isVideoUrl(url) { return url.split('.').pop().join().match(/mp4|ogg|webm/) }
-
-function uniq(ar) { return ar.filter(function (d, i) { return ar.indexOf(d) == i }) }
 
 function flatten(list){ return list.reduce(function(p,n){ return p.concat(n) }, []) }
 
@@ -800,8 +799,10 @@ function mergify(vs1, fs1, subst1) {
     return createProgram(this.gl, vs2, fs2)
   }
 };function init(c) {
-  pathgl.options = pathgl.options || {}
-  //{preserveDrawingBuffer: true}
+
+  pathgl.options || {}
+  //pathgl.options = {preserveDrawingBuffer: true}
+
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
@@ -3221,11 +3222,9 @@ function matchesSelector(selector) {
 //offscreen render color test
 
 var pickings  = {}
-window.p = pickings
 function addEventListener(evt, listener, capture) {
   (pickings[this.attr.cx | 0] = (pickings[this.attr.cx | 0] || {})
   )[this.attr.cy | 0] = this
-  this.mouseover = listener
 }
 
 function pick (x, y) {
@@ -3518,11 +3517,10 @@ var proto = {
               this.colorBuffer[this.indices[0]] = parseColor(v)
             }
           }
-, ellipse: { init: function () {},
-             cx: noop, cy: noop, rx: noop, ry: noop }
+, ellipse: { init: function () {}, cx: noop, cy: noop, rx: noop, ry: noop }
 , rect: { init: function (i) {
-            this.fBuffer[i * 4] = 0
-            this.indices = [i * 4]
+            this.indices = []//Quad().map
+            //this.posBuffer[this.indices[0] + 1] = v
           }
         , fill: function (v) {
             this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
@@ -3581,8 +3579,7 @@ var proto = {
 , g: { init: function () { }
      , appendChild: function (tag) { this.children.push(appendChild(tag)) }
      ,  ctr: function () { this.children = [] } }
-, text: { init: function () {}
-        , x: noop, y: noop, dx: noop, dy: noop }
+, text: { init: function () {}, x: noop, y: noop, dx: noop, dy: noop }
 }
 
 var baseProto = {
@@ -3621,7 +3618,7 @@ var baseProto = {
 , style: { setProperty: noop }
 , ownerSVGElement: { createSVGPoint: noop }
 , trigger: function (evt) {
-    console.log(evt)
+    debugger
   }
 }
 

@@ -36,11 +36,10 @@ var proto = {
               this.colorBuffer[this.indices[0]] = parseColor(v)
             }
           }
-, ellipse: { init: function () {},
-             cx: noop, cy: noop, rx: noop, ry: noop }
+, ellipse: { init: function () {}, cx: noop, cy: noop, rx: noop, ry: noop }
 , rect: { init: function (i) {
-            this.fBuffer[i * 4] = 0
-            this.indices = [i * 4]
+            this.indices = []//Quad().map
+            //this.posBuffer[this.indices[0] + 1] = v
           }
         , fill: function (v) {
             this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
@@ -99,8 +98,7 @@ var proto = {
 , g: { init: function () { }
      , appendChild: function (tag) { this.children.push(appendChild(tag)) }
      ,  ctr: function () { this.children = [] } }
-, text: { init: function () {}
-        , x: noop, y: noop, dx: noop, dy: noop }
+, text: { init: function () {}, x: noop, y: noop, dx: noop, dy: noop }
 }
 
 var baseProto = {
@@ -139,7 +137,7 @@ var baseProto = {
 , style: { setProperty: noop }
 , ownerSVGElement: { createSVGPoint: noop }
 , trigger: function (evt) {
-    console.log(evt)
+    debugger
   }
 }
 
