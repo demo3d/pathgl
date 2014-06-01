@@ -2,13 +2,12 @@
     position: absolute;
 }
 
-
 * {
     box-sizing: border-box;
 }
 
 body {
-    color: #222831;
+    color: white;
     margin: 0;
     padding: 0;
     font-family: "HelveticaNeue",Helvetica,Arial,sans-serif;
@@ -18,7 +17,7 @@ body {
     background: -ms-linear-gradient(rgba(255,255,255,0.3),rgba(255,255,255,0));
     background: -o-linear-gradient(rgba(255,255,255,0.3),rgba(255,255,255,0));
     background: linear-gradient(rgba(255,255,255,0.3),rgba(255,255,255,0));
-    background-color: #e8ebef;
+    background-color: #333;
     background-repeat: no-repeat;
 }
 
@@ -44,7 +43,7 @@ h3 {
     text-transform: uppercase;
     font-size: 11px;
     font-weight: bold;
-    color: #9ca5b5;
+    color: #ccc;
 }
 
 canvas, svg {
@@ -73,7 +72,7 @@ ul {
 
 .nav label, .nav a {
     width: 100%;
-    color: #008cdd;
+    color: white;
     padding: 9px 17px;
     text-decoration: none;
     display: block;

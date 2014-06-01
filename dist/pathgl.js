@@ -2858,7 +2858,7 @@ function mergify(vs1, fs1, subst1) {
   var main = RenderTarget(canvas)
   main.drawTo(null)
   tasks.push(main.update)
-  gl.clearColor(.3, .3, .3, 1.)
+  gl.clearColor(0,0,0,0)
   flags(gl)
   startDrawLoop()
   tasks.push(function () {
