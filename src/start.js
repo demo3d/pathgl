@@ -27,7 +27,7 @@ var textures = { null: [] }
 var stopRendering = false
 var tasks = []
 var uniforms = {}
-var start = Date.now()
+var start = 0
 
 pathgl.init = function (canvas) {
   inited = 1

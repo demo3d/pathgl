@@ -70,21 +70,19 @@
               <div class="col-sm-8">
                 <div class="highlight"><pre><code class="bash hljs ">
 d3.select('.one').selectAll("circle")
-.data(d3.range(5e3, 1e4))
+.data(d3.range(1e4))
 .enter().append("circle")
-.attr('opacity', .7)
-.attr('fill', function (i) { return d3.hcl(i, 100, 55) })
-.attr('cx', function (i) { return i / 5e6 })
-.attr('cy', function (i) { return i % 1e3 })
-.attr('r', function (i) { return i % 5 * 3 })
-.shader({ cx: 'resolution.x / 2. + cos(pos.y + clock * pos.x) * pos.y'
-        , cy: 'resolution.y / 2. + sin(pos.y + clock * pos.x) * pos.y'
+.attr('opacity', .9)
+.attr('fill', function (i) { return d3.hcl(i, 100, 55) }) 
+.attr('cx', function (i) { return i / 1e5 })
+.attr('r', function (i) { return i % 7 * 3 })
+.shader({ cx: 'resolution.x / 2. + cos(clock / 100. * pos.x) * (pos.x * 2e4)'
+        , cy: 'resolution.y / 2. + sin(clock / 100. * pos.x) * (pos.x * 2e4)'
 })
-
 								</code></pre></div>
               </div>
               <div class="col-sm-4">
-                <canvas class="one" width="1200" height="900"></canvas>
+                <canvas class="one" width="600" height="450"></canvas>
               </div>
             </div>
           </div>
@@ -101,46 +99,46 @@ d3.select('.one').selectAll("circle")
             </div>
             <div class="description"> 
               <div class="col-sm-4"> 
-                <canvas class="two" width="1200" height="900"> </canvas> 
+                <canvas class="two" width="600" height="450"> </canvas> 
               </div> 
               <div class="col-sm-8"> 
 
                 <div class="highlight"> 
                   <pre><code class="bash hljs"> 
 
-var vertices = d3.range(10).map(function(d) {
-  return [Math.random() * 1200, Math.random() * 900];
-});
+// var vertices = d3.range(10).map(function(d) {
+//   return [Math.random() * 1200, Math.random() * 900];
+// });
 
-var voronoi = d3.geom.voronoi()
-    .clipExtent([[0, 0], [1200, 900]]);
+// var voronoi = d3.geom.voronoi()
+//     .clipExtent([[0, 0], [1200, 900]]);
 
-var svg = d3.select(".two")
-.on("mousemove", function() { vertices[0] = d3.mouse(this); redraw(); })
+// var svg = d3.select(".two")
+// .on("mousemove", function() { vertices[0] = d3.mouse(this); redraw(); })
 
-var path = svg.selectAll("path");
+// var path = svg.selectAll("path");
 
-svg.selectAll("circle")
-.data(vertices.slice(1))
-.enter().append("circle")
-.attr("transform", function(d) { return "translate(" + d + ")"; })
-.attr("r", 1.5);
+// svg.selectAll("circle")
+// .data(vertices.slice(1))
+// .enter().append("circle")
+// .attr("transform", function(d) { return "translate(" + d + ")"; })
+// .attr("r", 1.5);
 
-var line = d3.svg.line()
-//line.interpolate('step-after');
-redraw();
+// var line = d3.svg.line()
+// //line.interpolate('step-after');
+// redraw();
 
-function redraw() {
-  path = path.data(voronoi(vertices), String);
+// function redraw() {
+//   path = path.data(voronoi(vertices), String);
 
-  path.exit().remove();
+//   path.exit().remove();
 
-  path.enter().append("path")
-    .attr("d", function (d) { return line(d) })
-   .attr('fill', function (d, i) { return "hsl(" + (i % 6)* 60 + ",80%,50%)"})
+//   path.enter().append("path")
+//     .attr("d", function (d) { return line(d) })
+//    .attr('fill', function (d, i) { return "hsl(" + (i % 6)* 60 + ",80%,50%)"})
 
-  path.order();
-}
+//   path.order();
+// }
                   </code></pre> 
                 </div> 
               </div> 

@@ -19,7 +19,7 @@ function init(c) {
   flags(gl)
   startDrawLoop()
   tasks.push(function () {
-    pathgl.uniform('clock', new Date - start)
+    pathgl.uniform('clock', new Date % 1e9)
   })
   return canvas
 }
@@ -27,6 +27,7 @@ function init(c) {
 function flags(gl) {
   gl.clearColor(0,0,0,0)
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
+  //gl.blendFunc(gl.ONE, gl.ONE)
 }
 
 function bindEvents(canvas) {
@@ -82,7 +83,6 @@ var appendable = {
   , removeChild: removeChild
   , insertBefore: insertBefore
   , __scene__: []
-
   , __program__: void 0
 }
 
