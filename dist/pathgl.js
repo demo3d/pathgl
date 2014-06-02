@@ -654,9 +654,6 @@ function simMesh() {
 , 'const mat4 modelViewMatrix = mat4(1.);'
 , 'const mat4 projectionMatrix = mat4(1.);'
 
-//which texture? 0-4
-//uv coordinates...
-//which index or combination of indices?
 , 'vec4 unpack_tex(float col) {'
 , '    return vec4(mod(col / 1000. / 1000., 1000.),'
 , '                mod(col / 1000. , 1000.),'
@@ -678,9 +675,9 @@ function simMesh() {
 , 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - 1., 1. - ((pos.y / resolution.y) * 2.)); }'
 , 'void main() {'
 , '    float time = clock / 1000.;'
+, '    float r = replace_r;'
 , '    float x = replace_x;'
 , '    float y = replace_y;'
-, '    float r = replace_r;'
 , '    float fill = color.x;'
 , '    float stroke = color.x;'
 , '    type = fugue.x;'
@@ -819,7 +816,7 @@ function mergify(vs1, fs1, subst1) {
   flags(gl)
   startDrawLoop()
   tasks.push(function () {
-    pathgl.uniform('clock', new Date % 1e9)
+    pathgl.uniform('clock', Date.now() % 1e7 )
   })
   return canvas
 }
@@ -827,7 +824,7 @@ function mergify(vs1, fs1, subst1) {
 function flags(gl) {
   gl.clearColor(0,0,0,0)
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
-  //gl.blendFunc(gl.ONE, gl.ONE)
+  //gl.blendFunc(gl.ONE_MINUS_SRC_ALPHA, gl.ONE_MINUS_DST_ALPHA)
 }
 
 function bindEvents(canvas) {

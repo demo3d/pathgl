@@ -21,9 +21,6 @@ pathgl.vertexShader = [
 , 'const mat4 modelViewMatrix = mat4(1.);'
 , 'const mat4 projectionMatrix = mat4(1.);'
 
-//which texture? 0-4
-//uv coordinates...
-//which index or combination of indices?
 , 'vec4 unpack_tex(float col) {'
 , '    return vec4(mod(col / 1000. / 1000., 1000.),'
 , '                mod(col / 1000. , 1000.),'
@@ -45,9 +42,9 @@ pathgl.vertexShader = [
 , 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - 1., 1. - ((pos.y / resolution.y) * 2.)); }'
 , 'void main() {'
 , '    float time = clock / 1000.;'
+, '    float r = replace_r;'
 , '    float x = replace_x;'
 , '    float y = replace_y;'
-, '    float r = replace_r;'
 , '    float fill = color.x;'
 , '    float stroke = color.x;'
 , '    type = fugue.x;'

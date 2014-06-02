@@ -19,7 +19,7 @@ function init(c) {
   flags(gl)
   startDrawLoop()
   tasks.push(function () {
-    pathgl.uniform('clock', new Date % 1e9)
+    pathgl.uniform('clock', Date.now() % 1e7 )
   })
   return canvas
 }
@@ -27,7 +27,7 @@ function init(c) {
 function flags(gl) {
   gl.clearColor(0,0,0,0)
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
-  //gl.blendFunc(gl.ONE, gl.ONE)
+  //gl.blendFunc(gl.ONE_MINUS_SRC_ALPHA, gl.ONE_MINUS_DST_ALPHA)
 }
 
 function bindEvents(canvas) {

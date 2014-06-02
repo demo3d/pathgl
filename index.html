@@ -70,14 +70,14 @@
               <div class="col-sm-8">
                 <div class="highlight"><pre><code class="bash hljs ">
 d3.select('.one').selectAll("circle")
-.data(d3.range(1e4))
+.data(d3.range(1e4).map(function (d) { return d * 2 }))
 .enter().append("circle")
 .attr('opacity', .9)
 .attr('fill', function (i) { return d3.hcl(i, 100, 55) }) 
-.attr('cx', function (i) { return i / 1e5 })
-.attr('r', function (i) { return i % 7 * 3 })
-.shader({ cx: 'resolution.x / 2. + cos(clock / 100. * pos.x) * (pos.x * 2e4)'
-        , cy: 'resolution.y / 2. + sin(clock / 100. * pos.x) * (pos.x * 2e4)'
+.attr('cx', function (i) { return i / 50 })
+.attr('r', function (i) { return i % 7 })
+.shader({ cx: 'resolution.x / 2. + cos(clock / (r * 2e4) * pos.x) * pos.x'
+        , cy: 'resolution.y / 2. + sin(clock / (r * 2e4) * pos.x) * pos.x'
 })
 								</code></pre></div>
               </div>
