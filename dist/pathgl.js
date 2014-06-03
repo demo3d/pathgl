@@ -846,8 +846,7 @@ function mousemoved(e) {
   var rect = canvas.getBoundingClientRect()
     , x = e.clientX - rect.left - canvas.clientLeft
     , y = e.clientY - rect.top - canvas.clientTop
-
-  pathgl.uniform('mouse', [x, y])
+  pathgl.uniform('mouse', [x / rect.width, y / rect.height])
   pick(x | 0, y | 0)
 }
 
@@ -3895,13 +3894,12 @@ var particleShader = [
 , 'uniform float drag;'
 , 'uniform float clock;'
 , 'void main() {'
-        , 'vec2 TARGET = vec2(mouse / resolution);'
         , 'vec4 data = texture2D(texture, (gl_FragCoord.xy) / dimensions);'
         , 'vec2 pos = data.xy;'
         , 'vec2 vel = data.zw;'
         , 'if (pos.x > 1. || pos.x < 0. || pos.y > 1. || pos.y < 0.) vel *= -1.; '
         , 'pos += inertia  * vel;'
-        , 'vel += gravity * normalize(TARGET - pos);'
+        , 'vel += gravity * normalize(mouse - pos);'
         , 'vel *= drag;'
         , 'gl_FragColor = vec4(pos, vel);'
      , '}'

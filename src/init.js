@@ -49,8 +49,7 @@ function mousemoved(e) {
   var rect = canvas.getBoundingClientRect()
     , x = e.clientX - rect.left - canvas.clientLeft
     , y = e.clientY - rect.top - canvas.clientTop
-
-  pathgl.uniform('mouse', [x, y])
+  pathgl.uniform('mouse', [x / rect.width, y / rect.height])
   pick(x | 0, y | 0)
 }
 
