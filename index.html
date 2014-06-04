@@ -76,10 +76,10 @@ d3.select('.one').selectAll("circle")
 .attr('fill', function (i) { return d3.hcl(i, 100, 55) })
 .attr('cx', function (i) { return i / 30})
 .attr('r', function (i) { return i % 6 + 2})
-.shader({ cx: 'resolution.x / 2. + cos(pos.x * (mouse.x) * clock / 1e6 ) * pos.x'
-        , cy: 'resolution.y / 2. + sin(pos.x * (mouse.x) * clock  / 1e6) * pos.x'
-				})
-				//'resolution.x / 2. + 
+.shader({
+  cx: 'resolution.x / 2. + cos(pos.x * mouse.x * clock / 1e5) * pos.x'
+, cy: 'resolution.y / 2. + sin(pos.x * mouse.x * clock  / 1e5) * pos.x'
+})
 								</code></pre></div>
               </div>
               <div class="col-sm-4">
