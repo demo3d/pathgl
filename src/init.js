@@ -82,6 +82,7 @@ var appendable = {
   , querySelector: function (s) { return this.querySelectorAll(s)[0] }
   , removeChild: removeChild
   , insertBefore: insertBefore
+  , ownerSVGElement: { createSVGPoint: function () { return { y: 0, x: 0, matrixTransform: d3.functor(0) } }}
   , __scene__: []
   , __program__: void 0
 }

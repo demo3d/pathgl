@@ -79,3 +79,19 @@ function debug (cond, message) {
 }
 
 function nyi () { debug(0, 'not yet implemented') }
+
+
+function refract() {}
+function reflect() {}
+function faceforward() {}
+function normalize() {}
+function cross() {}
+function dot() {}
+function distance() {}
+function smoothstep() {}
+function mix() {}
+function step() {}
+
+function fract(x) {
+  return x - (x | 0)
+}

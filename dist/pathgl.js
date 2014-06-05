@@ -410,7 +410,22 @@ function debug (cond, message) {
 }
 
 function nyi () { debug(0, 'not yet implemented') }
-;function parseColor(v) {
+
+
+function refract() {}
+function reflect() {}
+function faceforward() {}
+function normalize() {}
+function cross() {}
+function dot() {}
+function distance() {}
+function smoothstep() {}
+function mix() {}
+function step() {}
+
+function fract(x) {
+  return x - (x | 0)
+};function parseColor(v) {
   var a = setStyle(v)
   return + (a[0] * 255) << 16 ^ (a[1] * 255) << 8 ^ (a[2] * 255) << 0
 }
@@ -882,6 +897,7 @@ var appendable = {
   , querySelector: function (s) { return this.querySelectorAll(s)[0] }
   , removeChild: removeChild
   , insertBefore: insertBefore
+  , ownerSVGElement: { createSVGPoint: function () { return { y: 0, x: 0, matrixTransform: d3.functor(0) } }}
   , __scene__: []
   , __program__: void 0
 }
@@ -3632,7 +3648,7 @@ var baseProto = {
 , getBBox: getBBox
 , trigger: function (evt) {
     var fn = this['__on' + evt]
-    if(fn) fn(new proxyEvent(this))
+    if(fn) fn.call(this, new proxyEvent(this))
   }
 }
 

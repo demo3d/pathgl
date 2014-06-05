@@ -140,7 +140,7 @@ var baseProto = {
 , getBBox: getBBox
 , trigger: function (evt) {
     var fn = this['__on' + evt]
-    if(fn) fn(new proxyEvent(this))
+    if(fn) fn.call(this, new proxyEvent(this))
   }
 }
 

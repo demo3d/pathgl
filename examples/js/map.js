@@ -109,7 +109,7 @@ function draw_history(err, hist) {
   }
 
   var tip = d3.tip().attr('class', 'd3-tip')
-            .html(function(d) { return 'hello' })
+            .html(function(d) { return d.event  })
 
   function adnan (s) {
     pathgl.uniform('dates', s)
@@ -150,7 +150,7 @@ function draw_history(err, hist) {
 
   pathgl.uniform('dates', [0, 1])
 
-  webgl
+  webgl.call(tip)
   .selectAll('circle')
   .data(hist)
   .enter()
