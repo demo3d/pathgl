@@ -897,7 +897,11 @@ var appendable = {
   , querySelector: function (s) { return this.querySelectorAll(s)[0] }
   , removeChild: removeChild
   , insertBefore: insertBefore
-  , ownerSVGElement: { createSVGPoint: function () { return { y: 0, x: 0, matrixTransform: d3.functor(0) } }}
+  , ownerSVGElement: { createSVGPoint:
+                       function o(x, y) { return { y: y || 0, x: x || 0,
+                                                   matrixTransform: function (m) {
+                                                     //debugger
+                                                     return o(m.e, m.f) }} }}
   , __scene__: []
   , __program__: void 0
 }
@@ -3706,23 +3710,23 @@ var attrDefaults = {
 , opacity: .999
 }
 
-
 function getScreenCTM(){
   return { a: 1
          , b: 0
          , c: 0
          , d: 1
-         , e: 0
-         , f: 0
+         , e: this.attr.cx
+         , f: this.attr.cy
          }
 }
 function getBBox(){
-  return { height: 20
-         , width: 20
+  return { height: 10
+         , width: 10
          , y: this.attr.cy
          , x: this.attr.cx
          }
-};function Texture(image) {
+}
+;function Texture(image) {
   this.width = image.width || 512
   this.height = image.height || 512
 
