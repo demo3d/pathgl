@@ -52,7 +52,7 @@
 				<canvas width="760" height="500"></canvas>
 				<script src="js/physics.js"></script><p>A simple particle simulation using physics computed on the gpu.
 You can tweak the inertia and drag parameters with pathgl.uniform('inertia', .2)
-</p><pre><code>var particles = pathgl.sim.particles(1e5)
+</p><pre><code>var particles = pathgl.sim.particles(2e5)
 
 d3.select('canvas').selectAll("circle")
 .data(particles.unwrap())

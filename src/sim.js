@@ -20,7 +20,7 @@ var particleShader = [
         , 'vec2 vel = data.zw;'
         , 'if (pos.x > 1. || pos.x < 0. || pos.y > 1. || pos.y < 0.) vel *= -1.; '
         , 'pos += inertia  * vel;'
-        , 'vel += gravity * normalize(mouse - pos);'
+        , 'vel += gravity * sqrt(mouse * mouse + pos * pos) * normalize(mouse - pos);'
         , 'vel *= drag;'
         , 'gl_FragColor = vec4(pos, vel);'
      , '}'
@@ -50,9 +50,9 @@ pathgl.sim.particles = function (s) {
 
   function start () {
     pathgl.uniform('dimensions', [width, height])
-    pathgl.uniform('gravity', .1)
-    pathgl.uniform('inertia', 0.002)
-    pathgl.uniform('drag', 0.996)
+    pathgl.uniform('gravity', .25)
+    pathgl.uniform('inertia', 0.005)
+    pathgl.uniform('drag', 0.991)
     for(var i = -1; ++i < 10;)
       addParticles(size / 10, [1,2].map(Math.random))
   }

@@ -778,7 +778,7 @@ function build_vs(src, subst) {
 
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? clamp(texel(pos.xy).w + texel(pos.xy).z, 2., 100.) : (2. * pos.z)'
+    , r: '(pos.z < 0.) ? max(texel(pos.xy).w , texel(pos.xy).z): (2. * pos.z)'
     , x: '(pos.x < 1.) ? texel(pos.xy).x * resolution.x : pos.x'
     , y: '(pos.y < 1.) ? texel(pos.xy).y * resolution.y : pos.y'
     }, subst)
@@ -813,7 +813,8 @@ function mergify(vs1, fs1, subst1) {
     vs2 = build_vs(vs2, subst2)
     return createProgram(this.gl, vs2, fs2)
   }
-};function init(c) {
+}
+;function init(c) {
   pathgl.options || {}
   //pathgl.options = {preserveDrawingBuffer: true}
 
@@ -3958,7 +3959,7 @@ var particleShader = [
         , 'vec2 vel = data.zw;'
         , 'if (pos.x > 1. || pos.x < 0. || pos.y > 1. || pos.y < 0.) vel *= -1.; '
         , 'pos += inertia  * vel;'
-        , 'vel += gravity * normalize(mouse - pos);'
+        , 'vel += gravity * sqrt(mouse * mouse + pos * pos) * normalize(mouse - pos);'
         , 'vel *= drag;'
         , 'gl_FragColor = vec4(pos, vel);'
      , '}'
@@ -3988,9 +3989,9 @@ pathgl.sim.particles = function (s) {
 
   function start () {
     pathgl.uniform('dimensions', [width, height])
-    pathgl.uniform('gravity', .1)
-    pathgl.uniform('inertia', 0.002)
-    pathgl.uniform('drag', 0.996)
+    pathgl.uniform('gravity', .25)
+    pathgl.uniform('inertia', 0.005)
+    pathgl.uniform('drag', 0.991)
     for(var i = -1; ++i < 10;)
       addParticles(size / 10, [1,2].map(Math.random))
   }
