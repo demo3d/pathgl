@@ -10,7 +10,7 @@ function addEventListener(evt, listener, capture) {
 
 function pick (x, y) {
   if (elCoordinates[x] && elCoordinates[x][y])
-    elCoordinates[x][y].trigger('mouseover')
+    hoveringOver.push(elCoordinates[x][y].trigger('mouseover'))
 }
 
 

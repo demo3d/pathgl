@@ -40,7 +40,8 @@ var proto = {
 , rect: { init: function (i) {
             this.indices = []//Quad().map
             //this.posBuffer[this.indices[0] + 1] = v
-          }
+
+}
         , fill: function (v) {
             this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
           }
@@ -141,6 +142,7 @@ var baseProto = {
 , trigger: function (evt) {
     var fn = this['__on' + evt]
     if(fn) fn.call(this, new proxyEvent(this))
+    return this
   }
 }
 
@@ -199,12 +201,14 @@ var attrDefaults = {
 }
 
 function getScreenCTM(){
+  var rect = canvas.getBoundingClientRect()
+
   return { a: 1
          , b: 0
          , c: 0
          , d: 1
-         , e: this.attr.cx
-         , f: this.attr.cy
+         , e: this.attr.cx + rect.left
+         , f: this.attr.cy + rect.top
          }
 }
 function getBBox(){

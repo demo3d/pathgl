@@ -26,7 +26,8 @@ function Mesh (gl, options, attr) {
   return self
 
   function alloc() {
-    if (options.primitive == 'triangles') return count = 1e5
+    console.log(indexPool.length)
+    if (options.primitive == 'triangles') return 1e6 - indexPool.length
     return count += options.primitive == 'points' ? 1
                   : options.primitive == 'lines' ? 2
                   : 3

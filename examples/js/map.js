@@ -109,8 +109,7 @@ function draw_history(err, hist) {
   }
 
   var tip = d3.tip().attr('class', 'd3-tip')
-            //.offset(function () { return [this.attr.cx, this.attr.cy] })
-            .html(function(d) { return d.event.slice(0, 10)  })
+            .html(function(d) { return d.event  })
 
   function adnan (s) {
     pathgl.uniform('dates', s)
