@@ -127,7 +127,7 @@ function build_vs(src, subst) {
 
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? max(texel(pos.xy).w , texel(pos.xy).z): (2. * pos.z)'
+    , r: '(pos.z < 0.) ? clamp(max(abs(texel(pos.xy).w), abs(texel(pos.xy).z)), 2., 14.) : (2. * pos.z)'
     , x: '(pos.x < 1.) ? texel(pos.xy).x * resolution.x : pos.x'
     , y: '(pos.y < 1.) ? texel(pos.xy).y * resolution.y : pos.y'
     }, subst)

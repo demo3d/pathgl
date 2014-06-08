@@ -778,7 +778,7 @@ function build_vs(src, subst) {
 
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? max(texel(pos.xy).w , texel(pos.xy).z): (2. * pos.z)'
+    , r: '(pos.z < 0.) ? clamp(max(abs(texel(pos.xy).w), abs(texel(pos.xy).z)), 2., 14.) : (2. * pos.z)'
     , x: '(pos.x < 1.) ? texel(pos.xy).x * resolution.x : pos.x'
     , y: '(pos.y < 1.) ? texel(pos.xy).y * resolution.y : pos.y'
     }, subst)
@@ -3957,15 +3957,15 @@ var particleShader = [
         , 'vec4 data = texture2D(texture, (gl_FragCoord.xy) / dimensions);'
         , 'vec2 pos = data.xy;'
         , 'vec2 vel = data.zw;'
-        , 'if (pos.x > 1. || pos.x < 0. || pos.y > 1. || pos.y < 0.) vel *= -1.; '
-        , 'pos += inertia  * vel;'
-        , 'vel += gravity * sqrt(mouse * mouse + pos * pos) * normalize(mouse - pos);'
+        , 'if (pos.x > 1.0 || pos.x < 0. || pos.y > 1. || pos.y < -0.) vel *= -1.; '
+        , 'if (distance(pos, mouse) < .001) vel *= 2.;'
+        , 'pos += inertia * vel;'
+        , 'vel += gravity * normalize(mouse - pos);'
         , 'vel *= drag;'
         , 'gl_FragColor = vec4(pos, vel);'
      , '}'
 ].join('\n')
 
-var since = Date.now()
 pathgl.sim.particles = function (s) {
   var size  = nextSquare(s)
     , width = Math.sqrt(size)
@@ -3989,11 +3989,11 @@ pathgl.sim.particles = function (s) {
 
   function start () {
     pathgl.uniform('dimensions', [width, height])
-    pathgl.uniform('gravity', .25)
-    pathgl.uniform('inertia', 0.005)
-    pathgl.uniform('drag', 0.991)
-    for(var i = -1; ++i < 10;)
-      addParticles(size / 10, [1,2].map(Math.random))
+    pathgl.uniform('gravity', 1)
+    pathgl.uniform('inertia', 0.0005)
+    pathgl.uniform('drag', 0.981)
+    for(var i = -1; ++i < 100;)
+      addParticles(size / 100, [1,2].map(Math.random))
   }
 
   function emit(origin, ammount) {
@@ -4017,7 +4017,7 @@ pathgl.sim.particles = function (s) {
     chunks.forEach(function (chunk) {
       var data = [], j = -1
       while(++j < chunk.size)
-        data.push(origin[0], origin[1], random(-1.0, 1.0), random(-1.0, 1.0))
+        data.push(origin[0], origin[1], random(-2.0, 2.0), random(-2.0, 2.0))
 
       texture.subImage(chunk.x, chunk.y, data)
     })
