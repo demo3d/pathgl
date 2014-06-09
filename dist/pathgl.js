@@ -3270,6 +3270,11 @@ proxyEvent.prototype = extend(Object.create(null), {
     , material = []
     , indexPool = range(0, 1e6)
 
+  //move logic to indexpool
+  //if (options.primitive == 'points') indexPool = indexPool.filter(function (d) { return ! (d % 4) })
+  if (options.primitive == 'lines')indexPool = indexPool.filter(function (d) { return ! (d % 2) })
+
+
   indexPool.max = 1e6
 
   init()
@@ -3293,8 +3298,8 @@ proxyEvent.prototype = extend(Object.create(null), {
 
   function alloc() {
     if (options.primitive == 'triangles') return []
-    return options.primitive == 'points' ? []
-                  : options.primitive == 'lines' ? []
+    return options.primitive == 'points' ? [indexPool.shift() * 4]
+                  : options.primitive == 'lines' ? [indexPool.shift() * 2, indexPool.shift() * 2 + 1]
                   : []
   }
 
@@ -3518,7 +3523,7 @@ var chunker =
            a[type.name] = function x() {
              var self = Object.create(type.prototype)
              extend(self, x)
-             self.init(x.mesh.alloc())
+             self.init(self.mesh.alloc())
              self.attr = {}
              return self
            }
@@ -3579,7 +3584,10 @@ var proto = {
          , 'xlink:href': noop, height: noop, width: noop, x: noop, y: noop }
 
 , line: { init: function (i) {
-            this.indices = [i * 2, i * 2 + 1]
+
+            if(Math.random() > .5)
+            console.log(i)
+            this.indices = i
           }
         , x1: function (v) { this.posBuffer[this.indices[0] * 2] = v }
         , y1: function (v) { this.posBuffer[this.indices[0] * 2 + 1] = v }

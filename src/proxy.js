@@ -3,7 +3,7 @@ function SVGProxy () {
            a[type.name] = function x() {
              var self = Object.create(type.prototype)
              extend(self, x)
-             self.init(x.mesh.alloc())
+             self.init(self.mesh.alloc())
              self.attr = {}
              return self
            }
@@ -64,7 +64,7 @@ var proto = {
          , 'xlink:href': noop, height: noop, width: noop, x: noop, y: noop }
 
 , line: { init: function (i) {
-            this.indices = [i * 2, i * 2 + 1]
+            this.indices = i
           }
         , x1: function (v) { this.posBuffer[this.indices[0] * 2] = v }
         , y1: function (v) { this.posBuffer[this.indices[0] * 2 + 1] = v }

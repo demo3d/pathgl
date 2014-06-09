@@ -6,6 +6,11 @@ function Mesh (gl, options, attr) {
     , material = []
     , indexPool = range(0, 1e6)
 
+  //move logic to indexpool
+  //if (options.primitive == 'points') indexPool = indexPool.filter(function (d) { return ! (d % 4) })
+  if (options.primitive == 'lines')indexPool = indexPool.filter(function (d) { return ! (d % 2) })
+
+
   indexPool.max = 1e6
 
   init()
@@ -29,8 +34,8 @@ function Mesh (gl, options, attr) {
 
   function alloc() {
     if (options.primitive == 'triangles') return []
-    return options.primitive == 'points' ? []
-                  : options.primitive == 'lines' ? []
+    return options.primitive == 'points' ? [indexPool.shift() * 4]
+                  : options.primitive == 'lines' ? [indexPool.shift() * 2, indexPool.shift() * 2 + 1]
                   : []
   }
 
@@ -131,7 +136,7 @@ function RenderTarget(screen) {
   }
 
   function append(el) {
-    return (types[el.toLowerCase()] || console.log.bind(console, 'oops'))(el)
+    return (types[el.toLowerCase()] || console.log.bind(console, 'Error'))(el)
   }
 
   function mergeProgram(vs, fs, subst) {
