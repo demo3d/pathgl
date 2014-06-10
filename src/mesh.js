@@ -4,14 +4,8 @@ function Mesh (gl, options, attr) {
     , attrList = options.attrList || ['pos', 'color', 'fugue']
     , primitive = gl[options.primitive.toUpperCase()]
     , material = []
-    , indexPool = range(0, 1e6)
-
-  //move logic to indexpool
-  //if (options.primitive == 'points') indexPool = indexPool.filter(function (d) { return ! (d % 4) })
-  if (options.primitive == 'lines')indexPool = indexPool.filter(function (d) { return ! (d % 2) })
-
-
-  indexPool.max = 1e6
+    , indexPool = range(0, 1e5)
+    indexPool.max = 1e5
 
   init()
   var self = {
@@ -34,8 +28,8 @@ function Mesh (gl, options, attr) {
 
   function alloc() {
     if (options.primitive == 'triangles') return []
-    return options.primitive == 'points' ? [indexPool.shift() * 4]
-                  : options.primitive == 'lines' ? [indexPool.shift() * 2, indexPool.shift() * 2 + 1]
+      return options.primitive == 'points' ? [indexPool.shift()]
+                  : options.primitive == 'lines' ? [indexPool.shift(), indexPool.shift()]
                   : []
   }
 
@@ -86,7 +80,7 @@ function Mesh (gl, options, attr) {
   }
 
   function draw (offset) {
-    if (! count) return
+    //if (! count || 0 == indexPool.max - indexPool.length) return
     for (var attr in attributes) {
       attr = attributes[attr]
       gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
@@ -97,7 +91,7 @@ function Mesh (gl, options, attr) {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
     //bindMaterial()
-    gl.drawArrays(primitive, offset, indexPool.max - indexPool.length)
+    gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length) || options.count || 0)
   }
 
   function set () {}
@@ -161,7 +155,7 @@ function RenderTarget(screen) {
   }
 
   function beforeRender(gl, screen) {
-    //if (screen == gl.canvas) gl.clear(gl.COLOR_BUFFER_BIT)
+    if (screen == gl.canvas) gl.clear(gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
 }

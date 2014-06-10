@@ -814,7 +814,6 @@ function mergify(vs1, fs1, subst1) {
     return createProgram(this.gl, vs2, fs2)
   }
 };function init(c) {
-
   pathgl.options || {}
   //pathgl.options = {preserveDrawingBuffer: true}
 
@@ -3268,14 +3267,8 @@ proxyEvent.prototype = extend(Object.create(null), {
     , attrList = options.attrList || ['pos', 'color', 'fugue']
     , primitive = gl[options.primitive.toUpperCase()]
     , material = []
-    , indexPool = range(0, 1e6)
-
-  //move logic to indexpool
-  //if (options.primitive == 'points') indexPool = indexPool.filter(function (d) { return ! (d % 4) })
-  if (options.primitive == 'lines')indexPool = indexPool.filter(function (d) { return ! (d % 2) })
-
-
-  indexPool.max = 1e6
+    , indexPool = range(0, 1e5)
+    indexPool.max = 1e5
 
   init()
   var self = {
@@ -3298,8 +3291,8 @@ proxyEvent.prototype = extend(Object.create(null), {
 
   function alloc() {
     if (options.primitive == 'triangles') return []
-    return options.primitive == 'points' ? [indexPool.shift() * 4]
-                  : options.primitive == 'lines' ? [indexPool.shift() * 2, indexPool.shift() * 2 + 1]
+      return options.primitive == 'points' ? [indexPool.shift()]
+                  : options.primitive == 'lines' ? [indexPool.shift(), indexPool.shift()]
                   : []
   }
 
@@ -3350,7 +3343,7 @@ proxyEvent.prototype = extend(Object.create(null), {
   }
 
   function draw (offset) {
-    if (! count) return
+    //if (! count || 0 == indexPool.max - indexPool.length) return
     for (var attr in attributes) {
       attr = attributes[attr]
       gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
@@ -3361,7 +3354,7 @@ proxyEvent.prototype = extend(Object.create(null), {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
     //bindMaterial()
-    gl.drawArrays(primitive, offset, indexPool.max - indexPool.length)
+    gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length) || options.count || 0)
   }
 
   function set () {}
@@ -3400,7 +3393,7 @@ function RenderTarget(screen) {
   }
 
   function append(el) {
-    return (types[el.toLowerCase()] || console.log.bind(console, 'oops'))(el)
+    return (types[el.toLowerCase()] || console.log.bind(console, 'Error'))(el)
   }
 
   function mergeProgram(vs, fs, subst) {
@@ -3425,7 +3418,7 @@ function RenderTarget(screen) {
   }
 
   function beforeRender(gl, screen) {
-    //if (screen == gl.canvas) gl.clear(gl.COLOR_BUFFER_BIT)
+    if (screen == gl.canvas) gl.clear(gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
 }
@@ -3584,9 +3577,6 @@ var proto = {
          , 'xlink:href': noop, height: noop, width: noop, x: noop, y: noop }
 
 , line: { init: function (i) {
-
-            if(Math.random() > .5)
-            console.log(i)
             this.indices = i
           }
         , x1: function (v) { this.posBuffer[this.indices[0] * 2] = v }

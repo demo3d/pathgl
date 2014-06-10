@@ -1,5 +1,4 @@
 function init(c) {
-
   pathgl.options || {}
   //pathgl.options = {preserveDrawingBuffer: true}
 
