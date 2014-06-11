@@ -79,6 +79,7 @@ Texture.prototype = {
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 , unwrap: unwrap
 , adnan: true
+, seed: seed
 }
 
 function initTexture() {
@@ -181,26 +182,24 @@ function loadTexture()  {
   return this
 }
 
-function chunkIt(array) {
-  var x = this.height
-    , y = this.height
-    , chunks = [{ x: x, y: y, i: 0, size: array.length }]
-    , texture = this
+function seed(count, origin) {
+    var x = this.width
+    , chunks = [{ x: x, y: x, size: count }]
 
-  ;(function recur(chunk) {
-    var boundary = chunk.x + chunk.size
-      , delta = boundary - width
-    if (boundary < width) return
-    chunk.size -= delta
-    chunks.push(chunk = { x: 0, y:(chunk.y + 1) % x, size: delta , i: ++chunk.i })
-    recur(chunk)
-  })(chunks[0])
 
-  chunks.forEach(function (chunk) {
-    var data = [], j = -1
-    while(++j < chunk.size)
-      data.push(array[chunk.i])
+    ;(function recur(chunk) {
+        var boundary = chunk.x + chunk.size
+        , delta = boundary - x
+        if (boundary < x) return
+        chunk.size -= delta
+        chunks.push(chunk = { x: 0, y:(chunk.y + 1) % x, size: delta })
+        recur(chunk)
+    })(chunks[0])
 
-    texture.subImage(chunk.x, chunk.y, data)
-  })
+    for(var i = 0; i < chunks.length; i++) {
+        var data = [], j = -1, chunk = chunks[i]
+        while(++j < chunk.size)
+            data.push(origin[0], origin[1], Math.random() * 4, Math.random() * 4)
+        this.subImage(chunk.x, chunk.y, data)
+    }
 }

@@ -28,7 +28,7 @@ pathgl.vertexShader = [
 , '                col);'
 , '}'
 
-, 'vec4 texel(vec2 get) { return texture2D(texture0, abs(get)); }'
+, 'vec4 tex(vec2 get) { return texture2D(texture0, abs(get)); }'
 
 
 , 'vec4 unpack_color(float col) {'
@@ -127,9 +127,9 @@ function build_vs(src, subst) {
 
     var defaults = extend({
       stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? clamp(max(abs(texel(pos.xy).w), abs(texel(pos.xy).z)), 1., 11.) : (2. * pos.z)'
-    , x: '(pos.x < 1.) ? texel(pos.xy).x * resolution.x : pos.x'
-    , y: '(pos.y < 1.) ? texel(pos.xy).y * resolution.y : pos.y'
+    , r: '(pos.z < 0.) ? clamp(abs(tex(pos.xy).w) + abs(tex(pos.xy).z), 2., 21.) : (2. * pos.z)'
+    , x: '(pos.x < 1.) ? tex(pos.xy).x * resolution.x : pos.x'
+    , y: '(pos.y < 1.) ? tex(pos.xy).y * resolution.y : pos.y'
     }, subst)
 
   for(var attr in defaults)

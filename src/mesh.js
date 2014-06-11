@@ -5,9 +5,10 @@ function Mesh (gl, options, attr) {
     , primitive = gl[options.primitive.toUpperCase()]
     , material = []
     , indexPool = range(0, 1e6).reverse()
-    indexPool.max = 1e6
 
-    init()
+  indexPool.max = 1e6
+
+  init()
   var self = {
     init : init
   , free: free
@@ -28,9 +29,9 @@ function Mesh (gl, options, attr) {
 
   function alloc() {
     if (options.primitive == 'triangles') return []
-      return options.primitive == 'points' ? [indexPool.pop()]
-                  : options.primitive == 'lines' ? [indexPool.pop(), indexPool.pop()]
-                  : []
+    return options.primitive == 'points' ? [indexPool.pop()]
+         : options.primitive == 'lines' ? [indexPool.pop(), indexPool.pop()]
+         : []
   }
 
   function spread(indices, buffer) {
