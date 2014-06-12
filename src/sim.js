@@ -18,10 +18,11 @@ var particleShader = [
 , 'vec4 data = texture2D(texture, (gl_FragCoord.xy) / dimensions) ;'
 , 'vec2 pos = data.xy;'
 , 'vec2 vel = data.zw;'
-, 'float warp =  .01 * max(gravity - (distance(pos, mouse)), 0.);'
+, 'float warp =  .01  * (gravity - sqrt(distance(pos, mouse)));'
 , 'if (pos.x > 1.0 || pos.x < 0. || pos.y > 1. || pos.y < -0.) vel *= -1.; '
+, 'if (distance(pos, mouse) < .01) vel *= 1.5; '
 , 'pos += vel * warp;'
-, 'vel = (vel * .991) + normalize(mouse - pos);'
+, 'vel = (vel * .991) + gravity * normalize(mouse - pos) * warp;'
 , 'gl_FragColor = vec4(pos, vel) ;'
 , '}'
 ].join('\n')

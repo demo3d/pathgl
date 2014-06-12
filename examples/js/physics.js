@@ -6,7 +6,7 @@ d3.select('canvas').selectAll("circle")
 .attr('r', function (d) { return d.z })
 .attr('cx', function (d) { return d.x })
 .attr('cy', function (d) { return d.y })
-.shader({'stroke': 'vec4(tex(pos.xy).x, .2, tex(pos.xy).z' +  ', 1.)'})
+.shader({'stroke': 'vec4(tex(pos.xy).x, .2, tex(pos.xy).z' +  ', (10. - r) / 5.0)'})
 
 d3.select('canvas').on('click', function () {
     pathgl.uniform('gravity', pathgl.uniform('gravity') * -1)
