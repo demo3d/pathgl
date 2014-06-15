@@ -182,24 +182,25 @@ function loadTexture()  {
   return this
 }
 
-function seed(count, origin) {
-    var x = this.width
-    , chunks = [{ x: x, y: x, size: count }]
-
-
+  function seed(count, origin) {
+    var x = 0
+      , y = 0
+      , chunks = [{ x: x, y: y, size: count }]
+      , s = this.height
+      console.log(this.height)
     ;(function recur(chunk) {
-        var boundary = chunk.x + chunk.size
-        , delta = boundary - x
-        if (boundary < x) return
-        chunk.size -= delta
-        chunks.push(chunk = { x: 0, y:(chunk.y + 1) % x, size: delta })
-        recur(chunk)
+      var boundary = chunk.x + chunk.size
+        , delta = boundary - s
+      if (boundary < s) return
+      chunk.size -= delta
+      chunks.push(chunk = { x: 0, y:(chunk.y + 1) % s, size: delta })
+      recur(chunk)
     })(chunks[0])
 
     for(var i = 0; i < chunks.length; i++) {
-        var data = [], j = -1, chunk = chunks[i]
-        while(++j < chunk.size)
-            data.push(origin[0], origin[1], Math.random() * 4, Math.random() * 4)
+      var data = [], j = -1, chunk = chunks[i]
+      while(++j < chunk.size)
+        data.push(origin[0], origin[1], Math.random() * 4, Math.random() * 4)
         this.subImage(chunk.x, chunk.y, data)
     }
-}
+  }
