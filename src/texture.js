@@ -203,4 +203,5 @@ function loadTexture()  {
         data.push(origin[0], origin[1], Math.random() * 4, Math.random() * 4)
         this.subImage(chunk.x, chunk.y, data)
     }
+      this.invalidate()
   }

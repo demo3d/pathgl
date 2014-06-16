@@ -15,36 +15,52 @@ var particleShader = [
 , 'uniform float drag;'
 , 'uniform float clock;'
 , 'void main() {'
-, 'vec4 data = texture2D(texture, (gl_FragCoord.xy) / dimensions) ;'
-, 'vec2 pos = data.xy;'
-, 'vec2 vel = data.zw;'
-, 'float warp =  .01  * (gravity - sqrt(distance(pos, mouse)));'
-, 'if (pos.x > 1.0 || pos.x < 0. || pos.y > 1. || pos.y < -0.) vel *= -1.; '
-, 'if (distance(pos, mouse) < .01) vel *= 1.5; '
-, 'pos += vel * warp;'
-, 'vel = (vel * .991) + gravity * normalize(mouse - pos) * warp;'
-, 'gl_FragColor = vec4(pos, vel) ;'
+
+       //read last pass
+, '    vec4 data = texture2D(texture, (gl_FragCoord.xy) / dimensions) ;'
+, '    vec2 pos = data.xy;'
+, '    vec2 vel = data.zw;'
+
+       // time should move faster for stuff closer to mouse
+, '    float warp =  .01  * (gravity - sqrt(distance(pos, mouse)));'
+
+       //check bounds, contain within screen
+, '    if (pos.x > 1.0 || pos.x < 0. || pos.y > 1. || pos.y < -0.) vel *= -1.; '
+
+       //if it hits the origin, reward particle with a boost of energy
+, '    if (distance(pos, mouse) < .01) vel *= 1.5; '
+
+       //integrate velocity into position
+, '    pos += vel * warp;'
+
+       //decay velocity, send particle to mouse
+, '    vel = (vel * .991) + gravity * normalize(mouse - pos) * warp;'
+
+       //write data to next texture
+, '    gl_FragColor = vec4(pos, vel) ;'
 , '}'
 ].join('\n')
 
+//size must be a perfect square
+var size  = 1e3 * 1e3
+  , width = Math.sqrt(size)
+  , particleIndex = 0
 
-  var size  = 1e3 * 1e3
-    , width = Math.sqrt(size)
-    , height = width
-    , particleIndex = 0
+var texture = pathgl.texture(size)
+var shader = pathgl.shader().map(particleShader)
 
-  var texture = pathgl.texture(size)
-  var shader = pathgl.shader().map(particleShader)
+//simple operation
+//no dependence between particles
+//each particle reads its own data and changes with mouse as a function
+texture.pipe(shader)
+shader.pipe(texture)
 
-  texture.pipe(shader)
-  shader.pipe(texture)
-  shader.invalidate()
-  pathgl.uniform('dimensions', [width, height])
-  pathgl.uniform('gravity', 1)
-  pathgl.uniform('inertia', 0.001)
-  pathgl.uniform('drag', 0.991)
+pathgl.uniform('dimensions', [width, width])
+pathgl.uniform('gravity', 1)
+pathgl.uniform('inertia', 0.001)
+pathgl.uniform('drag', 0.991)
 
-  texture.seed(size / 1, [1,2].map(Math.random))
+texture.seed(size / 1, [1,2].map(Math.random))
 
 d3.select('canvas').selectAll("circle")
 .data(texture.unwrap())
@@ -55,5 +71,5 @@ d3.select('canvas').selectAll("circle")
 .shader({'stroke': 'vec4(tex(pos.xy).x, .2, tex(pos.xy).z' +  ', (10. - r) / 5.0)'})
 
 d3.select('canvas').on('click', function () {
-    pathgl.uniform('gravity', pathgl.uniform('gravity') * -1)
+  pathgl.uniform('gravity', pathgl.uniform('gravity') * -1)
 })
