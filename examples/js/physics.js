@@ -42,7 +42,7 @@ var particleShader = [
 ].join('\n')
 
 //size must be a perfect square
-var size  = 1e3 * 1e3
+var size  = 1e5
   , width = Math.sqrt(size)
   , particleIndex = 0
 
@@ -68,7 +68,7 @@ d3.select('canvas').selectAll("circle")
 .attr('r', function (d) { return d.z })
 .attr('cx', function (d) { return d.x })
 .attr('cy', function (d) { return d.y })
-.shader({'stroke': 'vec4(tex(pos.xy).x, .2, tex(pos.xy).z' +  ', (10. - r) / 5.0)'})
+.shader({'stroke': 'vec4(tex(pos.xy).x, .2, tex(pos.xy).z, 1.)'})
 
 d3.select('canvas').on('click', function () {
   pathgl.uniform('gravity', pathgl.uniform('gravity') * -1)

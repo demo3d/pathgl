@@ -3,7 +3,7 @@ function Texture(image) {
   this.height = image.height || 512
 
   if ('string' == typeof image) image = parseImage(image)
-  if ('number' == typeof image) this.width = this.height = Math.sqrt(image), image = false
+  if ('number' == typeof image) this.width = this.height = Math.sqrt(nextSquare(image)), image = false
 
   extend(this, {
     gl: gl
@@ -200,7 +200,7 @@ function loadTexture()  {
     for(var i = 0; i < chunks.length; i++) {
       var data = [], j = -1, chunk = chunks[i]
       while(++j < chunk.size)
-        data.push(origin[0], origin[1], Math.random() * 4, Math.random() * 4)
+        data.push(origin[0], origin[1], Math.random() * 2, Math.random() * 2)
         this.subImage(chunk.x, chunk.y, data)
     }
       this.invalidate()
