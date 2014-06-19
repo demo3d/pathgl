@@ -56,19 +56,18 @@ var proto = {
               this.posBuffer[this.indices[4]] = x + width
               this.posBuffer[this.indices[5]] = y + height
               this.posBuffer[this.indices[6]] = x + width
-              this.posBuffer[this.indices[7]] = y + height
-              this.posBuffer[this.indices[8]] = x + width
+              this.posBuffer[this.indices[7]] = y
+              this.posBuffer[this.indices[8]] = x 
               this.posBuffer[this.indices[9]] = y 
-              this.posBuffer[this.indices[10]] = x
-              this.posBuffer[this.indices[11]] = y
-
-              return this.posBuffer.subarray(
-                  this.indices[0], this.indices[11]
-              )
+              this.posBuffer[this.indices[10]] = x + width
+              this.posBuffer[this.indices[11]] = y + height
           }
         , fill: function (v) {
-            this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
+            var c = v < 0 ? v : parseColor(v)
             this.render()
+            this.indices.forEach(function (i) {
+                this[i * 2] = c
+            }, this.colorBuffer)
           }
         , x: function (v){
             this.posBuffer[this.indices[0] + 0] = v

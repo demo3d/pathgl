@@ -7,10 +7,10 @@ var simplify = d3.geo.transform({ point: function(x, y, z) { this.stream.point(x
 var proj = d3.geo.wagner4().scale(200).translate([size.width / 2, size.height / 2]).precision(.1)
   , path = d3.geo.path().projection(proj)
 
-// var svg` = d3.select('.right').append('svg')
-//           .style('position', 'absolute')
-//           .style('top', '0').style('left', '0')
-//           .attr(size)
+var svg = d3.select('.right').append('svg')
+          .style('position', 'absolute')
+          .style('top', '0').style('left', '0')
+          .attr(size)
 
 var webgl = d3.select('canvas')
 
@@ -61,11 +61,11 @@ function draw_history(err, hist) {
   webgl.selectAll('rect')
   .data(gram).enter()
   .append('rect')
-  .attr('fill', 'indianred')
   .attr('width', 4)
   .attr('height', function (d) { return y(d.y)  })
   .attr('x', function (d, i) { return x(d.x)  })
   .attr('y', function (d) { return size.height - y(d.y) - 30 })
+  .attr('fill', 'indianred')
 
   var axis = d3.svg.axis()
              .scale(x)
@@ -76,21 +76,21 @@ function draw_history(err, hist) {
   // .attr("transform", "translate(0," + (size.height - 30) + ")")
   // .call(xAxis)
 
-  // svg
-  // .on('click', function () { from = ~~ x.invert(+d3.mouse(this)[0]) })
+  svg
+  .on('click', function () { from = ~~ x.invert(+d3.mouse(this)[0]) })
   var brush = d3.svg.brush().x(x).on("brush", brushmove).extent([-500, -400])
 
-  // var b = svg.append("g")
-  //         .attr("class", "brush")
-  //         .call(brush)
-  //         .attr('transform', 'translate(' + [0, size.height * .85] +  ')')
+  var b = svg.append("g")
+          .attr("class", "brush")
+          .call(brush)
+          .attr('transform', 'translate(' + [0, size.height * .85] +  ')')
 
-  // b.selectAll("rect")
-  // .attr('fill', 'pink')
-  // .attr('opacity', '.7')
-  // .attr("height", size.height * .1)
-  // .on('mouseover', function () { this.pause = 1 })
-  // .on('mouseout', function () { this.pause = 0 })
+  b.selectAll("rect")
+  .attr('opacity', '.7')
+  .attr("height", size.height * .1)
+  .attr('fill', 'pink')
+     .on('mouseover', function () { this.pause = 1 })
+     .on('mouseout', function () { this.pause = 0 })
 
   // d3.timer(function () {
   //   if (b.node().pause) return
