@@ -63,12 +63,9 @@ video mosaic.
         )
 })
 
-var width = ~~ (.8 * innerWidth)
-  , height = ~~ (innerHeight * .9)
-
 var c = d3.select('canvas')
-        .attr('height', height)
-        .attr('width', width)
+var width = c.attr('width')
+  , height = c.attr('height')
 
 var col = 30
   , s = ~~ (width / col)
@@ -87,10 +84,11 @@ function init(arr) {
   .enter().append('rect')
   .attr('x', function (d) { return s/2 + s * (d % col) })
   .attr('y', function (d) { return s/2 + s * ~~(d / col) })
-  .attr('width', s / 2)
-  .attr('height', s / 2)
-  .filter(function (d, i) { return (d % 30) < 15 })
-  .attr('fill', function () { return d3.hsl(Math.random() * 360, .9, .5)})
+  .attr('width', s )
+  .attr('height', s)
+  //.filter(function (d, i) { return (d % 30) < 15 })
+  .transition().delay(function (d) { return d * 10 })
+  .attr('fill', function (d) { return d % 4 ? 'red' : 'blue'})
 
   return
   var mozify = pathgl.shader().matchWith(findAverageHue)

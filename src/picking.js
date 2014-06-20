@@ -9,6 +9,8 @@ function addEventListener(evt, listener, capture) {
 }
 
 function pick (x, y) {
+    elCoordinates[x] && elCoordinates[x][y] &&
+    console.log('123')
   if (elCoordinates[x] && elCoordinates[x][y])
     hoveringOver.push(elCoordinates[x][y].trigger('mouseover'))
 }

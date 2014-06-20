@@ -65,10 +65,10 @@ var simplify = d3.geo.transform({ point: function(x, y, z) { this.stream.point(x
 var proj = d3.geo.wagner4().scale(200).translate([size.width / 2, size.height / 2]).precision(.1)
   , path = d3.geo.path().projection(proj)
 
-// var svg` = d3.select('.right').append('svg')
-//           .style('position', 'absolute')
-//           .style('top', '0').style('left', '0')
-//           .attr(size)
+var svg = d3.select('.right').append('svg')
+          .style('position', 'absolute')
+          .style('top', '0').style('left', '0')
+          .attr(size)
 
 var webgl = d3.select('canvas')
 
@@ -119,11 +119,11 @@ function draw_history(err, hist) {
   webgl.selectAll('rect')
   .data(gram).enter()
   .append('rect')
-  .attr('fill', 'indianred')
   .attr('width', 4)
   .attr('height', function (d) { return y(d.y)  })
   .attr('x', function (d, i) { return x(d.x)  })
   .attr('y', function (d) { return size.height - y(d.y) - 30 })
+  .attr('fill', 'indianred')
 
   var axis = d3.svg.axis()
              .scale(x)
@@ -134,33 +134,34 @@ function draw_history(err, hist) {
   // .attr("transform", "translate(0," + (size.height - 30) + ")")
   // .call(xAxis)
 
-  // svg
-  // .on('click', function () { from = ~~ x.invert(+d3.mouse(this)[0]) })
+  svg
+  .on('click', function () { from = ~~ x.invert(+d3.mouse(this)[0]) })
   var brush = d3.svg.brush().x(x).on("brush", brushmove).extent([-500, -400])
 
-  // var b = svg.append("g")
-  //         .attr("class", "brush")
-  //         .call(brush)
-  //         .attr('transform', 'translate(' + [0, size.height * .85] +  ')')
+  var b = svg.append("g")
+          .attr("class", "brush")
+          .call(brush)
+          .attr('transform', 'translate(' + [0, size.height * .85] +  ')')
 
-  // b.selectAll("rect")
-  // .attr('fill', 'pink')
-  // .attr('opacity', '.7')
-  // .attr("height", size.height * .1)
-  // .on('mouseover', function () { this.pause = 1 })
-  // .on('mouseout', function () { this.pause = 0 })
+  b.selectAll("rect")
+  .attr('opacity', '.7')
+  .attr("height", size.height * .1)
+  .attr('fill', 'pink')
+     .on('mouseover', function () { this.pause = 1 })
+     .on('mouseout', function () { this.pause = 0 })
 
-  // d3.timer(function () {
-  //   if (b.node().pause) return
-  //   if (brush.empty()) brush.extent([0, 10])
-  //   var extent = brush.extent()
-  //   extent = (extent[1] < 2040) ?
-  //     extent.map(function (d) { return d + 1 }) :
-  //   extent.map(function (d) { return d - 2500 })
-  //   brush.extent(extent)
-  //   brush.event(b)
-  //   b.call(brush)
-  // })
+  d3.timer(function () {
+      return
+    if (b.node().pause) return
+    if (brush.empty()) brush.extent([0, 10])
+    var extent = brush.extent()
+    extent = (extent[1] < 2040) ?
+      extent.map(function (d) { return d + 1 }) :
+    extent.map(function (d) { return d - 2500 })
+    brush.extent(extent)
+    brush.event(b)
+    b.call(brush)
+  })
 
   function brushmove() {
     adnan(d3.event.target.extent())
@@ -219,12 +220,13 @@ function draw_history(err, hist) {
         , cy: function(d){ return d.location[1] }
         , cz: function(d){ return + d.year }
         , r: 5
-        , opacity: .5
+        , opacity: 1.
         })
   .shader({
-    'r': '(pos.w < dates.y && pos.w > dates.x) ? 20. : 20. - (min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );'
+    'r': '(pos.w < dates.y && pos.w > dates.x) ? 0. : 20. -(min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );',
+    //'stroke': 'unpack_color(stroke) - vec4(0,0,0,.5)'
   })
-  .each(function (d) { return d.node = this })
+ .each(function (d) { return d.node = this })
   .on('mouseover', tip.show)
   .on('mouseout', tip.hide)
 
@@ -235,7 +237,8 @@ function draw_history(err, hist) {
 function distance (x1, y1, x2, y2) {
   var xd = x2 - x1, yd = y2 - y1
   return xd * xd + yd * yd
-}</code></pre>
+}
+</code></pre>
 			</div>
 		</div>
 	</div>

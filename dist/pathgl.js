@@ -3266,6 +3266,8 @@ function addEventListener(evt, listener, capture) {
 }
 
 function pick (x, y) {
+    elCoordinates[x] && elCoordinates[x][y] &&
+    console.log('123')
   if (elCoordinates[x] && elCoordinates[x][y])
     hoveringOver.push(elCoordinates[x][y].trigger('mouseover'))
 }
@@ -3279,7 +3281,8 @@ function proxyEvent(target) {
 proxyEvent.prototype = extend(Object.create(null), {
   preventDefault: noop
 , stopPropagation: noop
-});function Mesh (gl, options, attr) {
+})
+;function Mesh (gl, options, attr) {
   var attributes = {}
     , count = options.count || 0
     , attrList = options.attrList || ['pos', 'color', 'fugue']
