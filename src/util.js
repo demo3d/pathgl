@@ -4,7 +4,7 @@ function identity(x) { return x }
 
 function push(d) { return [].push.call(this, d) }
 
-function powerOfTwo(x) { return x && ! (x & (x - 1)) }
+function powerOfTwo(x) { return ((x != 0) && ! (x & (x - 1))) }
 
 function nextSquare(n) { return Math.pow(Math.ceil(Math.sqrt(n)), 2) }
 
@@ -49,10 +49,11 @@ function range(start, end) {
 }
 
 function mipmappable() {
-  return  powerOfTwo(this.height)
+  return !! (this.height == this.width && 
+      powerOfTwo(this.height)
       && powerOfTwo(this.width)
       && (this.data || {}).constructor !== HTMLVideoElement
-      && this.data
+      && this.data)
 }
 
 function extend (a, b) {

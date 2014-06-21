@@ -14,12 +14,6 @@ pathgl.vertexShader = [
 , 'varying vec4 dim;'
 
 , 'uniform sampler2D texture0;'
-, 'uniform sampler2D texture1;'
-, 'uniform sampler2D texture2;'
-, 'uniform sampler2D texture3;'
-
-, 'const mat4 modelViewMatrix = mat4(1.);'
-, 'const mat4 projectionMatrix = mat4(1.);'
 
 , 'vec4 unpack_tex(float col) {'
 , '    return vec4(mod(col / 1000. / 1000., 1000.),'
@@ -78,7 +72,6 @@ pathgl.fragmentShader = [
 function createProgram(gl, vs_src, fs_src, attributes) {
   var src = vs_src + '\n' + fs_src
   program = gl.createProgram()
-  program.shit = Math.random(0)
 
   var vs = compileShader(gl, gl.VERTEX_SHADER, vs_src)
     , fs = compileShader(gl, gl.FRAGMENT_SHADER, fs_src)

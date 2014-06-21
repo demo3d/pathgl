@@ -18,7 +18,7 @@ function init(c) {
   flags(gl)
   startDrawLoop()
   tasks.push(function () {
-    pathgl.uniform('clock', Date.now() % 1e7 )
+    pathgl.uniform('clock', Date.now() % 1e7)
   })
   return canvas
 }

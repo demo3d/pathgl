@@ -93,8 +93,10 @@ function initTexture() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap)
-  //if (this.height == this.width && mipmap) gl.generateMipmap(gl.TEXTURE_2D)
+
   this.update()
+
+  if (this.height == this.width && mipmap) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
 function parseImage(image) {
@@ -187,7 +189,7 @@ function seed(count, origin) {
       , y = 0
       , chunks = [{ x: x, y: y, size: count }]
       , s = this.height
-      console.log(this.height)
+
     ;(function recur(chunk) {
       var boundary = chunk.x + chunk.size
         , delta = boundary - s

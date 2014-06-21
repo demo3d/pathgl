@@ -335,7 +335,7 @@ function identity(x) { return x }
 
 function push(d) { return [].push.call(this, d) }
 
-function powerOfTwo(x) { return x && ! (x & (x - 1)) }
+function powerOfTwo(x) { return ((x != 0) && ! (x & (x - 1))) }
 
 function nextSquare(n) { return Math.pow(Math.ceil(Math.sqrt(n)), 2) }
 
@@ -380,10 +380,11 @@ function range(start, end) {
 }
 
 function mipmappable() {
-  return  powerOfTwo(this.height)
+  return !! (this.height == this.width && 
+      powerOfTwo(this.height)
       && powerOfTwo(this.width)
       && (this.data || {}).constructor !== HTMLVideoElement
-      && this.data
+      && this.data)
 }
 
 function extend (a, b) {
@@ -682,12 +683,6 @@ function simMesh() {
 , 'varying vec4 dim;'
 
 , 'uniform sampler2D texture0;'
-, 'uniform sampler2D texture1;'
-, 'uniform sampler2D texture2;'
-, 'uniform sampler2D texture3;'
-
-, 'const mat4 modelViewMatrix = mat4(1.);'
-, 'const mat4 projectionMatrix = mat4(1.);'
 
 , 'vec4 unpack_tex(float col) {'
 , '    return vec4(mod(col / 1000. / 1000., 1000.),'
@@ -746,7 +741,6 @@ pathgl.fragmentShader = [
 function createProgram(gl, vs_src, fs_src, attributes) {
   var src = vs_src + '\n' + fs_src
   program = gl.createProgram()
-  program.shit = Math.random(0)
 
   var vs = compileShader(gl, gl.VERTEX_SHADER, vs_src)
     , fs = compileShader(gl, gl.FRAGMENT_SHADER, fs_src)
@@ -851,7 +845,7 @@ function mergify(vs1, fs1, subst1) {
   flags(gl)
   startDrawLoop()
   tasks.push(function () {
-    pathgl.uniform('clock', Date.now() % 1e7 )
+    pathgl.uniform('clock', Date.now() % 1e7)
   })
   return canvas
 }
@@ -3578,10 +3572,10 @@ var proto = {
             
           },
           render: function (t) {
-              var x = this.attr.x
-              var y = this.attr.y
-              var width = this.attr.width
-              var height = this.attr.height
+              var x = this.attr.x || 0
+              var y = this.attr.y|| 0
+              var width = this.attr.width|| 0
+              var height = this.attr.height|| 0
 
               this.posBuffer[this.indices[0]] = x
               this.posBuffer[this.indices[1]] = y
@@ -3871,8 +3865,10 @@ function initTexture() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap)
-  //if (this.height == this.width && mipmap) gl.generateMipmap(gl.TEXTURE_2D)
+
   this.update()
+
+  if (this.height == this.width && mipmap) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
 function parseImage(image) {
@@ -3965,7 +3961,7 @@ function seed(count, origin) {
       , y = 0
       , chunks = [{ x: x, y: y, size: count }]
       , s = this.height
-      console.log(this.height)
+
     ;(function recur(chunk) {
       var boundary = chunk.x + chunk.size
         , delta = boundary - s
