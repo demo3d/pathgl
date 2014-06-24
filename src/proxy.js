@@ -43,10 +43,17 @@ var proto = {
             ).reverse()
             
           },
+          opacity: function (v) {
+              var f = this.fBuffer
+              this.indices.forEach(function (i) {
+                  f[i] = 256 - v * 256
+                  //f[2*i] = 256 - v * 256
+              })
+          },
           render: function (t) {
               var x = this.attr.x || 0
               var y = this.attr.y|| 0
-              var width = this.attr.width|| 0
+              var width = this.attr.width || 0
               var height = this.attr.height|| 0
 
               this.posBuffer[this.indices[0]] = x
@@ -142,7 +149,7 @@ var baseProto = {
     s.splice(s.indexOf(child), 1)
   }
 , opacity: function (v) {
-    this.fBuffer[this.indices[0] + 1] = 256 - (v * 256)
+    var f = this.fBuffer[this.indices[0] + 1] = 256 - (v * 256)
   }
 , transform: function (d) {}
 , getAttribute: function (name) {

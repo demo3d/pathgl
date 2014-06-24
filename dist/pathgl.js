@@ -3453,7 +3453,7 @@ function buildBuffers(gl, types) {
   triangleMesh.bind(types.path)
   triangleMesh.bind(types.rect)
 
-  return [triangleMesh, pointMesh, lineMesh]
+  return [pointMesh, lineMesh, triangleMesh]
 }
 
 function initFbo(texture) {
@@ -3574,10 +3574,17 @@ var proto = {
             ).reverse()
             
           },
+          opacity: function (v) {
+              var f = this.fBuffer
+              this.indices.forEach(function (i) {
+                  f[i] = 256 - v * 256
+                  //f[2*i] = 256 - v * 256
+              })
+          },
           render: function (t) {
               var x = this.attr.x || 0
               var y = this.attr.y|| 0
-              var width = this.attr.width|| 0
+              var width = this.attr.width || 0
               var height = this.attr.height|| 0
 
               this.posBuffer[this.indices[0]] = x
@@ -3673,7 +3680,7 @@ var baseProto = {
     s.splice(s.indexOf(child), 1)
   }
 , opacity: function (v) {
-    this.fBuffer[this.indices[0] + 1] = 256 - (v * 256)
+    var f = this.fBuffer[this.indices[0] + 1] = 256 - (v * 256)
   }
 , transform: function (d) {}
 , getAttribute: function (name) {
@@ -3839,7 +3846,8 @@ Texture.prototype = {
 , stop : function () {
     this.task && tasks.splice(tasks.indexOf(this.task))
     delete this.task
-  }
+  },
+    __scene__: []
 
 , appendChild: function (el) {
     if (! this.__renderTarget__) renderable.call(this)
@@ -3903,7 +3911,7 @@ function unwrap() {
 
 function renderable() {
   extend(this, { __scene__: [] })
-  (this.__renderTarget__ = RenderTarget(this))
+  ;(this.__renderTarget__ = RenderTarget(this))
   .drawTo(this)
   var save  = this.update
   this.update = function () {
@@ -3968,7 +3976,7 @@ function seed(count, origin, fn) {
     , chunks = [{ x: x, y: y, size: count }]
     , s = this.height
 
-    fn = fn || function () { return 5 - Math.random() * 10 }
+    fn = fn || function () { return 1 - Math.random() * 2 }
 
     ;(function recur(chunk) {
         var boundary = chunk.x + chunk.size

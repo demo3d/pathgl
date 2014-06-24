@@ -64,7 +64,8 @@ Texture.prototype = {
 , stop : function () {
     this.task && tasks.splice(tasks.indexOf(this.task))
     delete this.task
-  }
+  },
+    __scene__: []
 
 , appendChild: function (el) {
     if (! this.__renderTarget__) renderable.call(this)
@@ -128,7 +129,7 @@ function unwrap() {
 
 function renderable() {
   extend(this, { __scene__: [] })
-  (this.__renderTarget__ = RenderTarget(this))
+  ;(this.__renderTarget__ = RenderTarget(this))
   .drawTo(this)
   var save  = this.update
   this.update = function () {
@@ -193,7 +194,7 @@ function seed(count, origin, fn) {
     , chunks = [{ x: x, y: y, size: count }]
     , s = this.height
 
-    fn = fn || function () { return 5 - Math.random() * 10 }
+    fn = fn || function () { return 1 - Math.random() * 2 }
 
     ;(function recur(chunk) {
         var boundary = chunk.x + chunk.size

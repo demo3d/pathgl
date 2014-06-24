@@ -172,7 +172,7 @@ function buildBuffers(gl, types) {
   triangleMesh.bind(types.path)
   triangleMesh.bind(types.rect)
 
-  return [triangleMesh, pointMesh, lineMesh]
+  return [pointMesh, lineMesh, triangleMesh]
 }
 
 function initFbo(texture) {
