@@ -65,7 +65,7 @@ pathgl.fragmentShader = [
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture0, clipspace(dim.xy + (dim.zw * (gl_PointCoord - .5)))) : v_stroke;'
+, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture0, clipspace(dim.xy) * 2.0) : v_stroke;'
 , '}'
 ].join('\n')
 
@@ -104,9 +104,13 @@ function createProgram(gl, vs_src, fs_src, attributes) {
       , keep
 
     program[key] = function (data) {
-      if (keep == data || ! arguments.length) return
-
-      gl[method](loc, Array.isArray(data) ? data : [data])
+        //if (keep == data || ! arguments.length) return
+        
+      if (data.map && data.length > 4)
+          gl[method](loc, gl.FALSE, Array.isArray(data) ? data : [data])
+        else
+            gl[method](loc, Array.isArray(data) ? data : [data])
+            
       keep = data
     }
   }
@@ -145,6 +149,7 @@ function compileShader (gl, type, src) {
 }
 
 function glslTypedef(type) {
+  if (type.match('mat')) return 'Matrix' + type[type.length - 1]
   if (type.match('vec')) return type[type.length - 1]
   return 1
 }

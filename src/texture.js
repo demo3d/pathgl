@@ -16,8 +16,6 @@ function Texture(image) {
     }
   })
 
-  if (Array.isArray(image)) this.data = null, chunkIt.call(this, image)
-
   //if (Array.isArray(image)) this.data = batchTexture.call(this)
   if (image.constructor == Object) image = parseJSON(image)
   loadTexture.call(this)
@@ -179,7 +177,7 @@ function loadTexture()  {
   initTexture.call(this)
   this.update(checkerboard)
 
-  onLoad(image, this.update.bind(this))
+    onLoad(image, this.update.bind(this))
 
   return this
 }
@@ -202,7 +200,7 @@ function seed(count, origin) {
     for(var i = 0; i < chunks.length; i++) {
       var data = [], j = -1, chunk = chunks[i]
       while(++j < chunk.size)
-        data.push(origin[0], origin[1], Math.random() * 2, Math.random() * 2)
+        data.push(origin[0], origin[1], Math.random(), Math.random())
         this.subImage(chunk.x, chunk.y, data)
     }
       this.invalidate()

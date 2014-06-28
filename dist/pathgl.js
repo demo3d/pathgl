@@ -734,7 +734,7 @@ pathgl.fragmentShader = [
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture0, clipspace(dim.xy + (dim.zw * (gl_PointCoord - .5)))) : v_stroke;'
+, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture0, clipspace(dim.xy) * 2.0) : v_stroke;'
 , '}'
 ].join('\n')
 
@@ -773,9 +773,13 @@ function createProgram(gl, vs_src, fs_src, attributes) {
       , keep
 
     program[key] = function (data) {
-      if (keep == data || ! arguments.length) return
-
-      gl[method](loc, Array.isArray(data) ? data : [data])
+        //if (keep == data || ! arguments.length) return
+        
+      if (data.map && data.length > 4)
+          gl[method](loc, gl.FALSE, Array.isArray(data) ? data : [data])
+        else
+            gl[method](loc, Array.isArray(data) ? data : [data])
+            
       keep = data
     }
   }
@@ -814,6 +818,7 @@ function compileShader (gl, type, src) {
 }
 
 function glslTypedef(type) {
+  if (type.match('mat')) return 'Matrix' + type[type.length - 1]
   if (type.match('vec')) return type[type.length - 1]
   return 1
 }
@@ -3788,8 +3793,6 @@ function getBBox(){
     }
   })
 
-  if (Array.isArray(image)) this.data = null, chunkIt.call(this, image)
-
   //if (Array.isArray(image)) this.data = batchTexture.call(this)
   if (image.constructor == Object) image = parseJSON(image)
   loadTexture.call(this)
@@ -3951,7 +3954,7 @@ function loadTexture()  {
   initTexture.call(this)
   this.update(checkerboard)
 
-  onLoad(image, this.update.bind(this))
+    onLoad(image, this.update.bind(this))
 
   return this
 }
@@ -3974,7 +3977,7 @@ function seed(count, origin) {
     for(var i = 0; i < chunks.length; i++) {
       var data = [], j = -1, chunk = chunks[i]
       while(++j < chunk.size)
-        data.push(origin[0], origin[1], Math.random() * 2, Math.random() * 2)
+        data.push(origin[0], origin[1], Math.random(), Math.random())
         this.subImage(chunk.x, chunk.y, data)
     }
       this.invalidate()
