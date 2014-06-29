@@ -11,6 +11,7 @@ function Texture(image) {
   , data: image
   , dependents: []
   , texture: gl.createTexture()
+  , index: 0
   , invalidate: function () {
       tasksOnce.push(function () { this.forEach(function (d) { d.invalidate() }) }.bind(this.dependents))
     }
@@ -182,26 +183,31 @@ function loadTexture()  {
   return this
 }
 
-function seed(count, origin) {
-    var x = 0
-      , y = 0
-      , chunks = [{ x: x, y: y, size: count }]
-      , s = this.height
+function seed(count, origin, fn) {
+    var x = this.index % this.width | 0
+    , y = this.index / this.height | 0
+    , chunks = [{ x: x, y: y, size: count }]
+    , s = this.height
+
+    fn = fn || function () { return 5 - Math.random() * 10 }
 
     ;(function recur(chunk) {
-      var boundary = chunk.x + chunk.size
+        var boundary = chunk.x + chunk.size
         , delta = boundary - s
-      if (boundary < s) return
-      chunk.size -= delta
-      chunks.push(chunk = { x: 0, y:(chunk.y + 1) % s, size: delta })
-      recur(chunk)
+        if (boundary < s) return
+        chunk.size -= delta
+        chunks.push(chunk = { x: 0, y:(chunk.y + 1) % s, size: delta })
+        recur(chunk)
     })(chunks[0])
 
     for(var i = 0; i < chunks.length; i++) {
-      var data = [], j = -1, chunk = chunks[i]
-      while(++j < chunk.size)
-        data.push(origin[0], origin[1], Math.random(), Math.random())
+        var data = [], j = -1, chunk = chunks[i]
+        while(++j < chunk.size)
+            data.push(origin[0], origin[1], fn(j), fn(j))
         this.subImage(chunk.x, chunk.y, data)
     }
-      this.invalidate()
-  }
+
+    this.index += count;
+    this.index %= this.size();
+    this.invalidate()
+}

@@ -155,7 +155,7 @@ function RenderTarget(screen) {
   }
 
   function beforeRender(gl, screen) {
-    if (screen == gl.canvas) gl.clear(gl.COLOR_BUFFER_BIT)
+    //if (screen == gl.canvas) gl.clear(gl.COLOR_BUFFER_BIT)
     gl.viewport(0, 0, screen.width, screen.height)
   }
 }
