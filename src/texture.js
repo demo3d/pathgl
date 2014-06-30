@@ -13,8 +13,12 @@ function Texture(image) {
   , texture: gl.createTexture()
   , index: 0
   , invalidate: function () {
-      tasksOnce.push(function () { this.forEach(function (d) { d.invalidate() }) }.bind(this.dependents))
-    }
+      // tasksOnce.push(function () {
+      //     this.forEach(function (d) {
+      //         d.invalidate()
+      //     })
+      // }.bind(this.dependents))
+  }
   })
 
   //if (Array.isArray(image)) this.data = batchTexture.call(this)

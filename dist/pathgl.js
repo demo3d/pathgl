@@ -569,9 +569,10 @@ function shader() {
   })
 
   var children = []
-
+  tasks.push(step)
   function step() {
     for(var i = -1; ++i < stepRate;) render.update()
+    
   }
 
   return self
@@ -598,14 +599,12 @@ function shader() {
   }
 
   function invalidate() {
-    tasksOnce.push(step)
-    dependents.forEach(function (d) {
-      d.invalidate()
-    })
+    // dependents.forEach(function (d) {
+    //   d.invalidate()
+    // })
   }
 
-  function draw () {
-  }
+  function draw () {}
 
   function matchWith(shader) {
     var replace = shader()//takes 64 matched averages and tiles
@@ -769,8 +768,8 @@ function createProgram(gl, vs_src, fs_src, attributes) {
 
   function bindUniform(key, type) {
     var loc = gl.getUniformLocation(program, key)
-      , method = 'uniform' + glslTypedef(type) + 'fv'
-      , keep
+      , method = 'uniform' + glslTypedef(type) + 'fv'  
+    , keep
 
     program[key] = function (data) {
         //if (keep == data || ! arguments.length) return
@@ -3789,8 +3788,12 @@ function getBBox(){
   , texture: gl.createTexture()
   , index: 0
   , invalidate: function () {
-      tasksOnce.push(function () { this.forEach(function (d) { d.invalidate() }) }.bind(this.dependents))
-    }
+      // tasksOnce.push(function () {
+      //     this.forEach(function (d) {
+      //         d.invalidate()
+      //     })
+      // }.bind(this.dependents))
+  }
   })
 
   //if (Array.isArray(image)) this.data = batchTexture.call(this)

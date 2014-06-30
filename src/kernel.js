@@ -22,9 +22,10 @@ function shader() {
   })
 
   var children = []
-
+  tasks.push(step)
   function step() {
     for(var i = -1; ++i < stepRate;) render.update()
+    
   }
 
   return self
@@ -51,14 +52,12 @@ function shader() {
   }
 
   function invalidate() {
-    tasksOnce.push(step)
-    dependents.forEach(function (d) {
-      d.invalidate()
-    })
+    // dependents.forEach(function (d) {
+    //   d.invalidate()
+    // })
   }
 
-  function draw () {
-  }
+  function draw () {}
 
   function matchWith(shader) {
     var replace = shader()//takes 64 matched averages and tiles

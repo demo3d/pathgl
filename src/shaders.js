@@ -100,8 +100,8 @@ function createProgram(gl, vs_src, fs_src, attributes) {
 
   function bindUniform(key, type) {
     var loc = gl.getUniformLocation(program, key)
-      , method = 'uniform' + glslTypedef(type) + 'fv'
-      , keep
+      , method = 'uniform' + glslTypedef(type) + 'fv'  
+    , keep
 
     program[key] = function (data) {
         //if (keep == data || ! arguments.length) return
