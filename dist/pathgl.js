@@ -3369,7 +3369,7 @@ proxyEvent.prototype = extend(Object.create(null), {
       gl.enableVertexAttribArray(attr.loc)
 
       if (attr.changed)
-        gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array), attr.changed = false
     }
     //bindMaterial()
     gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length) || options.count || 0)
@@ -3882,7 +3882,7 @@ function initTexture() {
 
   this.update()
 
-  if (this.height == this.width && mipmap) gl.generateMipmap(gl.TEXTURE_2D)
+    //if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
 function parseImage(image) {
@@ -3962,10 +3962,10 @@ function parseJSON(json) {
 function loadTexture()  {
   var image = this.data
 
-  initTexture.call(this)
-  this.update(checkerboard)
+ initTexture.call(this)
+ this.update(checkerboard)
 
-    onLoad(image, this.update.bind(this))
+ onLoad(image, this.update.bind(this, 0))
 
   return this
 }

@@ -88,7 +88,7 @@ function Mesh (gl, options, attr) {
       gl.enableVertexAttribArray(attr.loc)
 
       if (attr.changed)
-        gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array), attr.changed = false
     }
     //bindMaterial()
     gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length) || options.count || 0)

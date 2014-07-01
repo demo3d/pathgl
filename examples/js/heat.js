@@ -1,7 +1,6 @@
 // var RTT = pathgl.texture().repeat()
 
 
-
 // // d3.timer(function () {
 // //   disco.filter(function (d, i) { return Math.random() > .99  }).transition()
 // //   .attr('fill', function () { return 'hsl(' + Math.random() * 360 + ',100%, 50%)' })
@@ -37,4 +36,4 @@ var disco = d3.select('canvas')
 .attr('height', 20)
 .attr('x', function (d) { return 20 * (d % 30) })
 .attr('y', function (d) { return 20 * ~~(d / 40) })
-.attr('fill', RTT)
+.attr('fill', pathgl.texture('.t'))
