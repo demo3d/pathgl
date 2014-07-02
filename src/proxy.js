@@ -158,6 +158,7 @@ var baseProto = {
 , setAttribute: function (name, value) {
     this.attr[name] = value
     this[name] && this[name](value)
+    this.mesh.changed = true
     if (value && value.texture) this.mesh.bindMaterial(name, value)
   }
 , removeAttribute: function (name) {
@@ -213,7 +214,6 @@ function removeChild(el) {
 
   el = this.__scene__.splice(i, 1)[0]
   el && el.mesh.free(i)
-  //el.buffer.changed = true
   //el.buffer.count -= 1
 }
 

@@ -12,6 +12,7 @@ function Mesh (gl, options, attr) {
   var self = {
     init : init
   , free: free
+  , changed: true
   , tessOffset: 0
   , alloc: alloc
   , draw: draw
@@ -87,12 +88,17 @@ function Mesh (gl, options, attr) {
       gl.vertexAttribPointer(attr.loc, attr.size, gl.FLOAT, false, 0, 0)
       gl.enableVertexAttribArray(attr.loc)
 
-      if (attr.changed)
-        gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array), attr.changed = false
+      if (self.changed) subData([attr.array])
     }
     //bindMaterial()
     gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length) || options.count || 0)
   }
+
+    function subData(arrays) {
+        for (var i = 0; i < arrays.length; i++)
+            gl.bufferSubData(gl.ARRAY_BUFFER, i * 1e5, arrays[i])
+        self.changed = false
+    }
 
   function set () {}
   function addAttr () {}
