@@ -3983,18 +3983,18 @@ function seed(count, origin, fn) {
     , s = this.height
 
     fn = fn || function () { return 1 - Math.random() * 2 }
+    var chunk = chunks[0]
 
-    ;(function recur(chunk) {
+    do {
         var boundary = chunk.x + chunk.size
-        , delta = boundary - s
-        if (boundary < s) return
+          , delta = boundary - s
         chunk.size -= delta
         chunks.push(chunk = { x: 0, y:(chunk.y + 1) % s, size: delta })
-        recur(chunk)
-    })(chunks[0])
+    } while (boundary > s)
 
     for(var i = 0; i < chunks.length; i++) {
-        var data = [], j = -1, chunk = chunks[i]
+        var data = [], j = -1
+        chunk = chunks[i]
         while(++j < chunk.size)
             data.push(origin[0], origin[1], fn(j), fn(j))
         this.subImage(chunk.x, chunk.y, data)
