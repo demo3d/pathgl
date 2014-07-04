@@ -140,11 +140,11 @@ function compileShader (gl, type, src) {
   var shader = gl.createShader(type)
   gl.shaderSource(shader, header + src)
   gl.compileShader(shader)
-  if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    var log = (gl.getShaderInfoLog(shader) || '')
-      , line = + log.split(':')[2]
-    return console.error((src || '').split('\n').slice(line-5, line + 5).join('\n'), log)
-  }
+  // if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+  //   var log = (gl.getShaderInfoLog(shader) || '')
+  //     , line = + log.split(':')[2]
+  //   return console.error((src || '').split('\n').slice(line-5, line + 5).join('\n'), log)
+  // }
   return shader
 }
 

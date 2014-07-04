@@ -373,9 +373,9 @@ function append () { [].forEach.call(arguments, push, this) }
 
 function hash(str) { return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0) }
 
-function range(start, end) {
-  var len = end - start, result = new Array(len), i = 0
-  while(i < len) result[i] = start + i++
+function revRange(end) {
+  var result = new Array(end), i = 0
+  while(i < end) result[i] = end - (i++)
   return result
 }
 
@@ -808,11 +808,11 @@ function compileShader (gl, type, src) {
   var shader = gl.createShader(type)
   gl.shaderSource(shader, header + src)
   gl.compileShader(shader)
-  if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    var log = (gl.getShaderInfoLog(shader) || '')
-      , line = + log.split(':')[2]
-    return console.error((src || '').split('\n').slice(line-5, line + 5).join('\n'), log)
-  }
+  // if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+  //   var log = (gl.getShaderInfoLog(shader) || '')
+  //     , line = + log.split(':')[2]
+  //   return console.error((src || '').split('\n').slice(line-5, line + 5).join('\n'), log)
+  // }
   return shader
 }
 
@@ -3279,21 +3279,36 @@ proxyEvent.prototype = extend(Object.create(null), {
   preventDefault: noop
 , stopPropagation: noop
 })
-;function Mesh (gl, options, attr) {
+;function Pool(max) {
+    var reclaim = []
+    this.length = this.max = max
+    this.push = function (i) {
+        reclaim.push(i)
+        return ++ this.length
+    }
+    this.pop = function () {
+        if (reclaim.length) return reclaim.pop()
+        return this.max - this.length--
+    }
+    this.splice = function (start, end) {
+        var result = []
+        while (result.length < end) result.push(this.pop())
+        return result 
+    }
+}
+
+function Mesh(gl, options, attr) {
   var attributes = {}
     , count = options.count || 0
     , attrList = options.attrList || ['pos', 'color', 'fugue']
     , primitive = gl[options.primitive.toUpperCase()]
     , material = []
-    , indexPool = range(0, 1e6).reverse()
-
-  indexPool.max = 1e6
+    , indexPool = new Pool(1e6)
 
   init()
   var self = {
     init : init
   , free: free
-  , changed: true
   , tessOffset: 0
   , alloc: alloc
   , draw: draw
@@ -3305,6 +3320,7 @@ proxyEvent.prototype = extend(Object.create(null), {
   , removeAttr: removeAttr
   , boundingBox: boundingBox
   , spread: spread
+  , changed: true
   }
 
   return self
@@ -3321,7 +3337,7 @@ proxyEvent.prototype = extend(Object.create(null), {
     if (dx > 0)
       indices = indices.concat(indexPool.splice(indexPool.length - dx, dx))
     else
-      indexPool = indexPool.concat(indices.splice(indexPool.length + dx, - dx))
+      indexPool.push.apply(indexPool, indices.splice(indexPool.length + dx, - dx))
     var posBuffer = attributes.pos.array
     indices.forEach(function (i) {
       posBuffer[i] = buffer[i]
@@ -3339,7 +3355,6 @@ proxyEvent.prototype = extend(Object.create(null), {
         array: new Float32Array(options[name] && options[name].array || 4e6)
       , buffer: buffer
       , size: option.size  || 4
-      , changed: true
       , loc: i
       }
     })
@@ -3369,18 +3384,13 @@ proxyEvent.prototype = extend(Object.create(null), {
       gl.vertexAttribPointer(attr.loc, attr.size, gl.FLOAT, false, 0, 0)
       gl.enableVertexAttribArray(attr.loc)
 
-      if (attr.changed)
-          subData([attr.array], attr)
+      if (self.changed)
+          gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
+      self.changed = false
     //bindMaterial()
     gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length) || options.count || 0)
   }
-
-    function subData(arrays, attr) {
-        for (var i = 0; i < arrays.length; i++)
-            gl.bufferSubData(gl.ARRAY_BUFFER, i * 1e5, arrays[i])
-        attr.changed = false
-    }
 
   function set () {}
   function addAttr () {}
@@ -3696,7 +3706,7 @@ var baseProto = {
 , setAttribute: function (name, value) {
     this.attr[name] = value
     this[name] && this[name](value)
-    for(var attr in this.mesh.attributes) this.mesh.attributes[attr].changed =  true
+    this.mesh.changed = true
     if (value && value.texture) this.mesh.bindMaterial(name, value)
   }
 , removeAttribute: function (name) {

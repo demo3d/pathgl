@@ -42,9 +42,9 @@ function append () { [].forEach.call(arguments, push, this) }
 
 function hash(str) { return str.split("").reduce(function(a,b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0) }
 
-function range(start, end) {
-  var len = end - start, result = new Array(len), i = 0
-  while(i < len) result[i] = start + i++
+function revRange(end) {
+  var result = new Array(end), i = 0
+  while(i < end) result[i] = end - (i++)
   return result
 }
 
