@@ -51,10 +51,10 @@ var proto = {
               })
           },
           render: function (t) {
-              var x = this.attr.x || 0
-              var y = this.attr.y|| 0
-              var width = this.attr.width || 0
-              var height = this.attr.height|| 0
+              var x = this.attr.y || 0
+              var y = this.attr.x|| 0
+              var width = this.attr.height || 0
+              var height = this.attr.width|| 0
 
               this.posBuffer[this.indices[0]] = x
               this.posBuffer[this.indices[1]] = y
