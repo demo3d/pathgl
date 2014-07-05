@@ -407,7 +407,10 @@ function uniq(array, iterator) {
 
 function debug (cond, message) {
   if (! cond) console.log(message)
-};function parseColor(v) {
+}
+
+function nyi () { debug(0, 'not yet implemented') }
+;function parseColor(v) {
   var a = setStyle(v)
   return + (a[0] * 255) << 16 ^ (a[1] * 255) << 8 ^ (a[2] * 255) << 0
 }
@@ -892,7 +895,7 @@ function initContext(canvas) {
 
 function d3_vAttr(attr, fn) {
   this.each(function(d, i) {
-    this.colorBuffer[this.indices[0]] = parseColor(fn(d, i))
+    this.posBuffer[this.indices[0]] = fn(d, i)
   })
   return this
 }
@@ -3218,17 +3221,28 @@ function matchesSelector(selector) {
 ;//cpu intersection tests
 //offscreen render color test
 
-var pickings  = {}
+var elCoordinates  = {}
+var hoveringOver = []
 function addEventListener(evt, listener, capture) {
-  (pickings[this.attr.cx | 0] = (pickings[this.attr.cx | 0] || {})
+  (elCoordinates[this.attr.cx | 0] = (elCoordinates[this.attr.cx | 0] || {})
   )[this.attr.cy | 0] = this
 }
 
 function pick (x, y) {
-  if (pickings[x] && pickings[x][y])
-    pickings[x][y].trigger('mousemove')
+  if (elCoordinates[x] && elCoordinates[x][y])
+    elCoordinates[x][y].trigger('mouseover')
 }
-;function Mesh (gl, options, attr) {
+
+
+function proxyEvent(target) {
+  this.target =  target
+}
+
+
+proxyEvent.prototype = extend(Object.create(null), {
+  preventDefault: noop
+, stopPropagation: noop
+});function Mesh (gl, options, attr) {
   var attributes = {}
     , count = options.count || 0
     , attrList = options.attrList || ['pos', 'color', 'fugue']
@@ -3613,9 +3627,12 @@ var baseProto = {
 , removeEventListener: noop
 , addEventListener: addEventListener
 , style: { setProperty: noop }
-, ownerSVGElement: { createSVGPoint: noop }
+, ownerSVGElement: { createSVGPoint: function () { return { y: 0, x: 0, matrixTransform: nyi } }}
+, getScreenCTM: getScreenCTM
+, getBBox: getBBox
 , trigger: function (evt) {
-    debugger
+    var fn = this['__on' + evt]
+    if(fn) fn(new proxyEvent(this))
   }
 }
 
@@ -3672,7 +3689,24 @@ var attrDefaults = {
 , y: 0
 , opacity: .999
 }
-;function Texture(image) {
+
+
+function getScreenCTM(){
+  return { a: 1
+         , b: 0
+         , c: 0
+         , d: 1
+         , e: 0
+         , f: 0
+         }
+}
+function getBBox(){
+  return { height: 20
+         , width: 20
+         , y: this.attr.cy
+         , x: this.attr.cx
+         }
+};function Texture(image) {
   this.width = image.width || 512
   this.height = image.height || 512
 

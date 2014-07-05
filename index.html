@@ -77,8 +77,8 @@ d3.select('.one').selectAll("circle")
 .attr('cx', function (i) { return i / 30})
 .attr('r', function (i) { return i % 6 + 2})
 .shader({
-  cx: 'resolution.x / 2. + cos(pos.x * mouse.x * clock / 1e5) * pos.x'
-, cy: 'resolution.y / 2. + sin(pos.x * mouse.x * clock  / 1e5) * pos.x'
+  cx: 'resolution.x / 2. + cos(pos.x * mouse.x * clock / 1e6) * pos.x'
+, cy: 'resolution.y / 2. + sin(pos.x * mouse.x * clock  / 1e6) * pos.x'
 })
 								</code></pre></div>
               </div>
@@ -107,39 +107,39 @@ d3.select('.one').selectAll("circle")
                 <div class="highlight"> 
                   <pre><code class="bash hljs"> 
 
-// var vertices = d3.range(10).map(function(d) {
-//   return [Math.random() * 1200, Math.random() * 900];
-// });
+var vertices = d3.range(10).map(function(d) {
+  return [Math.random() * 1200, Math.random() * 900];
+});
 
-// var voronoi = d3.geom.voronoi()
-//     .clipExtent([[0, 0], [1200, 900]]);
+var voronoi = d3.geom.voronoi()
+    .clipExtent([[0, 0], [1200, 900]]);
 
-// var svg = d3.select(".two")
-// .on("mousemove", function() { vertices[0] = d3.mouse(this); redraw(); })
+var svg = d3.select(".two")
+.on("mousemove", function() { vertices[0] = d3.mouse(this); redraw(); })
 
-// var path = svg.selectAll("path");
+var path = svg.selectAll("path");
 
-// svg.selectAll("circle")
-// .data(vertices.slice(1))
-// .enter().append("circle")
-// .attr("transform", function(d) { return "translate(" + d + ")"; })
-// .attr("r", 1.5);
+svg.selectAll("circle")
+.data(vertices.slice(1))
+.enter().append("circle")
+.attr("transform", function(d) { return "translate(" + d + ")"; })
+.attr("r", 1.5);
 
-// var line = d3.svg.line()
-// //line.interpolate('step-after');
-// redraw();
+var line = d3.svg.line()
+//line.interpolate('step-after');
+redraw();
 
-// function redraw() {
-//   path = path.data(voronoi(vertices), String);
+function redraw() {
+  path = path.data(voronoi(vertices), String);
 
-//   path.exit().remove();
+  path.exit().remove();
 
-//   path.enter().append("path")
-//     .attr("d", function (d) { return line(d) })
-//    .attr('fill', function (d, i) { return "hsl(" + (i % 6)* 60 + ",80%,50%)"})
+  path.enter().append("path")
+    .attr("d", function (d) { return line(d) })
+   .attr('fill', function (d, i) { return "hsl(" + (i % 6)* 60 + ",80%,50%)"})
 
-//   path.order();
-// }
+  path.order();
+}
                   </code></pre> 
                 </div> 
               </div> 
@@ -151,7 +151,7 @@ d3.select('.one').selectAll("circle")
       <script src="/dist/pathgl.js"></script>
       <script>
         d3.selectAll('.bash').each(function (d) {
-	        eval(this.textContent)
+	        Function(this.textContent)()
 	      })
       </script>
   </body>

@@ -1,13 +1,25 @@
 //cpu intersection tests
 //offscreen render color test
 
-var pickings  = {}
+var elCoordinates  = {}
+var hoveringOver = []
 function addEventListener(evt, listener, capture) {
-  (pickings[this.attr.cx | 0] = (pickings[this.attr.cx | 0] || {})
+  (elCoordinates[this.attr.cx | 0] = (elCoordinates[this.attr.cx | 0] || {})
   )[this.attr.cy | 0] = this
 }
 
 function pick (x, y) {
-  if (pickings[x] && pickings[x][y])
-    pickings[x][y].trigger('mousemove')
+  if (elCoordinates[x] && elCoordinates[x][y])
+    elCoordinates[x][y].trigger('mouseover')
 }
+
+
+function proxyEvent(target) {
+  this.target =  target
+}
+
+
+proxyEvent.prototype = extend(Object.create(null), {
+  preventDefault: noop
+, stopPropagation: noop
+})

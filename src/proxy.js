@@ -135,9 +135,12 @@ var baseProto = {
 , removeEventListener: noop
 , addEventListener: addEventListener
 , style: { setProperty: noop }
-, ownerSVGElement: { createSVGPoint: noop }
+, ownerSVGElement: { createSVGPoint: function () { return { y: 0, x: 0, matrixTransform: nyi } }}
+, getScreenCTM: getScreenCTM
+, getBBox: getBBox
 , trigger: function (evt) {
-    debugger
+    var fn = this['__on' + evt]
+    if(fn) fn(new proxyEvent(this))
   }
 }
 
@@ -193,4 +196,22 @@ var attrDefaults = {
 , x: 0
 , y: 0
 , opacity: .999
+}
+
+
+function getScreenCTM(){
+  return { a: 1
+         , b: 0
+         , c: 0
+         , d: 1
+         , e: 0
+         , f: 0
+         }
+}
+function getBBox(){
+  return { height: 20
+         , width: 20
+         , y: this.attr.cy
+         , x: this.attr.cx
+         }
 }

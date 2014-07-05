@@ -77,3 +77,5 @@ function uniq(array, iterator) {
 function debug (cond, message) {
   if (! cond) console.log(message)
 }
+
+function nyi () { debug(0, 'not yet implemented') }

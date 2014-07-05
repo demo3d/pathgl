@@ -95,7 +95,7 @@ function initContext(canvas) {
 
 function d3_vAttr(attr, fn) {
   this.each(function(d, i) {
-    this.colorBuffer[this.indices[0]] = parseColor(fn(d, i))
+    this.posBuffer[this.indices[0]] = fn(d, i)
   })
   return this
 }
