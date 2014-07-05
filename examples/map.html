@@ -224,7 +224,7 @@ function draw_history(err, hist) {
         , opacity: 1.
         })
   .shader({
-    'r': '(pos.w < dates.y) ? 0. : 20. -(min(distance(pos.w, dates.y), distance(pos.w, dates.x)) );',
+    'r': '(r.y < dates.y) ? 0. : 20. -(min(distance(r.y, dates.y), distance(r.y, dates.x)) );',
       'stroke': 'unpack_color(stroke) - vec4(0,0,0, (r) / 20.)'
   })
  .each(function (d) { return d.node = this })

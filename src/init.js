@@ -98,7 +98,7 @@ function initContext(canvas) {
 
 function d3_vAttr(attr, fn) {
   this.each(function(d, i) {
-    this.posBuffer[this.indices[0]] = fn(d, i)
+    this.xy[this.indices[0]] = fn(d, i)
   })
   return this
 }

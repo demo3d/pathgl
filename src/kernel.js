@@ -113,8 +113,8 @@ function shader() {
 }
 
 function simMesh() {
-  return Mesh(gl, { pos: { array: Quad(), size: 2 }
-                  , attrList: ['pos']
+  return Mesh(gl, { xy: { array: Quad(), size: 2 }
+                  , attrList: ['xy']
                   , count: 6
                   , primitive: 'triangles'
                   })

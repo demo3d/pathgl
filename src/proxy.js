@@ -14,20 +14,20 @@ function SVGProxy () {
 
 var proto = {
   circle: { init: function (i) {
-              this.fBuffer[i * 4] = 1
-              this.indices = [i * 4]
+              this.fBuffer[i] = 1
+              this.indices = [i * 2]
             }
           , cx: function (v) {
-              this.posBuffer[this.indices[0] + 0] = v
+              this.xyBuffer[this.indices[0] + 0] = v
             }
           , cy: function (v) {
-              this.posBuffer[this.indices[0] + 1] = v
+              this.xyBuffer[this.indices[0] + 1] = v
             }
           , r: function (v) {
-              this.posBuffer[this.indices[0] + 2] = v
+              this.rBuffer[this.indices[0]] = v
             }
           , cz: function (v) {
-              this.posBuffer[this.indices[0] + 3] = v
+              this.rBuffer[this.indices[0] + 1] = v
             }
           , fill: function (v) {
               this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
@@ -47,7 +47,7 @@ var proto = {
               var f = this.fBuffer
               this.indices.forEach(function (i) {
                   f[i] = 256 - v * 256
-                  //f[2*i] = 256 - v * 256
+                  f[2*i] = 256 - v * 256
               })
           },
           render: function (t) {
@@ -56,37 +56,38 @@ var proto = {
               var width = this.attr.height || 0
               var height = this.attr.width|| 0
 
-              this.posBuffer[this.indices[0]] = x
-              this.posBuffer[this.indices[1]] = y
-              this.posBuffer[this.indices[2]] = x
-              this.posBuffer[this.indices[3]] = y + height
-              this.posBuffer[this.indices[4]] = x + width
-              this.posBuffer[this.indices[5]] = y + height
-              this.posBuffer[this.indices[6]] = x + width
-              this.posBuffer[this.indices[7]] = y
-              this.posBuffer[this.indices[8]] = x 
-              this.posBuffer[this.indices[9]] = y 
-              this.posBuffer[this.indices[10]] = x + width
-              this.posBuffer[this.indices[11]] = y + height
+              this.xyBuffer[this.indices[0]] = x
+              this.xyBuffer[this.indices[1]] = y
+              this.xyBuffer[this.indices[2]] = x
+              this.xyBuffer[this.indices[3]] = y + height
+              this.xyBuffer[this.indices[4]] = x + width
+              this.xyBuffer[this.indices[5]] = y + height
+              this.xyBuffer[this.indices[6]] = x + width
+              this.xyBuffer[this.indices[7]] = y
+              this.xyBuffer[this.indices[8]] = x 
+              this.xyBuffer[this.indices[9]] = y 
+              this.xyBuffer[this.indices[10]] = x + width
+              this.xyBuffer[this.indices[11]] = y + height
           }
         , fill: function (v) {
             var c = v < 0 ? v : parseColor(v)
+            var cb = this.colorBuffer
             this.render()
             this.indices.forEach(function (i) {
-                this[i * 2] = c
-            }, this.colorBuffer)
+                cb[i] = c
+            })
           }
         , x: function (v){
-            this.posBuffer[this.indices[0] + 0] = v
+            this.xyBuffer[this.indices[0] + 0] = v
           }
         , y: function (v) {
-            this.posBuffer[this.indices[0] + 1] = v
+            this.xyBuffer[this.indices[0] + 1] = v
           }
         , width: function (v) {
-            this.posBuffer[this.indices[0] + 2] = v
+            this.xyBuffer[this.indices[0] + 2] = v
           }
         , height: function (v) {
-            this.posBuffer[this.indices[0] + 3] = v
+            this.xyBuffer[this.indices[0] + 3] = v
           }
         , rx: noop,
           ry:  noop
@@ -97,14 +98,17 @@ var proto = {
 , line: { init: function (i) {
             this.indices = i
           }
-        , x1: function (v) { this.posBuffer[this.indices[0] * 2] = v }
-        , y1: function (v) { this.posBuffer[this.indices[0] * 2 + 1] = v }
-        , x2: function (v) { this.posBuffer[this.indices[1] * 2] = v }
-        , y2: function (v) { this.posBuffer[this.indices[1] * 2  + 1] = v }
+        , x1: function (v) { this.xyBuffer[this.indices[0] * 2] = v }
+        , y1: function (v) { this.xyBuffer[this.indices[0] * 2 + 1] = v }
+        , x2: function (v) { this.xyBuffer[this.indices[1] * 2] = v }
+        , y2: function (v) { this.xyBuffer[this.indices[1] * 2  + 1] = v }
         , stroke: function (v) {
             var fill = parseColor(v)
+            var color = this.colorBuffer
             this.indices.forEach(function (i) {
-              this.colorBuffer[i * 4] = fill
+              color[i * 4] = fill
+              color[i * 2] = fill
+              color[i] = fill
             }, this)
           }
         }
@@ -116,7 +120,8 @@ var proto = {
         , fill: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
-              this.colorBuffer[i* 4] = fill
+              this.colorBuffer[i] = fill
+                this.colorBuffer[i*2] = fill
             }, this)
           }
         }
@@ -143,13 +148,13 @@ var baseProto = {
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 , previousSibling: function () { canvas.__scene__[canvas.__scene__.indexOf(this) - 1] }
 , nextSibling: function () { canvas.__scene__[canvas.__scene__.indexOf()  + 1] }
-, parentNode: false //delegate to self
+, parentNode: false
 , removeChild: function (child) {
     var s = canvas.__scene__
     s.splice(s.indexOf(child), 1)
   }
 , opacity: function (v) {
-    var f = this.fBuffer[this.indices[0] + 1] = 256 - (v * 256)
+    var f = this.fBuffer[this.indices[0]] = 256 - (v * 256)
   }
 , transform: function (d) {}
 , getAttribute: function (name) {

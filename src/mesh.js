@@ -19,7 +19,7 @@ function Pool(max) {
 function Mesh(gl, options, attr) {
   var attributes = {}
     , count = options.count || 0
-    , attrList = options.attrList || ['pos', 'color', 'fugue']
+    , attrList = options.attrList || ['xy','color',  'r', 'fugue']
     , primitive = gl[options.primitive.toUpperCase()]
     , material = []
     , indexPool = new Pool(1e6)
@@ -57,7 +57,7 @@ function Mesh(gl, options, attr) {
       indices = indices.concat(indexPool.splice(indexPool.length - dx, dx))
     else
       indexPool.push.apply(indexPool, indices.splice(indexPool.length + dx, - dx))
-    var posBuffer = attributes.pos.array
+    var posBuffer = attributes.xy.array
     indices.forEach(function (i) {
       posBuffer[i] = buffer[i]
     })
@@ -73,7 +73,7 @@ function Mesh(gl, options, attr) {
       attributes[name] = {
         array: new Float32Array(options[name] && options[name].array || 4e6)
       , buffer: buffer
-      , size: option.size  || 4
+      , size: option.size || 2
       , loc: i
       }
     })
@@ -89,7 +89,9 @@ function Mesh(gl, options, attr) {
   }
 
   function bind (obj) {
-    obj.posBuffer = attributes.pos.array
+    obj.xyBuffer = attributes.xy.array
+    obj.rBuffer = attributes.r.array
+
     obj.fBuffer = attributes.fugue.array
     obj.colorBuffer = attributes.color.array
     obj.mesh = this
@@ -182,10 +184,10 @@ function buildBuffers(gl, types) {
   pointMesh.bind(types.circle)
 
 
-  var lineMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 2 } })
+  var lineMesh = new Mesh(gl, { primitive: 'lines', xy: { size: 2 } })
   lineMesh.bind(types.line)
 
-  var triangleMesh = new Mesh(gl, { primitive: 'triangles', pos: { size: 2 } })
+  var triangleMesh = new Mesh(gl, { primitive: 'triangles', xy: { size: 2 } })
   triangleMesh.bind(types.path)
   triangleMesh.bind(types.rect)
 

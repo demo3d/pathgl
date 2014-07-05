@@ -4,9 +4,10 @@ pathgl.vertexShader = [
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
 
-, 'attribute vec4 pos;'
-, 'attribute vec4 color;'
-, 'attribute vec4 fugue;'
+, 'attribute vec2 xy;'
+, 'attribute vec2 r;'
+, 'attribute vec2 color;'
+, 'attribute vec2 fugue;'
 
 , 'varying float type;'
 , 'varying vec4 v_stroke;'
@@ -15,40 +16,32 @@ pathgl.vertexShader = [
 
 , 'uniform sampler2D texture0;'
 
-, 'vec4 unpack_tex(float col) {'
-, '    return vec4(mod(col / 1000. / 1000., 1000.),'
-, '                mod(col / 1000. , 1000.),'
-, '                mod(col, 1000.),'
-, '                col);'
-, '}'
-
 , 'vec4 tex(vec2 get) { return texture2D(texture0, abs(get)); }'
-
 
 , 'vec4 unpack_color(float col) {'
 , '    return vec4(mod(col / 256. / 256., 256.),'
 , '                mod(col / 256. , 256.),'
 , '                mod(col, 256.),'
-, '                256. - fugue.y)'
+, '                256. - fugue.x)'
 , '                / 256.;'
 , '}'
 
 , 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - 1., 1. - ((pos.y / resolution.y) * 2.)); }'
 , 'void main() {'
 , '    float time = clock / 1000.;'
-, '    float r = replace_r;'
+, '    float pointSize = replace_r;'
 , '    float x = replace_x;'
 , '    float y = replace_y;'
 , '    float fill = color.x;'
 , '    float stroke = color.x;'
-, '    type = fugue.x;'
-, '    gl_PointSize =  r;'
+, '    type = float(pointSize > 0.);'
+, '    gl_PointSize =  pointSize;'
 , '    v_fill = unpack_color(fill);'
-, '    dim = vec4(x, y, r, -r);'
+, '    dim = vec4(x, y, pointSize, -pointSize);'
 , '    v_stroke = replace_stroke;'
 , '    gl_Position = vec4(clipspace(vec2(x, y)),  1., 1.);'
 , '}'
-].join('\n\n')
+].join('\n')
 
 pathgl.fragmentShader = [
   'uniform sampler2D texture0;'
@@ -82,7 +75,7 @@ function createProgram(gl, vs_src, fs_src, attributes) {
   gl.deleteShader(vs)
   gl.deleteShader(fs)
 
-  ;(attributes || ['pos', 'color', 'fugue']).forEach(function (d, i){
+  ;(attributes || ['xy', 'color', 'r', 'fugue']).forEach(function (d, i){
      gl.bindAttribLocation(program, i, d)
    })
 
@@ -123,10 +116,10 @@ function build_vs(src, subst) {
   })
 
     var defaults = extend({
-      stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? clamp(abs(tex(pos.xy).w) + abs(tex(pos.xy).z) * 4., 2., 10.): (2. * pos.z)'
-    , x: '(pos.x < 1.) ? tex(pos.xy).x * resolution.x : pos.x'
-    , y: '(pos.y < 1.) ? tex(pos.xy).y * resolution.y : pos.y'
+      stroke: '(stroke < 0.) ? vec4(stroke) : unpack_color(stroke)'
+    , r: '(r.x < 0.) ? clamp(abs(tex(xy.xy).w) + abs(tex(xy.xy).z) * 4., 2., 10.): (2. * r.x)'
+    , x: '(xy.x < 1.) ? tex(xy.xy).x * resolution.x : xy.x'
+    , y: '(xy.y < 1.) ? tex(xy.xy).y * resolution.y : xy.y'
     }, subst)
 
   for(var attr in defaults)
@@ -140,11 +133,11 @@ function compileShader (gl, type, src) {
   var shader = gl.createShader(type)
   gl.shaderSource(shader, header + src)
   gl.compileShader(shader)
-  // if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-  //   var log = (gl.getShaderInfoLog(shader) || '')
-  //     , line = + log.split(':')[2]
-  //   return console.error((src || '').split('\n').slice(line-5, line + 5).join('\n'), log)
-  // }
+  if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    var log = (gl.getShaderInfoLog(shader) || '')
+      , line = + log.split(':')[2]
+    return console.error((src || '').split('\n').slice(line-5, line + 5).join('\n'), log)
+  }
   return shader
 }
 

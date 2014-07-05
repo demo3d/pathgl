@@ -660,8 +660,8 @@ function shader() {
 }
 
 function simMesh() {
-  return Mesh(gl, { pos: { array: Quad(), size: 2 }
-                  , attrList: ['pos']
+  return Mesh(gl, { xy: { array: Quad(), size: 2 }
+                  , attrList: ['xy']
                   , count: 6
                   , primitive: 'triangles'
                   })
@@ -672,9 +672,10 @@ function simMesh() {
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
 
-, 'attribute vec4 pos;'
-, 'attribute vec4 color;'
-, 'attribute vec4 fugue;'
+, 'attribute vec2 xy;'
+, 'attribute vec2 r;'
+, 'attribute vec2 color;'
+, 'attribute vec2 fugue;'
 
 , 'varying float type;'
 , 'varying vec4 v_stroke;'
@@ -683,40 +684,32 @@ function simMesh() {
 
 , 'uniform sampler2D texture0;'
 
-, 'vec4 unpack_tex(float col) {'
-, '    return vec4(mod(col / 1000. / 1000., 1000.),'
-, '                mod(col / 1000. , 1000.),'
-, '                mod(col, 1000.),'
-, '                col);'
-, '}'
-
 , 'vec4 tex(vec2 get) { return texture2D(texture0, abs(get)); }'
-
 
 , 'vec4 unpack_color(float col) {'
 , '    return vec4(mod(col / 256. / 256., 256.),'
 , '                mod(col / 256. , 256.),'
 , '                mod(col, 256.),'
-, '                256. - fugue.y)'
+, '                256. - fugue.x)'
 , '                / 256.;'
 , '}'
 
 , 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - 1., 1. - ((pos.y / resolution.y) * 2.)); }'
 , 'void main() {'
 , '    float time = clock / 1000.;'
-, '    float r = replace_r;'
+, '    float pointSize = replace_r;'
 , '    float x = replace_x;'
 , '    float y = replace_y;'
 , '    float fill = color.x;'
 , '    float stroke = color.x;'
-, '    type = fugue.x;'
-, '    gl_PointSize =  r;'
+, '    type = float(pointSize > 0.);'
+, '    gl_PointSize =  pointSize;'
 , '    v_fill = unpack_color(fill);'
-, '    dim = vec4(x, y, r, -r);'
+, '    dim = vec4(x, y, pointSize, -pointSize);'
 , '    v_stroke = replace_stroke;'
 , '    gl_Position = vec4(clipspace(vec2(x, y)),  1., 1.);'
 , '}'
-].join('\n\n')
+].join('\n')
 
 pathgl.fragmentShader = [
   'uniform sampler2D texture0;'
@@ -750,7 +743,7 @@ function createProgram(gl, vs_src, fs_src, attributes) {
   gl.deleteShader(vs)
   gl.deleteShader(fs)
 
-  ;(attributes || ['pos', 'color', 'fugue']).forEach(function (d, i){
+  ;(attributes || ['xy', 'color', 'r', 'fugue']).forEach(function (d, i){
      gl.bindAttribLocation(program, i, d)
    })
 
@@ -791,10 +784,10 @@ function build_vs(src, subst) {
   })
 
     var defaults = extend({
-      stroke: '(color.r < 0.) ? vec4(stroke) : unpack_color(stroke)'
-    , r: '(pos.z < 0.) ? clamp(abs(tex(pos.xy).w) + abs(tex(pos.xy).z) * 4., 2., 10.): (2. * pos.z)'
-    , x: '(pos.x < 1.) ? tex(pos.xy).x * resolution.x : pos.x'
-    , y: '(pos.y < 1.) ? tex(pos.xy).y * resolution.y : pos.y'
+      stroke: '(stroke < 0.) ? vec4(stroke) : unpack_color(stroke)'
+    , r: '(r.x < 0.) ? clamp(abs(tex(xy.xy).w) + abs(tex(xy.xy).z) * 4., 2., 10.): (2. * r.x)'
+    , x: '(xy.x < 1.) ? tex(xy.xy).x * resolution.x : xy.x'
+    , y: '(xy.y < 1.) ? tex(xy.xy).y * resolution.y : xy.y'
     }, subst)
 
   for(var attr in defaults)
@@ -808,11 +801,11 @@ function compileShader (gl, type, src) {
   var shader = gl.createShader(type)
   gl.shaderSource(shader, header + src)
   gl.compileShader(shader)
-  // if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-  //   var log = (gl.getShaderInfoLog(shader) || '')
-  //     , line = + log.split(':')[2]
-  //   return console.error((src || '').split('\n').slice(line-5, line + 5).join('\n'), log)
-  // }
+  if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    var log = (gl.getShaderInfoLog(shader) || '')
+      , line = + log.split(':')[2]
+    return console.error((src || '').split('\n').slice(line-5, line + 5).join('\n'), log)
+  }
   return shader
 }
 
@@ -929,7 +922,7 @@ function initContext(canvas) {
 
 function d3_vAttr(attr, fn) {
   this.each(function(d, i) {
-    this.posBuffer[this.indices[0]] = fn(d, i)
+    this.xy[this.indices[0]] = fn(d, i)
   })
   return this
 }
@@ -3300,7 +3293,7 @@ proxyEvent.prototype = extend(Object.create(null), {
 function Mesh(gl, options, attr) {
   var attributes = {}
     , count = options.count || 0
-    , attrList = options.attrList || ['pos', 'color', 'fugue']
+    , attrList = options.attrList || ['xy','color',  'r', 'fugue']
     , primitive = gl[options.primitive.toUpperCase()]
     , material = []
     , indexPool = new Pool(1e6)
@@ -3338,7 +3331,7 @@ function Mesh(gl, options, attr) {
       indices = indices.concat(indexPool.splice(indexPool.length - dx, dx))
     else
       indexPool.push.apply(indexPool, indices.splice(indexPool.length + dx, - dx))
-    var posBuffer = attributes.pos.array
+    var posBuffer = attributes.xy.array
     indices.forEach(function (i) {
       posBuffer[i] = buffer[i]
     })
@@ -3354,7 +3347,7 @@ function Mesh(gl, options, attr) {
       attributes[name] = {
         array: new Float32Array(options[name] && options[name].array || 4e6)
       , buffer: buffer
-      , size: option.size  || 4
+      , size: option.size || 2
       , loc: i
       }
     })
@@ -3370,7 +3363,9 @@ function Mesh(gl, options, attr) {
   }
 
   function bind (obj) {
-    obj.posBuffer = attributes.pos.array
+    obj.xyBuffer = attributes.xy.array
+    obj.rBuffer = attributes.r.array
+
     obj.fBuffer = attributes.fugue.array
     obj.colorBuffer = attributes.color.array
     obj.mesh = this
@@ -3463,10 +3458,10 @@ function buildBuffers(gl, types) {
   pointMesh.bind(types.circle)
 
 
-  var lineMesh = new Mesh(gl, { primitive: 'lines', pos: { size: 2 } })
+  var lineMesh = new Mesh(gl, { primitive: 'lines', xy: { size: 2 } })
   lineMesh.bind(types.line)
 
-  var triangleMesh = new Mesh(gl, { primitive: 'triangles', pos: { size: 2 } })
+  var triangleMesh = new Mesh(gl, { primitive: 'triangles', xy: { size: 2 } })
   triangleMesh.bind(types.path)
   triangleMesh.bind(types.rect)
 
@@ -3562,20 +3557,20 @@ var chunker =
 
 var proto = {
   circle: { init: function (i) {
-              this.fBuffer[i * 4] = 1
-              this.indices = [i * 4]
+              this.fBuffer[i] = 1
+              this.indices = [i * 2]
             }
           , cx: function (v) {
-              this.posBuffer[this.indices[0] + 0] = v
+              this.xyBuffer[this.indices[0] + 0] = v
             }
           , cy: function (v) {
-              this.posBuffer[this.indices[0] + 1] = v
+              this.xyBuffer[this.indices[0] + 1] = v
             }
           , r: function (v) {
-              this.posBuffer[this.indices[0] + 2] = v
+              this.rBuffer[this.indices[0]] = v
             }
           , cz: function (v) {
-              this.posBuffer[this.indices[0] + 3] = v
+              this.rBuffer[this.indices[0] + 1] = v
             }
           , fill: function (v) {
               this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
@@ -3595,7 +3590,7 @@ var proto = {
               var f = this.fBuffer
               this.indices.forEach(function (i) {
                   f[i] = 256 - v * 256
-                  //f[2*i] = 256 - v * 256
+                  f[2*i] = 256 - v * 256
               })
           },
           render: function (t) {
@@ -3604,37 +3599,38 @@ var proto = {
               var width = this.attr.height || 0
               var height = this.attr.width|| 0
 
-              this.posBuffer[this.indices[0]] = x
-              this.posBuffer[this.indices[1]] = y
-              this.posBuffer[this.indices[2]] = x
-              this.posBuffer[this.indices[3]] = y + height
-              this.posBuffer[this.indices[4]] = x + width
-              this.posBuffer[this.indices[5]] = y + height
-              this.posBuffer[this.indices[6]] = x + width
-              this.posBuffer[this.indices[7]] = y
-              this.posBuffer[this.indices[8]] = x 
-              this.posBuffer[this.indices[9]] = y 
-              this.posBuffer[this.indices[10]] = x + width
-              this.posBuffer[this.indices[11]] = y + height
+              this.xyBuffer[this.indices[0]] = x
+              this.xyBuffer[this.indices[1]] = y
+              this.xyBuffer[this.indices[2]] = x
+              this.xyBuffer[this.indices[3]] = y + height
+              this.xyBuffer[this.indices[4]] = x + width
+              this.xyBuffer[this.indices[5]] = y + height
+              this.xyBuffer[this.indices[6]] = x + width
+              this.xyBuffer[this.indices[7]] = y
+              this.xyBuffer[this.indices[8]] = x 
+              this.xyBuffer[this.indices[9]] = y 
+              this.xyBuffer[this.indices[10]] = x + width
+              this.xyBuffer[this.indices[11]] = y + height
           }
         , fill: function (v) {
             var c = v < 0 ? v : parseColor(v)
+            var cb = this.colorBuffer
             this.render()
             this.indices.forEach(function (i) {
-                this[i * 2] = c
-            }, this.colorBuffer)
+                cb[i] = c
+            })
           }
         , x: function (v){
-            this.posBuffer[this.indices[0] + 0] = v
+            this.xyBuffer[this.indices[0] + 0] = v
           }
         , y: function (v) {
-            this.posBuffer[this.indices[0] + 1] = v
+            this.xyBuffer[this.indices[0] + 1] = v
           }
         , width: function (v) {
-            this.posBuffer[this.indices[0] + 2] = v
+            this.xyBuffer[this.indices[0] + 2] = v
           }
         , height: function (v) {
-            this.posBuffer[this.indices[0] + 3] = v
+            this.xyBuffer[this.indices[0] + 3] = v
           }
         , rx: noop,
           ry:  noop
@@ -3645,14 +3641,17 @@ var proto = {
 , line: { init: function (i) {
             this.indices = i
           }
-        , x1: function (v) { this.posBuffer[this.indices[0] * 2] = v }
-        , y1: function (v) { this.posBuffer[this.indices[0] * 2 + 1] = v }
-        , x2: function (v) { this.posBuffer[this.indices[1] * 2] = v }
-        , y2: function (v) { this.posBuffer[this.indices[1] * 2  + 1] = v }
+        , x1: function (v) { this.xyBuffer[this.indices[0] * 2] = v }
+        , y1: function (v) { this.xyBuffer[this.indices[0] * 2 + 1] = v }
+        , x2: function (v) { this.xyBuffer[this.indices[1] * 2] = v }
+        , y2: function (v) { this.xyBuffer[this.indices[1] * 2  + 1] = v }
         , stroke: function (v) {
             var fill = parseColor(v)
+            var color = this.colorBuffer
             this.indices.forEach(function (i) {
-              this.colorBuffer[i * 4] = fill
+              color[i * 4] = fill
+              color[i * 2] = fill
+              color[i] = fill
             }, this)
           }
         }
@@ -3664,7 +3663,8 @@ var proto = {
         , fill: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
-              this.colorBuffer[i* 4] = fill
+              this.colorBuffer[i] = fill
+                this.colorBuffer[i*2] = fill
             }, this)
           }
         }
@@ -3691,13 +3691,13 @@ var baseProto = {
 , ownerDocument: { createElementNS: function (_, x) { return x } }
 , previousSibling: function () { canvas.__scene__[canvas.__scene__.indexOf(this) - 1] }
 , nextSibling: function () { canvas.__scene__[canvas.__scene__.indexOf()  + 1] }
-, parentNode: false //delegate to self
+, parentNode: false
 , removeChild: function (child) {
     var s = canvas.__scene__
     s.splice(s.indexOf(child), 1)
   }
 , opacity: function (v) {
-    var f = this.fBuffer[this.indices[0] + 1] = 256 - (v * 256)
+    var f = this.fBuffer[this.indices[0]] = 256 - (v * 256)
   }
 , transform: function (d) {}
 , getAttribute: function (name) {

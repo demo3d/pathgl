@@ -1,7 +1,7 @@
 var simulation_vs = [
-  'attribute vec2 pos;'
+  'attribute vec2 xy;'
 , '  void main() {'
-, '    gl_Position = vec4(pos.xy, 1.0 , 1.0);'
+, '    gl_Position = vec4(xy, 1.0 , 1.0);'
 , '  }'
 ].join('\n')
 
@@ -68,10 +68,10 @@ d3.select('canvas').selectAll("circle")
 .attr('r', function (d) { return d.z })
 .attr('cx', function (d) { return d.x })
 .attr('cy', function (d) { return d.y })
-.shader({'stroke': 'vec4(tex(pos.xy).x, .2, tex(pos.xy).z, 1.)'})
+.shader({'stroke': 'vec4(tex(xy.xy).x, .2, tex(xy.xy).z, 1.)'})
 
-d3.select('canvas').on('mousedown', gravity(-1))
-d3.select('canvas').on('mouseup', gravity(+1))
+d3.select(window).on('mousedown', gravity(-1))
+d3.select(window).on('mouseup', gravity(+1))
 
 function gravity (x) {
     return function () { pathgl.uniform('gravity', x) }
