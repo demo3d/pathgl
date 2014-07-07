@@ -110,7 +110,7 @@ function Mesh(gl, options, attr) {
     }
       self.changed = false
     //bindMaterial()
-    gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length) || options.count || 0)
+    gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length) / 2 || options.count || 0)
   }
 
   function set () {}
@@ -191,7 +191,7 @@ function buildBuffers(gl, types) {
   triangleMesh.bind(types.path)
   triangleMesh.bind(types.rect)
 
-  return [pointMesh, lineMesh, triangleMesh]
+  return [pointMesh, triangleMesh, lineMesh]
 }
 
 function initFbo(texture) {

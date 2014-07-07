@@ -25,7 +25,6 @@ function init(c) {
 function flags(gl) {
   gl.clearColor(0,0,0,0)
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
-  //gl.blendFunc(gl.ONE_MINUS_SRC_ALPHA, gl.DST_ALPHA)
 }
 
 function bindEvents(canvas) {

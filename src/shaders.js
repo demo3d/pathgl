@@ -26,6 +26,7 @@ pathgl.vertexShader = [
 , '                / 256.;'
 , '}'
 
+
 , 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - 1., 1. - ((pos.y / resolution.y) * 2.)); }'
 , 'void main() {'
 , '    float time = clock / 1000.;'

@@ -694,6 +694,7 @@ function simMesh() {
 , '                / 256.;'
 , '}'
 
+
 , 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - 1., 1. - ((pos.y / resolution.y) * 2.)); }'
 , 'void main() {'
 , '    float time = clock / 1000.;'
@@ -849,7 +850,6 @@ function mergify(vs1, fs1, subst1) {
 function flags(gl) {
   gl.clearColor(0,0,0,0)
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE)
-  //gl.blendFunc(gl.ONE_MINUS_SRC_ALPHA, gl.DST_ALPHA)
 }
 
 function bindEvents(canvas) {
@@ -3384,7 +3384,7 @@ function Mesh(gl, options, attr) {
     }
       self.changed = false
     //bindMaterial()
-    gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length) || options.count || 0)
+    gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length) / 2 || options.count || 0)
   }
 
   function set () {}
@@ -3465,7 +3465,7 @@ function buildBuffers(gl, types) {
   triangleMesh.bind(types.path)
   triangleMesh.bind(types.rect)
 
-  return [pointMesh, lineMesh, triangleMesh]
+  return [pointMesh, triangleMesh, lineMesh]
 }
 
 function initFbo(texture) {
@@ -3616,6 +3616,7 @@ var proto = {
             var c = v < 0 ? v : parseColor(v)
             var cb = this.colorBuffer
             this.render()
+            this.opacity(this.attr.opacity)
             this.indices.forEach(function (i) {
                 cb[i] = c
             })

@@ -73,6 +73,7 @@ var proto = {
             var c = v < 0 ? v : parseColor(v)
             var cb = this.colorBuffer
             this.render()
+            this.opacity(this.attr.opacity)
             this.indices.forEach(function (i) {
                 cb[i] = c
             })
