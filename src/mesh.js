@@ -6,6 +6,8 @@ function Mesh (gl, options, attr) {
     , material = []
     , indexPool = range(0, 1e6)
 
+  indexPool.max = 1e6
+
   init()
   var self = {
     init : init
@@ -26,11 +28,10 @@ function Mesh (gl, options, attr) {
   return self
 
   function alloc() {
-    console.log(indexPool.length)
-    if (options.primitive == 'triangles') return 1e6 - indexPool.length
-    return count += options.primitive == 'points' ? 1
-                  : options.primitive == 'lines' ? 2
-                  : 3
+    if (options.primitive == 'triangles') return []
+    return options.primitive == 'points' ? []
+                  : options.primitive == 'lines' ? []
+                  : []
   }
 
   function spread(indices, buffer) {
@@ -43,6 +44,7 @@ function Mesh (gl, options, attr) {
     indices.forEach(function (i) {
       posBuffer[i] = buffer[i]
     })
+    //count = indexPool.max - indexPool.length
     return indices
   }
 
@@ -90,7 +92,7 @@ function Mesh (gl, options, attr) {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
     //bindMaterial()
-    gl.drawArrays(primitive, offset, count)
+    gl.drawArrays(primitive, offset, indexPool.max - indexPool.length)
   }
 
   function set () {}

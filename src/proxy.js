@@ -3,7 +3,7 @@ function SVGProxy () {
            a[type.name] = function x() {
              var self = Object.create(type.prototype)
              extend(self, x)
-             self.init(x.mesh.alloc() - 1)
+             self.init(x.mesh.alloc())
              self.attr = {}
              return self
            }

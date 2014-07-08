@@ -3270,6 +3270,8 @@ proxyEvent.prototype = extend(Object.create(null), {
     , material = []
     , indexPool = range(0, 1e6)
 
+  indexPool.max = 1e6
+
   init()
   var self = {
     init : init
@@ -3290,11 +3292,10 @@ proxyEvent.prototype = extend(Object.create(null), {
   return self
 
   function alloc() {
-    console.log(indexPool.length)
-    if (options.primitive == 'triangles') return 1e6 - indexPool.length
-    return count += options.primitive == 'points' ? 1
-                  : options.primitive == 'lines' ? 2
-                  : 3
+    if (options.primitive == 'triangles') return []
+    return options.primitive == 'points' ? []
+                  : options.primitive == 'lines' ? []
+                  : []
   }
 
   function spread(indices, buffer) {
@@ -3307,6 +3308,7 @@ proxyEvent.prototype = extend(Object.create(null), {
     indices.forEach(function (i) {
       posBuffer[i] = buffer[i]
     })
+    //count = indexPool.max - indexPool.length
     return indices
   }
 
@@ -3354,7 +3356,7 @@ proxyEvent.prototype = extend(Object.create(null), {
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
     //bindMaterial()
-    gl.drawArrays(primitive, offset, count)
+    gl.drawArrays(primitive, offset, indexPool.max - indexPool.length)
   }
 
   function set () {}
@@ -3516,7 +3518,7 @@ var chunker =
            a[type.name] = function x() {
              var self = Object.create(type.prototype)
              extend(self, x)
-             self.init(x.mesh.alloc() - 1)
+             self.init(x.mesh.alloc())
              self.attr = {}
              return self
            }
