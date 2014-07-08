@@ -3,7 +3,7 @@ function Pool(max) {
     this.length = this.max = max
     this.push = function (i) {
         reclaim.push(i)
-        return ++ this.length
+        return ++ this.length 
     }
     this.pop = function () {
         if (reclaim.length) return reclaim.pop()
@@ -46,8 +46,8 @@ function Mesh(gl, options, attr) {
 
   function alloc() {
     if (options.primitive == 'triangles') return []
-    return options.primitive == 'points' ? [indexPool.pop()]
-         : options.primitive == 'lines' ? [indexPool.pop(), indexPool.pop()]
+    return options.primitive == 'points' ? [indexPool.pop() * 2]
+          : options.primitive == 'lines' ? [indexPool.pop() * 2, indexPool.pop() * 2]
          : []
   }
 
@@ -110,7 +110,7 @@ function Mesh(gl, options, attr) {
     }
       self.changed = false
     //bindMaterial()
-    gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length) / 2 || options.count || 0)
+    gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length)|| options.count || 0)
   }
 
   function set () {}
@@ -184,10 +184,10 @@ function buildBuffers(gl, types) {
   pointMesh.bind(types.circle)
 
 
-  var lineMesh = new Mesh(gl, { primitive: 'lines', xy: { size: 2 } })
+  var lineMesh = new Mesh(gl, { primitive: 'lines'})
   lineMesh.bind(types.line)
 
-  var triangleMesh = new Mesh(gl, { primitive: 'triangles', xy: { size: 2 } })
+  var triangleMesh = new Mesh(gl, { primitive: 'triangles'})
   triangleMesh.bind(types.path)
   triangleMesh.bind(types.rect)
 

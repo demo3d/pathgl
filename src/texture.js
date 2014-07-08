@@ -203,7 +203,6 @@ function seed(count, origin, fn) {
         chunk.size -= delta
         chunks.push(chunk = { x: 0, y:(chunk.y + 1) % s, size: delta })
     } while (boundary > s)
-
     for(var i = 0; i < chunks.length; i++) {
         var data = [], j = -1
         chunk = chunks[i]

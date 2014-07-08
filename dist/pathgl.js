@@ -787,8 +787,8 @@ function build_vs(src, subst) {
     var defaults = extend({
       stroke: '(stroke < 0.) ? vec4(stroke) : unpack_color(stroke)'
     , r: '(r.x < 0.) ? clamp(abs(tex(xy.xy).w) + abs(tex(xy.xy).z) * 4., 2., 10.): (2. * r.x)'
-    , x: '(xy.x < 1.) ? tex(xy.xy).x * resolution.x : xy.x'
-    , y: '(xy.y < 1.) ? tex(xy.xy).y * resolution.y : xy.y'
+    , x: '(xy.x < 0.) ? tex(xy.xy).x * resolution.x : xy.x'
+    , y: '(xy.y < 0.) ? tex(xy.xy).y * resolution.y : xy.y'
     }, subst)
 
   for(var attr in defaults)
@@ -3277,7 +3277,7 @@ proxyEvent.prototype = extend(Object.create(null), {
     this.length = this.max = max
     this.push = function (i) {
         reclaim.push(i)
-        return ++ this.length
+        return ++ this.length 
     }
     this.pop = function () {
         if (reclaim.length) return reclaim.pop()
@@ -3320,8 +3320,8 @@ function Mesh(gl, options, attr) {
 
   function alloc() {
     if (options.primitive == 'triangles') return []
-    return options.primitive == 'points' ? [indexPool.pop()]
-         : options.primitive == 'lines' ? [indexPool.pop(), indexPool.pop()]
+    return options.primitive == 'points' ? [indexPool.pop() * 2]
+          : options.primitive == 'lines' ? [indexPool.pop() * 2, indexPool.pop() * 2]
          : []
   }
 
@@ -3384,7 +3384,7 @@ function Mesh(gl, options, attr) {
     }
       self.changed = false
     //bindMaterial()
-    gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length) / 2 || options.count || 0)
+    gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length)|| options.count || 0)
   }
 
   function set () {}
@@ -3458,10 +3458,10 @@ function buildBuffers(gl, types) {
   pointMesh.bind(types.circle)
 
 
-  var lineMesh = new Mesh(gl, { primitive: 'lines', xy: { size: 2 } })
+  var lineMesh = new Mesh(gl, { primitive: 'lines'})
   lineMesh.bind(types.line)
 
-  var triangleMesh = new Mesh(gl, { primitive: 'triangles', xy: { size: 2 } })
+  var triangleMesh = new Mesh(gl, { primitive: 'triangles'})
   triangleMesh.bind(types.path)
   triangleMesh.bind(types.rect)
 
@@ -3541,13 +3541,27 @@ var combinators = { ' ': function (d) { return d && d !== __scene__ && d.parent(
                   }
 var chunker =
   /^(\*|\w+)?(?:([\.\#]+[\w\-\.#]+)?)(\[([\w\-]+)(?:([\|\^\$\*\~]?\=)['"]?([ \w\-\/\?\&\=\:\.\(\)\!,@#%<>\{\}\$\*\^]+)["']?)?\])?(:([\w\-]+)(\(['"]?([^()]+)['"]?\))?)?/
-;function SVGProxy () {
+;var attrDefaults = {
+  rotation: [0, 1]
+, translate: [0, 0]
+, scale: [1, 1]
+, fill: 0
+, stroke: 0
+, 'stroke-width': 2
+, cx: 0
+, cy: 0
+, x: 0
+, y: 0
+, opacity: .999
+}
+
+function SVGProxy () {
   return types.reduce(function (a, type) {
            a[type.name] = function x() {
              var self = Object.create(type.prototype)
              extend(self, x)
              self.init(self.mesh.alloc())
-             self.attr = {}
+             self.attr = Object.create(attrDefaults)
              return self
            }
            extend(type.prototype, baseProto, proto[type.name], {tagName: type.name})
@@ -3557,8 +3571,8 @@ var chunker =
 
 var proto = {
   circle: { init: function (i) {
-              this.fBuffer[i] = 1
-              this.indices = [i * 2]
+              this.fBuffer[i[0]] = 1
+              this.indices = i
             }
           , cx: function (v) {
               this.xyBuffer[this.indices[0] + 0] = v
@@ -3583,21 +3597,20 @@ var proto = {
 , rect: { init: function (i) {
             this.indices = this.mesh.spread(
               [], Quad()
-            ).reverse()
+            )
             
           },
           opacity: function (v) {
               var f = this.fBuffer
               this.indices.forEach(function (i) {
                   f[i] = 256 - v * 256
-                  f[2*i] = 256 - v * 256
               })
           },
           render: function (t) {
-              var x = this.attr.y || 0
-              var y = this.attr.x|| 0
-              var width = this.attr.height || 0
-              var height = this.attr.width|| 0
+              var x = this.attr.x || 0
+              var y = this.attr.y || 0
+              var width = this.attr.width || 0
+              var height = this.attr.height || 0
 
               this.xyBuffer[this.indices[0]] = x
               this.xyBuffer[this.indices[1]] = y
@@ -3642,10 +3655,10 @@ var proto = {
 , line: { init: function (i) {
             this.indices = i
           }
-        , x1: function (v) { this.xyBuffer[this.indices[0] * 2] = v }
-        , y1: function (v) { this.xyBuffer[this.indices[0] * 2 + 1] = v }
-        , x2: function (v) { this.xyBuffer[this.indices[1] * 2] = v }
-        , y2: function (v) { this.xyBuffer[this.indices[1] * 2  + 1] = v }
+        , x1: function (v) { this.xyBuffer[this.indices[0]] = v }
+        , y1: function (v) { this.xyBuffer[this.indices[0] + 1] = v }
+        , x2: function (v) { this.xyBuffer[this.indices[1]] = v }
+        , y2: function (v) { this.xyBuffer[this.indices[1]  + 1] = v }
         , stroke: function (v) {
             var fill = parseColor(v)
             var color = this.colorBuffer
@@ -3764,20 +3777,6 @@ function removeChild(el) {
   el = this.__scene__.splice(i, 1)[0]
   el && el.mesh.free(i)
   //el.buffer.count -= 1
-}
-
-var attrDefaults = {
-  rotation: [0, 1]
-, translate: [0, 0]
-, scale: [1, 1]
-, fill: 0
-, stroke: 0
-, 'stroke-width': 2
-, cx: 0
-, cy: 0
-, x: 0
-, y: 0
-, opacity: .999
 }
 
 function getScreenCTM(){
@@ -4003,7 +4002,6 @@ function seed(count, origin, fn) {
         chunk.size -= delta
         chunks.push(chunk = { x: 0, y:(chunk.y + 1) % s, size: delta })
     } while (boundary > s)
-
     for(var i = 0; i < chunks.length; i++) {
         var data = [], j = -1
         chunk = chunks[i]

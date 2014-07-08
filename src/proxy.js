@@ -1,10 +1,24 @@
+var attrDefaults = {
+  rotation: [0, 1]
+, translate: [0, 0]
+, scale: [1, 1]
+, fill: 0
+, stroke: 0
+, 'stroke-width': 2
+, cx: 0
+, cy: 0
+, x: 0
+, y: 0
+, opacity: .999
+}
+
 function SVGProxy () {
   return types.reduce(function (a, type) {
            a[type.name] = function x() {
              var self = Object.create(type.prototype)
              extend(self, x)
              self.init(self.mesh.alloc())
-             self.attr = {}
+             self.attr = Object.create(attrDefaults)
              return self
            }
            extend(type.prototype, baseProto, proto[type.name], {tagName: type.name})
@@ -14,8 +28,8 @@ function SVGProxy () {
 
 var proto = {
   circle: { init: function (i) {
-              this.fBuffer[i] = 1
-              this.indices = [i * 2]
+              this.fBuffer[i[0]] = 1
+              this.indices = i
             }
           , cx: function (v) {
               this.xyBuffer[this.indices[0] + 0] = v
@@ -40,21 +54,20 @@ var proto = {
 , rect: { init: function (i) {
             this.indices = this.mesh.spread(
               [], Quad()
-            ).reverse()
+            )
             
           },
           opacity: function (v) {
               var f = this.fBuffer
               this.indices.forEach(function (i) {
                   f[i] = 256 - v * 256
-                  f[2*i] = 256 - v * 256
               })
           },
           render: function (t) {
-              var x = this.attr.y || 0
-              var y = this.attr.x|| 0
-              var width = this.attr.height || 0
-              var height = this.attr.width|| 0
+              var x = this.attr.x || 0
+              var y = this.attr.y || 0
+              var width = this.attr.width || 0
+              var height = this.attr.height || 0
 
               this.xyBuffer[this.indices[0]] = x
               this.xyBuffer[this.indices[1]] = y
@@ -99,10 +112,10 @@ var proto = {
 , line: { init: function (i) {
             this.indices = i
           }
-        , x1: function (v) { this.xyBuffer[this.indices[0] * 2] = v }
-        , y1: function (v) { this.xyBuffer[this.indices[0] * 2 + 1] = v }
-        , x2: function (v) { this.xyBuffer[this.indices[1] * 2] = v }
-        , y2: function (v) { this.xyBuffer[this.indices[1] * 2  + 1] = v }
+        , x1: function (v) { this.xyBuffer[this.indices[0]] = v }
+        , y1: function (v) { this.xyBuffer[this.indices[0] + 1] = v }
+        , x2: function (v) { this.xyBuffer[this.indices[1]] = v }
+        , y2: function (v) { this.xyBuffer[this.indices[1]  + 1] = v }
         , stroke: function (v) {
             var fill = parseColor(v)
             var color = this.colorBuffer
@@ -221,20 +234,6 @@ function removeChild(el) {
   el = this.__scene__.splice(i, 1)[0]
   el && el.mesh.free(i)
   //el.buffer.count -= 1
-}
-
-var attrDefaults = {
-  rotation: [0, 1]
-, translate: [0, 0]
-, scale: [1, 1]
-, fill: 0
-, stroke: 0
-, 'stroke-width': 2
-, cx: 0
-, cy: 0
-, x: 0
-, y: 0
-, opacity: .999
 }
 
 function getScreenCTM(){

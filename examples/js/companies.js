@@ -1,16 +1,43 @@
 var i = 7e5
-while(i--)
-    setTimeout(function () {
-        d3.select('canvas').append("circle")
-            .datum(5)
-            .attr('cx', function () { return Math.random() * 1000})
-            .attr('cy', function () { return Math.random() * 1000})
-            .attr("r", 1)    
-            .attr('fill', function (d,i) {
-                return 'pink'
-            }) 
-      //  console.log(i)
-    }, i/ 100)
+
+d3.select('canvas').append("rect")
+    .attr('x', function () { return Math.random() * 500})
+    .attr('y', function () { return Math.random() * 500})
+    .attr("width", 100)    
+    .attr("width", 100)    
+    .attr('fill', function (d,i) {
+        return 'pink'
+    })
+
+d3.select('canvas').append("rect")
+    .attr('x', function () { return Math.random() * 500})
+    .attr('y', function () { return Math.random() * 500})
+    .attr("width", 100)    
+    .attr("height", 100)    
+    .attr('fill', function (d,i) {
+        return 'pink'
+    })
+
+
+d3.select('canvas').append("circle")
+    .attr('x', function () { return Math.random( )* 500})
+    .attr('y', function () { return Math.random() * 500})
+    .attr("r", 100)    
+    .attr('fill', function (d,i) {
+        return 'pink'
+    })
+// while(i--)
+//     setTimeout(function () {
+//         d3.select('canvas').append("circle")
+//             .datum(5)
+//             .attr('cx', function () { return Math.random() * 1000})
+//             .attr('cy', function () { return Math.random() * 1000})
+//             .attr("r", 1)    
+//             .attr('fill', function (d,i) {
+//                 return 'pink'
+//             }) 
+//       //  console.log(i)
+//     }, i/ 100)
 
 
 // d3.select('canvas')
