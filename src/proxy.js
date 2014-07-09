@@ -85,7 +85,7 @@ var proto = {
         , fill: function (v) {
             var fill = parseColor(v)
             this.indices.forEach(function (i) {
-              this.colorBuffer[i * 4] = fill
+              this.colorBuffer[i* 4] = fill
             }, this)
           }
         }

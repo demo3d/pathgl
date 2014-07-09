@@ -53,7 +53,7 @@ function Mesh (gl, options, attr) {
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
       gl.bufferData(gl.ARRAY_BUFFER, 4 * 1e7, gl.STREAM_DRAW)
       attributes[name] = {
-        array: new Float32Array(options[name] && options[name].array || 4e5)
+        array: new Float32Array(options[name] && options[name].array || 4e6)
       , buffer: buffer
       , size: option.size  || 4
       , changed: true
