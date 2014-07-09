@@ -3267,8 +3267,8 @@ proxyEvent.prototype = extend(Object.create(null), {
     , attrList = options.attrList || ['pos', 'color', 'fugue']
     , primitive = gl[options.primitive.toUpperCase()]
     , material = []
-    , indexPool = range(0, 1e5)
-    indexPool.max = 1e5
+    , indexPool = range(0, 1e6)
+    indexPool.max = 1e6
 
   init()
   var self = {
@@ -3306,7 +3306,6 @@ proxyEvent.prototype = extend(Object.create(null), {
     indices.forEach(function (i) {
       posBuffer[i] = buffer[i]
     })
-    //count = indexPool.max - indexPool.length
     return indices
   }
 
