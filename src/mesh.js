@@ -4,10 +4,10 @@ function Mesh (gl, options, attr) {
     , attrList = options.attrList || ['pos', 'color', 'fugue']
     , primitive = gl[options.primitive.toUpperCase()]
     , material = []
-    , indexPool = range(0, 1e6)
+    , indexPool = range(0, 1e6).reverse()
     indexPool.max = 1e6
 
-  init()
+    init()
   var self = {
     init : init
   , free: free
@@ -28,17 +28,17 @@ function Mesh (gl, options, attr) {
 
   function alloc() {
     if (options.primitive == 'triangles') return []
-      return options.primitive == 'points' ? [indexPool.shift()]
-                  : options.primitive == 'lines' ? [indexPool.shift(), indexPool.shift()]
+      return options.primitive == 'points' ? [indexPool.pop()]
+                  : options.primitive == 'lines' ? [indexPool.pop(), indexPool.pop()]
                   : []
   }
 
   function spread(indices, buffer) {
     var dx = buffer.length - indices.length
     if (dx > 0)
-      indices = indices.concat(indexPool.splice(0, dx))
+      indices = indices.concat(indexPool.splice(indexPool.length - dx, dx))
     else
-      indexPool = indexPool.concat(indices.splice(0, - dx))
+      indexPool = indexPool.concat(indices.splice(indexPool.length + dx, - dx))
     var posBuffer = attributes.pos.array
     indices.forEach(function (i) {
       posBuffer[i] = buffer[i]
