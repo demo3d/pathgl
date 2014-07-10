@@ -79,7 +79,7 @@ function Mesh (gl, options, attr) {
   }
 
   function draw (offset) {
-    //if (! count || 0 == indexPool.max - indexPool.length) return
+    if (! count && 0 == indexPool.max - indexPool.length) return
     for (var attr in attributes) {
       attr = attributes[attr]
       gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)

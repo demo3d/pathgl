@@ -118,7 +118,7 @@ var svg = d3.select(".two")
 .on("mousemove", function() { vertices[0] = d3.mouse(this); redraw(); })
 
 var path = svg.selectAll("path");
-
+return
 svg.selectAll("circle")
 .data(vertices.slice(1))
 .enter().append("circle")
