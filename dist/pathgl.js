@@ -347,6 +347,22 @@ function invoke(list, method) { return list.map(function (d) { return d[method](
 
 //left-top, left-bottom, right-bottom, right-top
 function Quad() { return [-1.0, -1.0, 1.0, -1.0, -1.0,  1.0, 1.0,  1.0] }
+//0
+//1
+//2
+//2
+//3
+//1
+function Quad() { return [
+        -1.0, -1.0, //0
+    1.0, -1.0,//1
+        -1.0,  1.0,//2
+
+        -1.0,  1.0,//2
+    1.0,  1.0,//3
+    1.0, -1.0//1
+                         ]
+                }
 
 function isVideoUrl(url) { return url.split('.').pop().join().match(/mp4|ogg|webm/) }
 
@@ -425,7 +441,8 @@ function step() {}
 
 function fract(x) {
   return x - (x | 0)
-};function parseColor(v) {
+}
+;function parseColor(v) {
   var a = setStyle(v)
   return + (a[0] * 255) << 16 ^ (a[1] * 255) << 8 ^ (a[2] * 255) << 0
 }
@@ -3554,12 +3571,36 @@ var proto = {
 , ellipse: { init: function () {}, cx: noop, cy: noop, rx: noop, ry: noop }
 , rect: { init: function (i) {
             this.indices = this.mesh.spread(
-              Quad(), []
-            )
-            //this.posBuffer[this.indices[0] + 1] = v
+              [], Quad()
+            ).reverse()
+            
+          },
+          render: function (t) {
+              var x = this.attr.x
+              var y = this.attr.y
+              var width = this.attr.width
+              var height = this.attr.height
+
+              this.posBuffer[this.indices[0]] = x
+              this.posBuffer[this.indices[1]] = y
+              this.posBuffer[this.indices[2]] = x
+              this.posBuffer[this.indices[3]] = y + height
+              this.posBuffer[this.indices[4]] = x + width
+              this.posBuffer[this.indices[5]] = y + height
+              this.posBuffer[this.indices[6]] = x + width
+              this.posBuffer[this.indices[7]] = y + height
+              this.posBuffer[this.indices[8]] = x + width
+              this.posBuffer[this.indices[9]] = y 
+              this.posBuffer[this.indices[10]] = x
+              this.posBuffer[this.indices[11]] = y
+
+              return this.posBuffer.subarray(
+                  this.indices[0], this.indices[11]
+              )
           }
         , fill: function (v) {
             this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
+            this.render()
           }
         , x: function (v){
             this.posBuffer[this.indices[0] + 0] = v

@@ -16,6 +16,22 @@ function invoke(list, method) { return list.map(function (d) { return d[method](
 
 //left-top, left-bottom, right-bottom, right-top
 function Quad() { return [-1.0, -1.0, 1.0, -1.0, -1.0,  1.0, 1.0,  1.0] }
+//0
+//1
+//2
+//2
+//3
+//1
+function Quad() { return [
+        -1.0, -1.0, //0
+    1.0, -1.0,//1
+        -1.0,  1.0,//2
+
+        -1.0,  1.0,//2
+    1.0,  1.0,//3
+    1.0, -1.0//1
+                         ]
+                }
 
 function isVideoUrl(url) { return url.split('.').pop().join().match(/mp4|ogg|webm/) }
 
