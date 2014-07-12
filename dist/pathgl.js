@@ -646,10 +646,11 @@ function shader() {
 function simMesh() {
   return Mesh(gl, { pos: { array: Quad(), size: 2 }
                   , attrList: ['pos']
-                  , count: 4
-                  , primitive: 'triangle_strip'
+                  , count: 6
+                  , primitive: 'triangles'
                   })
-};pathgl.vertexShader = [
+}
+;pathgl.vertexShader = [
   'uniform float clock;'
 , 'uniform vec2 mouse;'
 , 'uniform vec2 resolution;'
@@ -3552,10 +3553,11 @@ var proto = {
           }
 , ellipse: { init: function () {}, cx: noop, cy: noop, rx: noop, ry: noop }
 , rect: { init: function (i) {
-            this.indices = []//Quad().map
+            this.indices = this.mesh.spread(
+              Quad(), []
+            )
             //this.posBuffer[this.indices[0] + 1] = v
-
-}
+          }
         , fill: function (v) {
             this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
           }
@@ -3916,7 +3918,7 @@ function loadTexture()  {
   return this
 }
 
-  function seed(count, origin) {
+function seed(count, origin) {
     var x = 0
       , y = 0
       , chunks = [{ x: x, y: y, size: count }]
@@ -3939,4 +3941,4 @@ function loadTexture()  {
     }
       this.invalidate()
   }
-;; }()
+; }()

@@ -38,10 +38,11 @@ var proto = {
           }
 , ellipse: { init: function () {}, cx: noop, cy: noop, rx: noop, ry: noop }
 , rect: { init: function (i) {
-            this.indices = []//Quad().map
+            this.indices = this.mesh.spread(
+              Quad(), []
+            )
             //this.posBuffer[this.indices[0] + 1] = v
-
-}
+          }
         , fill: function (v) {
             this.colorBuffer[this.indices[0]] = v < 0 ? v : parseColor(v)
           }

@@ -114,7 +114,7 @@ pathgl.uniform('gravity', 1)
 pathgl.uniform('inertia', 0.001)
 pathgl.uniform('drag', 0.991)
 
-texture.seed(size / 1, [1,2].map(Math.random))
+texture.seed(size, [.5 ,.5 ])
 
 d3.select('canvas').selectAll("circle")
 .data(texture.unwrap())
@@ -122,7 +122,7 @@ d3.select('canvas').selectAll("circle")
 .attr('r', function (d) { return d.z })
 .attr('cx', function (d) { return d.x })
 .attr('cy', function (d) { return d.y })
-.shader({'stroke': 'vec4(tex(pos.xy).x, .2, tex(pos.xy).z' +  ', (20. - r )/  20.)'})
+.shader({'stroke': 'vec4(tex(pos.xy).x, .2, tex(pos.xy).z, 1.)'})
 
 d3.select('canvas').on('click', function () {
   pathgl.uniform('gravity', pathgl.uniform('gravity') * -1)

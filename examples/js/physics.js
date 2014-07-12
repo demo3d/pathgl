@@ -60,7 +60,7 @@ pathgl.uniform('gravity', 1)
 pathgl.uniform('inertia', 0.001)
 pathgl.uniform('drag', 0.991)
 
-texture.seed(size / 1, [1,2].map(Math.random))
+texture.seed(size, [.5 ,.5 ])
 
 d3.select('canvas').selectAll("circle")
 .data(texture.unwrap())

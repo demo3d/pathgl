@@ -182,7 +182,7 @@ function loadTexture()  {
   return this
 }
 
-  function seed(count, origin) {
+function seed(count, origin) {
     var x = 0
       , y = 0
       , chunks = [{ x: x, y: y, size: count }]

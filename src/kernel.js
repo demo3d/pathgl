@@ -116,7 +116,7 @@ function shader() {
 function simMesh() {
   return Mesh(gl, { pos: { array: Quad(), size: 2 }
                   , attrList: ['pos']
-                  , count: 4
-                  , primitive: 'triangle_strip'
+                  , count: 6
+                  , primitive: 'triangles'
                   })
 }
