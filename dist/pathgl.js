@@ -550,7 +550,7 @@ var cssColors = {
 function shader() {
   var  target = null
     , blockSize
-    , stepRate = 2
+    , stepRate = 5
     , dependents = []
 
   var self = {
@@ -787,8 +787,8 @@ function build_vs(src, subst) {
     var defaults = extend({
       stroke: '(stroke < 0.) ? vec4(stroke) : unpack_color(stroke)'
     , r: '(r.x < 0.) ? clamp(abs(tex(xy.xy).w) + abs(tex(xy.xy).z) * 4., 2., 10.): (2. * r.x)'
-    , x: '(xy.x < 0.) ? tex(xy.xy).x * resolution.x : xy.x'
-    , y: '(xy.y < 0.) ? tex(xy.xy).y * resolution.y : xy.y'
+    , x: '(xy.x < 1.) ? tex(xy.xy).x * resolution.x : xy.x'
+    , y: '(xy.y < 1.) ? tex(xy.xy).y * resolution.y : xy.y'
     }, subst)
 
   for(var attr in defaults)
@@ -824,8 +824,7 @@ function mergify(vs1, fs1, subst1) {
   }
 }
 ;function init(c) {
-  pathgl.options || {}
-
+    pathgl.options || {}
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 
@@ -3384,6 +3383,9 @@ function Mesh(gl, options, attr) {
     }
       self.changed = false
     //bindMaterial()
+      pathgl.options.beforeDraw && pathgl.options.beforeDraw(options)
+           
+
     gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length)|| options.count || 0)
   }
 

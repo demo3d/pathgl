@@ -119,8 +119,8 @@ function build_vs(src, subst) {
     var defaults = extend({
       stroke: '(stroke < 0.) ? vec4(stroke) : unpack_color(stroke)'
     , r: '(r.x < 0.) ? clamp(abs(tex(xy.xy).w) + abs(tex(xy.xy).z) * 4., 2., 10.): (2. * r.x)'
-    , x: '(xy.x < 0.) ? tex(xy.xy).x * resolution.x : xy.x'
-    , y: '(xy.y < 0.) ? tex(xy.xy).y * resolution.y : xy.y'
+    , x: '(xy.x < 1.) ? tex(xy.xy).x * resolution.x : xy.x'
+    , y: '(xy.y < 1.) ? tex(xy.xy).y * resolution.y : xy.y'
     }, subst)
 
   for(var attr in defaults)

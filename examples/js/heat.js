@@ -1,4 +1,4 @@
-// var RTT = pathgl.texture().repeat()
+var RTT = pathgl.texture().repeat()
 
 
 // // d3.timer(function () {
@@ -6,14 +6,14 @@
 // //   .attr('fill', function () { return 'hsl(' + Math.random() * 360 + ',100%, 50%)' })
 // // })
 
-// var shit = d3.select(RTT)
-// .selectAll("circle")
-// .data(d3.range(100), function (d) { return d })
-// .enter().append("circle")
-// .attr('r', 50)
-// .attr('cx', function (d) { return 100 * (d % 10) })
-// .attr('cy', function (d) { return 100 * ~~(d / 10) })
-// .attr('fill', function () { return 'hsl(' + Math.random() * 360 + ',100%, 50%)' }, RTT)
+var shit = d3.select(RTT)
+.selectAll("circle")
+.data(d3.range(100), function (d) { return d })
+.enter().append("circle")
+.attr('r', 50)
+.attr('cx', function (d) { return 100 * (d % 10) })
+.attr('cy', function (d) { return 100 * ~~(d / 10) })
+.attr('fill', function () { return 'hsl(' + Math.random() * 360 + ',100%, 50%)' }, RTT)
 
 // var disco = d3.select('canvas')
 // .selectAll('circle')
@@ -36,4 +36,4 @@ var disco = d3.select('canvas')
 .attr('height', 20)
 .attr('x', function (d) { return 20 * (d % 30) })
 .attr('y', function (d) { return 20 * ~~(d / 40) })
-.attr('fill', pathgl.texture('.t'))
+.attr('fill', RTT)

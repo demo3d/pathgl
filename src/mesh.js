@@ -110,6 +110,9 @@ function Mesh(gl, options, attr) {
     }
       self.changed = false
     //bindMaterial()
+      pathgl.options.beforeDraw && pathgl.options.beforeDraw(options)
+           
+
     gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length)|| options.count || 0)
   }
 

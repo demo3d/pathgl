@@ -1,6 +1,5 @@
 function init(c) {
-  pathgl.options || {}
-
+    pathgl.options || {}
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 

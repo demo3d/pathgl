@@ -149,8 +149,8 @@ function draw_history(err, hist) {
   .attr('opacity', '.7')
   .attr("height", size.height * .1)
   .attr('fill', 'pink')
-     .on('mouseover', function () { this.pause = 1 })
-     .on('mouseout', function () { this.pause = 0 })
+  .on('mouseover', function () { this.pause = 1 })
+  .on('mouseout', function () { this.pause = 0 })
 
   d3.timer(function () {
       if (b.node().pause) return
