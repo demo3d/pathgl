@@ -3,7 +3,7 @@ pathgl.shader = shader
 function shader() {
   var  target = null
     , blockSize
-    , stepRate = 5
+    , stepRate = 2
     , dependents = []
 
   var self = {
