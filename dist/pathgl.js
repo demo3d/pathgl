@@ -3804,11 +3804,10 @@ function getBBox(){
          }
 }
 ;function Texture(image) {
-  this.width = image.width || 512
-  this.height = image.height || 512
-
   if ('string' == typeof image) image = parseImage(image)
   if ('number' == typeof image) this.width = this.height = Math.sqrt(nextSquare(image)), image = false
+  //if (Array.isArray(image)) this.data = batchTexture.call(this)
+  //if (image.constructor == Object) image = parseJSON(image)
 
   extend(this, {
     gl: gl
@@ -3819,15 +3818,11 @@ function getBBox(){
   , index: 0
   , invalidate: function () {
       // tasksOnce.push(function () {
-      //     this.forEach(function (d) {
-      //         d.invalidate()
-      //     })
+      //     this.forEach(function (d) { d.invalidate() })
       // }.bind(this.dependents))
   }
   })
 
-  //if (Array.isArray(image)) this.data = batchTexture.call(this)
-  if (image.constructor == Object) image = parseJSON(image)
   loadTexture.call(this)
 }
 
@@ -3895,17 +3890,17 @@ function initTexture() {
   var mipmap = mipmappable.call(this)
     , wrap = gl[mipmap ? 'REPEAT' : 'CLAMP_TO_EDGE']
     , filter = gl[mipmap ? 'LINEAR' : 'NEAREST']
-
+    
   gl.bindTexture(gl.TEXTURE_2D, this.texture)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap)
-
+    
   this.update()
 
-    //if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
+  if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
 function parseImage(image) {
@@ -3953,6 +3948,7 @@ function batchTexture () {
     , count = 0
 
   c.canvas.width = c.canvas.height = size
+    
   data.forEach(function (d, i) {
     var img = parseImage(data[i]),
         sx = tile * (i % rows),
@@ -3977,18 +3973,27 @@ function parseJSON(json) {
     for(var pixel in json[key])
       buff[count++] = json[key][pixel]
 
-    if (count > 1020) this.subImage(0, count, buff)
-                    , buff = new Float32Array(1024)
+    if (count > 1020) {
+        this.subImage(0, count, buff)
+        buff = new Float32Array(1024)
+    }
   }
 }
 
 function loadTexture()  {
   var image = this.data
 
- initTexture.call(this)
- this.update(checkerboard)
+  this.data = checkerboard
+  this.width = checkerboard.width
+  this.height = checkerboard.height
+  initTexture.call(this)
 
- onLoad(image, this.update.bind(this, 0))
+  onLoad(image, function () {
+      this.width = image.width || 512
+      this.height = image.height || 512
+      this.data = image
+      initTexture.call(this)
+  }.bind(this))
 
   return this
 }
@@ -4008,6 +4013,7 @@ function seed(count, origin, fn) {
         chunk.size -= delta
         chunks.push(chunk = { x: 0, y:(chunk.y + 1) % s, size: delta })
     } while (boundary > s)
+
     for(var i = 0; i < chunks.length; i++) {
         var data = [], j = -1
         chunk = chunks[i]
