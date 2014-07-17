@@ -1,6 +1,6 @@
 function Texture(image) {
   if ('string' == typeof image) image = parseImage(image)
-  if ('number' == typeof image) this.width = this.height = Math.sqrt(nextSquare(image)), image = false
+
   //if (Array.isArray(image)) this.data = batchTexture.call(this)
   //if (image.constructor == Object) image = parseJSON(image)
 
@@ -10,15 +10,17 @@ function Texture(image) {
   , data: image
   , dependents: []
   , texture: gl.createTexture()
-  , index: 0
+  , cursor: 0
   , invalidate: function () {
       // tasksOnce.push(function () {
       //     this.forEach(function (d) { d.invalidate() })
       // }.bind(this.dependents))
   }
   })
-
-  loadTexture.call(this)
+  if ('number' == typeof image) this.width = this.height = Math.sqrt(nextSquare(image)), this.data = false, initTexture.call(this)
+  else
+      loadTexture.call(this)
+  
 }
 
 Texture.prototype = {
@@ -178,12 +180,14 @@ function parseJSON(json) {
 function loadTexture()  {
   var image = this.data
 
-  this.data = checkerboard
-  this.width = checkerboard.width
-  this.height = checkerboard.height
-  initTexture.call(this)
+  //swap texture data with filler until texture loads
+  // this.data = checkerboard
+  // this.width = checkerboard.width
+  // this.height = checkerboard.height
+  // initTexture.call(this)
 
   onLoad(image, function () {
+      console.log(image)
       this.width = image.width || 512
       this.height = image.height || 512
       this.data = image
@@ -194,8 +198,8 @@ function loadTexture()  {
 }
 
 function seed(count, origin, fn) {
-    var x = this.index % this.width | 0
-    , y = this.index / this.height | 0
+    var x = this.cursor % this.width | 0
+    , y = this.cursor / this.height | 0
     , chunks = [{ x: x, y: y, size: count }]
     , s = this.height
 
@@ -217,7 +221,7 @@ function seed(count, origin, fn) {
         this.subImage(chunk.x, chunk.y, data)
     }
 
-    this.index += count;
-    this.index %= this.size();
+    this.cursor += count;
+    this.cursor %= this.size();
     this.invalidate()
 }

@@ -106,7 +106,7 @@ function d3_vAttr(attr, fn) {
 }
 
 function d3_shader(attr, name) {
-  this.node().mesh.mergeProgram(pathgl.vertexShader, pathgl.fragmentShader, attr)
+  this.node().batch.mergeProgram(pathgl.vertexShader, pathgl.fragmentShader, attr)
   return this
 }
 

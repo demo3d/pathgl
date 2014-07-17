@@ -52,7 +52,7 @@
 				<canvas width="760" height="500"></canvas>
 				<script src="js/mosaic.js"></script><p>Intake video stream and swap 50px tiles with images from imgur to create a realtime
 video mosaic. 
-</p><pre><code>setTimeout(init, 1000)
+</p><pre><code>
 // d3.json('https://api.imgur.com/3/gallery/r/foodporn/top/1')
 // .header("Authorization", 'Client-Id 9e7ab6a35eb2f7a')
 // .header("Accept", 'application/json')
@@ -77,8 +77,9 @@ var findAverageHue = 'vec4 accumulator (vec4 a, vec4 b) {'
                    + '}'
 
 var a = pathgl.texture('.l')
-    //var b =  pathgl.texture('.t')
+var b =  pathgl.texture('.t')
 var b = a
+init()
 function init(arr) {
   //arr.width = 1024
   //arr.rows = 8
@@ -92,7 +93,7 @@ function init(arr) {
   .attr('height', s)
   //.filter(function (d, i) { return (d % 30) < 15 })
   //.transition().delay(function (d) { return d * 10 })
-  .attr('fill', function (d) { return d % 2 ? b :b})
+  .attr('fill', function (d) { return d % 2 ? a : b})
 
   return
   var mozify = pathgl.shader().matchWith(findAverageHue)

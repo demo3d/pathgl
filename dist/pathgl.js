@@ -565,7 +565,7 @@ function shader() {
 
   var render = RenderTarget({
     gl: gl
-  , mesh: simMesh()
+  , batch: simMesh()
   })
 
   var children = []
@@ -595,7 +595,7 @@ function shader() {
   }
 
   function read () {
-    //render.mesh.addMaterial(texture)
+    //render.batch.addMaterial(texture)
   }
 
   function invalidate() {
@@ -931,7 +931,7 @@ function d3_vAttr(attr, fn) {
 }
 
 function d3_shader(attr, name) {
-  this.node().mesh.mergeProgram(pathgl.vertexShader, pathgl.fragmentShader, attr)
+  this.node().batch.mergeProgram(pathgl.vertexShader, pathgl.fragmentShader, attr)
   return this
 }
 
@@ -3214,7 +3214,7 @@ var triangulator = new T()
         }
       }
     })
-  this.indices = this.mesh.spread(this.indices, triangulate(contours))
+  this.indices = this.batch.spread(this.indices, triangulate(contours))
 }
 
 function applyCSSRules () {
@@ -3371,7 +3371,7 @@ function Mesh(gl, options, attr) {
 
     obj.fBuffer = attributes.fugue.array
     obj.colorBuffer = attributes.color.array
-    obj.mesh = this
+    obj.batch = this
   }
 
   function draw (offset) {
@@ -3405,14 +3405,14 @@ function Mesh(gl, options, attr) {
   }
 }
 
-function RenderTarget(screen) {
+;function RenderTarget(screen) {
   var gl = screen.gl
     , targets = []
     , prog = screen.program || program
     , types = screen.types = SVGProxy()
-    , meshes = screen.mesh ? [screen.mesh] : buildBuffers(gl, screen.types)
+    , batches = screen.batch ? [screen.batch] : buildBuffers(gl, screen.types)
 
-  meshes.forEach(function (d) { d.mergeProgram = mergeProgram })
+  batches.forEach(function (d) { d.mergeProgram = mergeProgram })
 
   return screen.__renderTarget__ = {
     update: update
@@ -3444,7 +3444,7 @@ function RenderTarget(screen) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, targets[i])
       setUniforms()
       beforeRender(gl, screen)
-      for(var j = -1; ++j < meshes.length;) meshes[j].draw()
+      for(var j = -1; ++j < batches.length;) batches[j].draw()
     }
   }
 
@@ -3566,7 +3566,7 @@ function SVGProxy () {
            a[type.name] = function x() {
              var self = Object.create(type.prototype)
              extend(self, x)
-             self.init(self.mesh.alloc())
+             self.init(self.batch.alloc())
              self.attr = Object.create(attrDefaults)
              return self
            }
@@ -3601,7 +3601,7 @@ var proto = {
           }
 , ellipse: { init: function () {}, cx: noop, cy: noop, rx: noop, ry: noop }
 , rect: { init: function (i) {
-            this.indices = this.mesh.spread(
+            this.indices = this.batch.spread(
               [], Quad()
             )
             
@@ -3726,8 +3726,8 @@ var baseProto = {
 , setAttribute: function (name, value) {
     this.attr[name] = value
     this[name] && this[name](value)
-    this.mesh.changed = true
-    if (value && value.texture) this.mesh.bindMaterial(name, value)
+    this.batch.changed = true
+    if (value && value.texture) this.batch.bindMaterial(name, value)
   }
 , removeAttribute: function (name) {
     delete this.attr[name]
@@ -3781,7 +3781,7 @@ function removeChild(el) {
   var i = this.__scene__.indexOf(el)
 
   el = this.__scene__.splice(i, 1)[0]
-  el && el.mesh.free(i)
+  el && el.batch.free(i)
   //el.buffer.count -= 1
 }
 
@@ -3805,7 +3805,7 @@ function getBBox(){
 }
 ;function Texture(image) {
   if ('string' == typeof image) image = parseImage(image)
-  if ('number' == typeof image) this.width = this.height = Math.sqrt(nextSquare(image)), image = false
+
   //if (Array.isArray(image)) this.data = batchTexture.call(this)
   //if (image.constructor == Object) image = parseJSON(image)
 
@@ -3815,15 +3815,17 @@ function getBBox(){
   , data: image
   , dependents: []
   , texture: gl.createTexture()
-  , index: 0
+  , cursor: 0
   , invalidate: function () {
       // tasksOnce.push(function () {
       //     this.forEach(function (d) { d.invalidate() })
       // }.bind(this.dependents))
   }
   })
-
-  loadTexture.call(this)
+  if ('number' == typeof image) this.width = this.height = Math.sqrt(nextSquare(image)), this.data = false, initTexture.call(this)
+  else
+      loadTexture.call(this)
+  
 }
 
 Texture.prototype = {
@@ -3983,12 +3985,14 @@ function parseJSON(json) {
 function loadTexture()  {
   var image = this.data
 
-  this.data = checkerboard
-  this.width = checkerboard.width
-  this.height = checkerboard.height
-  initTexture.call(this)
+  //swap texture data with filler until texture loads
+  // this.data = checkerboard
+  // this.width = checkerboard.width
+  // this.height = checkerboard.height
+  // initTexture.call(this)
 
   onLoad(image, function () {
+      console.log(image)
       this.width = image.width || 512
       this.height = image.height || 512
       this.data = image
@@ -3999,8 +4003,8 @@ function loadTexture()  {
 }
 
 function seed(count, origin, fn) {
-    var x = this.index % this.width | 0
-    , y = this.index / this.height | 0
+    var x = this.cursor % this.width | 0
+    , y = this.cursor / this.height | 0
     , chunks = [{ x: x, y: y, size: count }]
     , s = this.height
 
@@ -4022,8 +4026,8 @@ function seed(count, origin, fn) {
         this.subImage(chunk.x, chunk.y, data)
     }
 
-    this.index += count;
-    this.index %= this.size();
+    this.cursor += count;
+    this.cursor %= this.size();
     this.invalidate()
 }
 ; }()

@@ -17,7 +17,7 @@ function SVGProxy () {
            a[type.name] = function x() {
              var self = Object.create(type.prototype)
              extend(self, x)
-             self.init(self.mesh.alloc())
+             self.init(self.batch.alloc())
              self.attr = Object.create(attrDefaults)
              return self
            }
@@ -52,7 +52,7 @@ var proto = {
           }
 , ellipse: { init: function () {}, cx: noop, cy: noop, rx: noop, ry: noop }
 , rect: { init: function (i) {
-            this.indices = this.mesh.spread(
+            this.indices = this.batch.spread(
               [], Quad()
             )
             
@@ -177,8 +177,8 @@ var baseProto = {
 , setAttribute: function (name, value) {
     this.attr[name] = value
     this[name] && this[name](value)
-    this.mesh.changed = true
-    if (value && value.texture) this.mesh.bindMaterial(name, value)
+    this.batch.changed = true
+    if (value && value.texture) this.batch.bindMaterial(name, value)
   }
 , removeAttribute: function (name) {
     delete this.attr[name]
@@ -232,7 +232,7 @@ function removeChild(el) {
   var i = this.__scene__.indexOf(el)
 
   el = this.__scene__.splice(i, 1)[0]
-  el && el.mesh.free(i)
+  el && el.batch.free(i)
   //el.buffer.count -= 1
 }
 

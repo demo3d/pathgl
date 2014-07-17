@@ -18,7 +18,7 @@ function shader() {
 
   var render = RenderTarget({
     gl: gl
-  , mesh: simMesh()
+  , batch: simMesh()
   })
 
   var children = []
@@ -48,7 +48,7 @@ function shader() {
   }
 
   function read () {
-    //render.mesh.addMaterial(texture)
+    //render.batch.addMaterial(texture)
   }
 
   function invalidate() {

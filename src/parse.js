@@ -39,7 +39,7 @@ function parsePath(str) {
         }
       }
     })
-  this.indices = this.mesh.spread(this.indices, triangulate(contours))
+  this.indices = this.batch.spread(this.indices, triangulate(contours))
 }
 
 function applyCSSRules () {
