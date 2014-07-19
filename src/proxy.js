@@ -158,7 +158,7 @@ var baseProto = {
 , setAttribute: function (name, value) {
     this.attr[name] = value
     this[name] && this[name](value)
-    this.mesh.changed = true
+    for(var attr in this.mesh.attributes) this.mesh.attributes[attr].changed =  true
     if (value && value.texture) this.mesh.bindMaterial(name, value)
   }
 , removeAttribute: function (name) {

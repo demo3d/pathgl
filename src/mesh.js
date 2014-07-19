@@ -53,7 +53,7 @@ function Mesh (gl, options, attr) {
       var buffer = gl.createBuffer()
       var option = options[name]  || {}
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
-      gl.bufferData(gl.ARRAY_BUFFER, 4 * 1e7, gl.STREAM_DRAW)
+      gl.bufferData(gl.ARRAY_BUFFER, 1.7e7, gl.STATIC_DRAW)
       attributes[name] = {
         array: new Float32Array(options[name] && options[name].array || 4e6)
       , buffer: buffer
@@ -88,16 +88,17 @@ function Mesh (gl, options, attr) {
       gl.vertexAttribPointer(attr.loc, attr.size, gl.FLOAT, false, 0, 0)
       gl.enableVertexAttribArray(attr.loc)
 
-      if (self.changed) subData([attr.array])
+      if (attr.changed)
+          subData([attr.array], attr)
     }
     //bindMaterial()
     gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length) || options.count || 0)
   }
 
-    function subData(arrays) {
+    function subData(arrays, attr) {
         for (var i = 0; i < arrays.length; i++)
             gl.bufferSubData(gl.ARRAY_BUFFER, i * 1e5, arrays[i])
-        self.changed = false
+        attr.changed = false
     }
 
   function set () {}

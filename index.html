@@ -73,12 +73,11 @@ d3.select('.one').selectAll("circle")
 .data(d3.range(1e4))
 .enter().append("circle")
 .attr('opacity', .8)
-.attr('fill', function (i) { return d3.hcl(i, 100, 55) })
+.attr('stroke', function (i) { return d3.hcl(i, 100, 55) })
 .attr('cx', function (i) { return Math.random() * i / 3})
 .attr('r', function (i) { return i % 3 * 4 })
-.shader({
-  cx: 'resolution.x / 2. + cos(pos.w + pos.x * mouse.x * clock / 1e6) * pos.x'
-, cy: 'resolution.y / 2. + sin(pos.w + pos.x * mouse.x * clock  / 1e6) * pos.x'
+.shader({ cx: 'resolution.x / 2. + cos(pos.w + pos.x * clock / 1e6) * pos.x'
+        , cy: 'resolution.y / 2. + sin(pos.w + pos.x * clock  / 1e6) * pos.x'
 })
 								</code></pre></div>
               </div>
