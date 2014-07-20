@@ -28,7 +28,7 @@ var particleShader = [
 , '    if (pos.x > 1.0 || pos.x < 0. || pos.y > 1. || pos.y < -0.) vel *= -1.; '
 
        //if it hits the origin, reward particle with a boost of energy
-, '    if (distance(pos, mouse) < .01) vel *= 1.5; '
+, '    if (distance(pos, mouse) < .005) vel *= 1.3; '
 
        //integrate velocity into position
 , '    pos += vel * warp;'
@@ -70,6 +70,9 @@ d3.select('canvas').selectAll("circle")
 .attr('cy', function (d) { return d.y })
 .shader({'stroke': 'vec4(tex(pos.xy).x, .2, tex(pos.xy).z, 1.)'})
 
-d3.select('canvas').on('click', function () {
-  pathgl.uniform('gravity', pathgl.uniform('gravity') * -1)
-})
+d3.select('canvas').on('mousedown', gravity(-1))
+d3.select('canvas').on('mouseup', gravity(+1))
+
+function gravity (x) {
+    return function () { pathgl.uniform('gravity', x) }
+}
