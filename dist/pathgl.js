@@ -384,7 +384,7 @@ function mipmappable() {
       powerOfTwo(this.height)
       && powerOfTwo(this.width)
       && (this.data || {}).constructor !== HTMLVideoElement
-      && this.data)
+      )
 }
 
 function extend (a, b) {
@@ -684,7 +684,9 @@ function simMesh() {
 
 , 'uniform sampler2D texture0;'
 
-, 'vec4 tex(vec2 get) { return texture2D(texture0, abs(get)); }'
+, 'vec4 tex(vec2 get) { '
+, '  return texture2D(texture0, abs(get));'
+, '}'
 
 , 'vec4 unpack_color(float col) {'
 , '    return vec4(mod(col / 256. / 256., 256.),'
@@ -709,7 +711,7 @@ function simMesh() {
 , '    v_fill = unpack_color(fill);'
 
 , '    dim = vec4(x, y, pointSize, -pointSize);'
-, '    v_stroke = replace_stroke;'
+    , '    v_stroke = replace_stroke;'
 , '    gl_Position = vec4(clipspace(vec2(x, y)),  1., 1.);'
 , '}'
 ].join('\n')
@@ -719,8 +721,6 @@ pathgl.fragmentShader = [
 , 'uniform vec2 dates;'
 , 'uniform sampler2D texture0;'
 , 'uniform sampler2D texture1;'
-, 'uniform sampler2D texture2;'
-
 
 , 'varying float type;'
 
@@ -728,12 +728,17 @@ pathgl.fragmentShader = [
 , 'varying vec4 v_fill;'
 , 'varying vec4 dim;'
 
+, 'vec4 chos(vec2 get, float n) { '
+, '  if (n == -1.)return texture2D(texture1, abs(get));'
+, '  if (n == -2.) return texture2D(texture0, abs(get));'
+, '}'
+
 , 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - .5, 1. - ((pos.y / resolution.y))); }'
 
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture0, clipspace(dim.xy) * 2.0) : v_stroke;'
+, '    gl_FragColor = (v_stroke.x < 0.) ? chos(clipspace(dim.xy) * 2.0, v_stroke.x) : v_stroke;'
 , '}'
 ].join('\n')
 
@@ -768,9 +773,9 @@ function createProgram(gl, vs_src, fs_src, attributes) {
 
   function bindUniform(key, type) {
     var loc = gl.getUniformLocation(program, key)
-      , method = 'uniform' + glslTypedef(type) + 'fv'
+      , method = 'uniform' + glslTypedef(type)
       , keep
-
+      
     program[key] = function (data) {
       //if (keep == data || ! arguments.length) return
 
@@ -791,7 +796,7 @@ function build_vs(src, subst) {
   })
 
     var defaults = extend({
-      stroke: '(stroke < 0.) ? vec4(stroke) : unpack_color(stroke)'
+      stroke: '(stroke < 0.) ? vec4(stroke)  : unpack_color(stroke)'
     , r: '(r.x < 0.) ? clamp(abs(tex(xy.xy).w) + abs(tex(xy.xy).z) * 4., 2., 10.): (2. * r.x)'
     , x: '(xy.x < 0.) ? tex(xy.xy).x * resolution.x : xy.x'
     , y: '(xy.y < 0.) ? tex(xy.xy).y * resolution.y : xy.y'
@@ -817,9 +822,10 @@ function compileShader (gl, type, src) {
 }
 
 function glslTypedef(type) {
-  if (type.match('mat')) return 'Matrix' + type[type.length - 1]
-  if (type.match('vec')) return type[type.length - 1]
-  return 1
+  if (type == 'sampler2D') return '1i'
+  if (type.match('mat')) return 'Matrix' + type[type.length - 1] +'fv'
+  if (type.match('vec')) return type[type.length - 1] + 'fv'
+  return '1fv'
 }
 
 function mergify(vs1, fs1, subst1) {
@@ -3379,10 +3385,10 @@ function Mesh(gl, options, attr) {
     obj.colorBuffer = attributes.color.array
     obj.batch = this
   }
-
+    var k = 0
   function draw (offset) {
     if (! count && 0 == indexPool.max - indexPool.length) return
-      //if (12 == indexPool.max - indexPool.length) return
+      
     for (var attr in attributes) {
       attr = attributes[attr]
       gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
@@ -3392,11 +3398,11 @@ function Mesh(gl, options, attr) {
       if (self.changed)
           gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
+      k += 1
       self.changed = false
-    //bindMaterial()
+
       //pathgl.options.beforeDraw && pathgl.options.beforeDraw(options)
            
-
     gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length)|| options.count || 0)
   }
 
@@ -3616,7 +3622,7 @@ var proto = {
           opacity: function (v) {
               var f = this.fBuffer
               this.indices.forEach(function (i) {
-                  f[i] = 256 - v * 256
+                  f[i] = 0
               })
           },
           render: function (t) {
@@ -3642,6 +3648,7 @@ var proto = {
             var c = v < 0 ? v : parseColor(v)
             var cb = this.colorBuffer
             this.render()
+            //console.log(+c)
             this.opacity(this.attr.opacity)
             this.indices.forEach(function (i) {
                 cb[i] = c
@@ -3810,19 +3817,19 @@ function getBBox(){
          , x: this.attr.cx
          }
 }
-;function Texture(image) {
+;function Texture(image, options) {
   if ('string' == typeof image) image = parseImage(image)
-
+    options = options || {}
   //if (Array.isArray(image)) this.data = batchTexture.call(this)
   //if (image.constructor == Object) image = parseJSON(image)
 
   extend(this, {
     gl: gl
-  , id: id()
   , data: image
   , dependents: []
-  , texture: gl.createTexture()
+  , id: gl.createTexture()
   , cursor: 0
+  , val: id()
   , invalidate: function () {
       // tasksOnce.push(function () {
       //     this.forEach(function (d) { d.invalidate() })
@@ -3830,9 +3837,7 @@ function getBBox(){
   }
   })
   if ('number' == typeof image) this.width = this.height = Math.sqrt(nextSquare(image)), this.data = false, initTexture.call(this)
-  else
-      loadTexture.call(this)
-  
+  else loadTexture.call(this)
 }
 
 Texture.prototype = {
@@ -3859,8 +3864,14 @@ Texture.prototype = {
     var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
   }
+
+, bind: function (unit) {
+    gl.activeTexture(gl.TEXTURE0 + (unit || 0));
+    gl.bindTexture(gl.TEXTURE_2D, this.id);
+    pathgl.uniform('texture' + unit, unit);
+}
 , subImage: function (x, y, data) {
-    gl.bindTexture(gl.TEXTURE_2D, this.texture)
+    gl.bindTexture(gl.TEXTURE_2D, this.id)
     gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, data.length / 4, 1, gl.RGBA, gl.FLOAT, new Float32Array(data))
   }
 
@@ -3882,7 +3893,7 @@ Texture.prototype = {
   }
 
 , valueOf: function () {
-    return - this.id
+    return - this.val
   }
 
 , copy: function () { return pathgl.texture(this.src) }
@@ -3900,7 +3911,7 @@ function initTexture() {
     , wrap = gl[mipmap ? 'REPEAT' : 'CLAMP_TO_EDGE']
     , filter = gl[mipmap ? 'LINEAR' : 'NEAREST']
     
-  gl.bindTexture(gl.TEXTURE_2D, this.texture)
+  gl.bindTexture(gl.TEXTURE_2D, this.id)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
@@ -3908,7 +3919,7 @@ function initTexture() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap)
     
   this.update()
-
+    
   if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
@@ -3999,7 +4010,6 @@ function loadTexture()  {
   // initTexture.call(this)
 
   onLoad(image, function () {
-      console.log(image)
       this.width = image.width || 512
       this.height = image.height || 512
       this.data = image

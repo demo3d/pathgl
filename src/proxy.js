@@ -60,7 +60,7 @@ var proto = {
           opacity: function (v) {
               var f = this.fBuffer
               this.indices.forEach(function (i) {
-                  f[i] = 256 - v * 256
+                  f[i] = 0
               })
           },
           render: function (t) {
@@ -86,6 +86,7 @@ var proto = {
             var c = v < 0 ? v : parseColor(v)
             var cb = this.colorBuffer
             this.render()
+            //console.log(+c)
             this.opacity(this.attr.opacity)
             this.indices.forEach(function (i) {
                 cb[i] = c

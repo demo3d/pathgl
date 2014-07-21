@@ -53,7 +53,7 @@ function mipmappable() {
       powerOfTwo(this.height)
       && powerOfTwo(this.width)
       && (this.data || {}).constructor !== HTMLVideoElement
-      && this.data)
+      )
 }
 
 function extend (a, b) {

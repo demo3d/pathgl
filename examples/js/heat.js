@@ -1,5 +1,6 @@
-var RTT = pathgl.texture().repeat()
-
+var RTT = pathgl.texture(null, {
+    format: 'UNSIGNED_BYTE'
+}).repeat()
 
 // // d3.timer(function () {
 // //   disco.filter(function (d, i) { return Math.random() > .99  }).transition()

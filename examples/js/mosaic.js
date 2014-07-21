@@ -22,10 +22,18 @@ var findAverageHue = 'vec4 accumulator (vec4 a, vec4 b) {'
                    + '  return vec4(a.x + b.x, 0, a.z, a.w);'
                    + '}'
 
-//var a = pathgl.texture('.l')
+var a = pathgl.texture('.l')
 var b =  pathgl.texture('.t')
+    a.bind(1)
+    b.bind(0)
+
+setTimeout(function () {
+    a.bind(1)
+    b.bind(0)
+}, 500)
+
 //var b = a
-var a = b
+//var a = b
 init()
 function init(arr) {
   //arr.width = 1024
@@ -40,7 +48,7 @@ function init(arr) {
   .attr('height', s)
   //.filter(function (d, i) { return (d % 30) < 15 })
   //.transition().delay(function (d) { return d * 10 })
-  .attr('fill', function (d) { return d % 2 ? b : b })
+  .attr('fill', function (d) { return d % 2 ? a : b })
 
   return
   var mozify = pathgl.shader().matchWith(findAverageHue)

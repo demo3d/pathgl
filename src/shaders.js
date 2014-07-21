@@ -16,7 +16,9 @@ pathgl.vertexShader = [
 
 , 'uniform sampler2D texture0;'
 
-, 'vec4 tex(vec2 get) { return texture2D(texture0, abs(get)); }'
+, 'vec4 tex(vec2 get) { '
+, '  return texture2D(texture0, abs(get));'
+, '}'
 
 , 'vec4 unpack_color(float col) {'
 , '    return vec4(mod(col / 256. / 256., 256.),'
@@ -41,7 +43,7 @@ pathgl.vertexShader = [
 , '    v_fill = unpack_color(fill);'
 
 , '    dim = vec4(x, y, pointSize, -pointSize);'
-, '    v_stroke = replace_stroke;'
+    , '    v_stroke = replace_stroke;'
 , '    gl_Position = vec4(clipspace(vec2(x, y)),  1., 1.);'
 , '}'
 ].join('\n')
@@ -51,8 +53,6 @@ pathgl.fragmentShader = [
 , 'uniform vec2 dates;'
 , 'uniform sampler2D texture0;'
 , 'uniform sampler2D texture1;'
-, 'uniform sampler2D texture2;'
-
 
 , 'varying float type;'
 
@@ -60,12 +60,17 @@ pathgl.fragmentShader = [
 , 'varying vec4 v_fill;'
 , 'varying vec4 dim;'
 
+, 'vec4 chos(vec2 get, float n) { '
+, '  if (n == -1.)return texture2D(texture1, abs(get));'
+, '  if (n == -2.) return texture2D(texture0, abs(get));'
+, '}'
+
 , 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - .5, 1. - ((pos.y / resolution.y))); }'
 
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (v_stroke.x < 0.) ? texture2D(texture0, clipspace(dim.xy) * 2.0) : v_stroke;'
+, '    gl_FragColor = (v_stroke.x < 0.) ? chos(clipspace(dim.xy) * 2.0, v_stroke.x) : v_stroke;'
 , '}'
 ].join('\n')
 
@@ -100,9 +105,9 @@ function createProgram(gl, vs_src, fs_src, attributes) {
 
   function bindUniform(key, type) {
     var loc = gl.getUniformLocation(program, key)
-      , method = 'uniform' + glslTypedef(type) + 'fv'
+      , method = 'uniform' + glslTypedef(type)
       , keep
-
+      
     program[key] = function (data) {
       //if (keep == data || ! arguments.length) return
 
@@ -123,7 +128,7 @@ function build_vs(src, subst) {
   })
 
     var defaults = extend({
-      stroke: '(stroke < 0.) ? vec4(stroke) : unpack_color(stroke)'
+      stroke: '(stroke < 0.) ? vec4(stroke)  : unpack_color(stroke)'
     , r: '(r.x < 0.) ? clamp(abs(tex(xy.xy).w) + abs(tex(xy.xy).z) * 4., 2., 10.): (2. * r.x)'
     , x: '(xy.x < 0.) ? tex(xy.xy).x * resolution.x : xy.x'
     , y: '(xy.y < 0.) ? tex(xy.xy).y * resolution.y : xy.y'
@@ -149,9 +154,10 @@ function compileShader (gl, type, src) {
 }
 
 function glslTypedef(type) {
-  if (type.match('mat')) return 'Matrix' + type[type.length - 1]
-  if (type.match('vec')) return type[type.length - 1]
-  return 1
+  if (type == 'sampler2D') return '1i'
+  if (type.match('mat')) return 'Matrix' + type[type.length - 1] +'fv'
+  if (type.match('vec')) return type[type.length - 1] + 'fv'
+  return '1fv'
 }
 
 function mergify(vs1, fs1, subst1) {

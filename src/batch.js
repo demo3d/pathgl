@@ -96,10 +96,10 @@ function Mesh(gl, options, attr) {
     obj.colorBuffer = attributes.color.array
     obj.batch = this
   }
-
+    var k = 0
   function draw (offset) {
     if (! count && 0 == indexPool.max - indexPool.length) return
-      //if (12 == indexPool.max - indexPool.length) return
+      
     for (var attr in attributes) {
       attr = attributes[attr]
       gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
@@ -109,11 +109,11 @@ function Mesh(gl, options, attr) {
       if (self.changed)
           gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
+      k += 1
       self.changed = false
-    //bindMaterial()
+
       //pathgl.options.beforeDraw && pathgl.options.beforeDraw(options)
            
-
     gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length)|| options.count || 0)
   }
 

@@ -1,16 +1,16 @@
-function Texture(image) {
+function Texture(image, options) {
   if ('string' == typeof image) image = parseImage(image)
-
+    options = options || {}
   //if (Array.isArray(image)) this.data = batchTexture.call(this)
   //if (image.constructor == Object) image = parseJSON(image)
 
   extend(this, {
     gl: gl
-  , id: id()
   , data: image
   , dependents: []
-  , texture: gl.createTexture()
+  , id: gl.createTexture()
   , cursor: 0
+  , val: id()
   , invalidate: function () {
       // tasksOnce.push(function () {
       //     this.forEach(function (d) { d.invalidate() })
@@ -18,9 +18,7 @@ function Texture(image) {
   }
   })
   if ('number' == typeof image) this.width = this.height = Math.sqrt(nextSquare(image)), this.data = false, initTexture.call(this)
-  else
-      loadTexture.call(this)
-  
+  else loadTexture.call(this)
 }
 
 Texture.prototype = {
@@ -47,8 +45,14 @@ Texture.prototype = {
     var sq = Math.sqrt(this.size())
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
   }
+
+, bind: function (unit) {
+    gl.activeTexture(gl.TEXTURE0 + (unit || 0));
+    gl.bindTexture(gl.TEXTURE_2D, this.id);
+    pathgl.uniform('texture' + unit, unit);
+}
 , subImage: function (x, y, data) {
-    gl.bindTexture(gl.TEXTURE_2D, this.texture)
+    gl.bindTexture(gl.TEXTURE_2D, this.id)
     gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, data.length / 4, 1, gl.RGBA, gl.FLOAT, new Float32Array(data))
   }
 
@@ -70,7 +74,7 @@ Texture.prototype = {
   }
 
 , valueOf: function () {
-    return - this.id
+    return - this.val
   }
 
 , copy: function () { return pathgl.texture(this.src) }
@@ -88,7 +92,7 @@ function initTexture() {
     , wrap = gl[mipmap ? 'REPEAT' : 'CLAMP_TO_EDGE']
     , filter = gl[mipmap ? 'LINEAR' : 'NEAREST']
     
-  gl.bindTexture(gl.TEXTURE_2D, this.texture)
+  gl.bindTexture(gl.TEXTURE_2D, this.id)
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
@@ -96,7 +100,7 @@ function initTexture() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap)
     
   this.update()
-
+    
   if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
@@ -187,7 +191,6 @@ function loadTexture()  {
   // initTexture.call(this)
 
   onLoad(image, function () {
-      console.log(image)
       this.width = image.width || 512
       this.height = image.height || 512
       this.data = image
