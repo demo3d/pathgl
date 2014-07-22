@@ -72,7 +72,7 @@ function initFbo(texture) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
   fbo.width = texture.width
   fbo.height = texture.height
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture.texture, null)
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture.id, null)
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
   return fbo
 }
