@@ -112,7 +112,7 @@ function Mesh(gl, options, attr) {
       k += 1
       self.changed = false
 
-      //pathgl.options.beforeDraw && pathgl.options.beforeDraw(options)
+      pathgl.options.beforeDraw && pathgl.options.beforeDraw(options)
            
     gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length)|| options.count || 0)
   }

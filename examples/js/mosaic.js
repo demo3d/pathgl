@@ -48,7 +48,7 @@ function init(arr) {
   .attr('height', s)
   //.filter(function (d, i) { return (d % 30) < 15 })
   //.transition().delay(function (d) { return d * 10 })
-  .attr('fill', function (d) { return d % 2 ? a : b })
+  .attr('fill', function (d) { return d % 2 ? 'red' : 'blue' })
 
   return
   var mozify = pathgl.shader().matchWith(findAverageHue)
