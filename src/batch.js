@@ -99,6 +99,7 @@ function Mesh(gl, options, attr) {
 
   function draw (offset) {
     if (! count && 0 == indexPool.max - indexPool.length) return
+      //if (12 == indexPool.max - indexPool.length) return
     for (var attr in attributes) {
       attr = attributes[attr]
       gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
@@ -110,7 +111,7 @@ function Mesh(gl, options, attr) {
     }
       self.changed = false
     //bindMaterial()
-      pathgl.options.beforeDraw && pathgl.options.beforeDraw(options)
+      //pathgl.options.beforeDraw && pathgl.options.beforeDraw(options)
            
 
     gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length)|| options.count || 0)

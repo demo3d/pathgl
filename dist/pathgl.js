@@ -694,8 +694,8 @@ function simMesh() {
 , '                / 256.;'
 , '}'
 
-
 , 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - 1., 1. - ((pos.y / resolution.y) * 2.)); }'
+
 , 'void main() {'
 , '    float time = clock / 1000.;'
 , '    float pointSize = replace_r;'
@@ -703,9 +703,11 @@ function simMesh() {
 , '    float y = replace_y;'
 , '    float fill = color.x;'
 , '    float stroke = color.x;'
+
 , '    type = float(pointSize > 0.);'
 , '    gl_PointSize =  pointSize;'
 , '    v_fill = unpack_color(fill);'
+
 , '    dim = vec4(x, y, pointSize, -pointSize);'
 , '    v_stroke = replace_stroke;'
 , '    gl_Position = vec4(clipspace(vec2(x, y)),  1., 1.);'
@@ -713,9 +715,12 @@ function simMesh() {
 ].join('\n')
 
 pathgl.fragmentShader = [
-  'uniform sampler2D texture0;'
-, 'uniform vec2 resolution;'
+  'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
+, 'uniform sampler2D texture0;'
+, 'uniform sampler2D texture1;'
+, 'uniform sampler2D texture2;'
+
 
 , 'varying float type;'
 
@@ -724,6 +729,7 @@ pathgl.fragmentShader = [
 , 'varying vec4 dim;'
 
 , 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - .5, 1. - ((pos.y / resolution.y))); }'
+
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
 , '    if (type == 1. && dist > 0.5) discard;'
@@ -762,17 +768,17 @@ function createProgram(gl, vs_src, fs_src, attributes) {
 
   function bindUniform(key, type) {
     var loc = gl.getUniformLocation(program, key)
-      , method = 'uniform' + glslTypedef(type) + 'fv'  
-    , keep
+      , method = 'uniform' + glslTypedef(type) + 'fv'
+      , keep
 
     program[key] = function (data) {
-        //if (keep == data || ! arguments.length) return
-        
+      //if (keep == data || ! arguments.length) return
+
       if (data.map && data.length > 4)
-          gl[method](loc, gl.FALSE, Array.isArray(data) ? data : [data])
-        else
-            gl[method](loc, Array.isArray(data) ? data : [data])
-            
+        gl[method](loc, gl.FALSE, Array.isArray(data) ? data : [data])
+      else
+        gl[method](loc, Array.isArray(data) ? data : [data])
+
       keep = data
     }
   }
@@ -3376,6 +3382,7 @@ function Mesh(gl, options, attr) {
 
   function draw (offset) {
     if (! count && 0 == indexPool.max - indexPool.length) return
+      //if (12 == indexPool.max - indexPool.length) return
     for (var attr in attributes) {
       attr = attributes[attr]
       gl.bindBuffer(gl.ARRAY_BUFFER, attr.buffer)
@@ -3387,7 +3394,7 @@ function Mesh(gl, options, attr) {
     }
       self.changed = false
     //bindMaterial()
-      pathgl.options.beforeDraw && pathgl.options.beforeDraw(options)
+      //pathgl.options.beforeDraw && pathgl.options.beforeDraw(options)
            
 
     gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length)|| options.count || 0)
