@@ -21,7 +21,6 @@ function Mesh(gl, options, attr) {
     , count = options.count || 0
     , attrList = options.attrList || ['xy','color',  'r', 'fugue']
     , primitive = gl[options.primitive.toUpperCase()]
-    , material = []
     , indexPool = new Pool(1e6)
 
   init()
@@ -32,7 +31,6 @@ function Mesh(gl, options, attr) {
   , alloc: alloc
   , draw: draw
   , bind: bind
-  , bindMaterial: bindMaterial
   , attributes: attributes
   , set: set
   , addAttr: addAttr
@@ -121,11 +119,5 @@ function Mesh(gl, options, attr) {
   function addAttr () {}
   function removeAttr () {}
   function boundingBox() {}
-
-  function bindMaterial(attr, tex) {
-    if (!~ material.indexOf(tex))
-      material.push(tex)
-    //mapping
-  }
 }
 

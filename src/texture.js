@@ -3,7 +3,7 @@ function Texture(image, options) {
     options = options || {}
   //if (Array.isArray(image)) this.data = batchTexture.call(this)
   //if (image.constructor == Object) image = parseJSON(image)
-
+    
   extend(this, {
     gl: gl
   , data: image
@@ -50,6 +50,7 @@ Texture.prototype = {
     gl.activeTexture(gl.TEXTURE0 + (unit || 0));
     gl.bindTexture(gl.TEXTURE_2D, this.id);
     pathgl.uniform('texture' + unit, unit);
+    console.log(unit)
 }
 , subImage: function (x, y, data) {
     gl.bindTexture(gl.TEXTURE_2D, this.id)
@@ -101,7 +102,7 @@ function initTexture() {
     
   this.update()
     
-  if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
+  //if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
 function parseImage(image) {
@@ -114,7 +115,7 @@ function parseImage(image) {
 }
 
 function pipeTexture(ctx) {
-  this.dependents.push(ctx)
+  ctx.render.read(this)
   return this
 }
 

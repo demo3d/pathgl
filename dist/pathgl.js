@@ -568,11 +568,12 @@ function shader() {
   , batch: simMesh()
   })
 
+  self.render = render
   var children = []
   tasks.push(step)
+
   function step() {
     for(var i = -1; ++i < stepRate;) render.update()
-    
   }
 
   return self
@@ -654,6 +655,7 @@ function shader() {
 
   function pipe (ctx) {
     render.drawTo(ctx)
+
     ctx && dependents.push(ctx)
     return self
   }
@@ -711,7 +713,7 @@ function simMesh() {
 , '    v_fill = unpack_color(fill);'
 
 , '    dim = vec4(x, y, pointSize, -pointSize);'
-    , '    v_stroke = replace_stroke;'
+, '    v_stroke = replace_stroke;'
 , '    gl_Position = vec4(clipspace(vec2(x, y)),  1., 1.);'
 , '}'
 ].join('\n')
@@ -737,8 +739,8 @@ pathgl.fragmentShader = [
 
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
-, '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (v_stroke.x < 0.) ? chos(clipspace(dim.xy) * 2.0, v_stroke.x) : v_stroke;'
+//, '    if (type == 1. && dist > 0.5) discard;'
+, '    gl_FragColor = (v_stroke.x < 0.) ? chos(clipspace(dim.xy) * 2., -1.0)  : v_stroke;'
 , '}'
 ].join('\n')
 
@@ -798,8 +800,8 @@ function build_vs(src, subst) {
     var defaults = extend({
       stroke: '(stroke < 0.) ? vec4(stroke)  : unpack_color(stroke)'
     , r: '(r.x < 0.) ? clamp(abs(tex(xy.xy).w) + abs(tex(xy.xy).z) * 4., 2., 10.): (2. * r.x)'
-    , x: '(xy.x < 0.) ? tex(xy.xy).x * resolution.x : xy.x'
-    , y: '(xy.y < 0.) ? tex(xy.xy).y * resolution.y : xy.y'
+    , x: '(xy.x < 1.) ? tex(xy.xy).x * resolution.x : xy.x'
+    , y: '(xy.y < 1.) ? tex(xy.xy).y * resolution.y : xy.y'
     }, subst)
 
   for(var attr in defaults)
@@ -3310,7 +3312,6 @@ function Mesh(gl, options, attr) {
     , count = options.count || 0
     , attrList = options.attrList || ['xy','color',  'r', 'fugue']
     , primitive = gl[options.primitive.toUpperCase()]
-    , material = []
     , indexPool = new Pool(1e6)
 
   init()
@@ -3321,7 +3322,6 @@ function Mesh(gl, options, attr) {
   , alloc: alloc
   , draw: draw
   , bind: bind
-  , bindMaterial: bindMaterial
   , attributes: attributes
   , set: set
   , addAttr: addAttr
@@ -3410,12 +3410,6 @@ function Mesh(gl, options, attr) {
   function addAttr () {}
   function removeAttr () {}
   function boundingBox() {}
-
-  function bindMaterial(attr, tex) {
-    if (!~ material.indexOf(tex))
-      material.push(tex)
-    //mapping
-  }
 }
 
 ;function RenderTarget(screen) {
@@ -3427,12 +3421,15 @@ function Mesh(gl, options, attr) {
 
   batches.forEach(function (d) { d.mergeProgram = mergeProgram })
 
-  return screen.__renderTarget__ = {
+  var self = {
     update: update
   , append: append
   , drawTo: drawTo
   , mergeProgram: mergeProgram
+  , mats: []
+  , read: function (m) { this.mats.push(m) } 
   }
+   return screen.__renderTarget__ = self
 
   function drawTo(texture) {
     if (! texture) return targets.push(null)
@@ -3456,6 +3453,7 @@ function Mesh(gl, options, attr) {
       else gl.disable(gl.BLEND)
       gl.bindFramebuffer(gl.FRAMEBUFFER, targets[i])
       setUniforms()
+      self.mats.forEach(function (m, i) { m.bind(i) })
       beforeRender(gl, screen)
       for(var j = -1; ++j < batches.length;) batches[j].draw()
     }
@@ -3821,7 +3819,7 @@ function getBBox(){
     options = options || {}
   //if (Array.isArray(image)) this.data = batchTexture.call(this)
   //if (image.constructor == Object) image = parseJSON(image)
-
+    
   extend(this, {
     gl: gl
   , data: image
@@ -3868,6 +3866,7 @@ Texture.prototype = {
     gl.activeTexture(gl.TEXTURE0 + (unit || 0));
     gl.bindTexture(gl.TEXTURE_2D, this.id);
     pathgl.uniform('texture' + unit, unit);
+    console.log(unit)
 }
 , subImage: function (x, y, data) {
     gl.bindTexture(gl.TEXTURE_2D, this.id)
@@ -3919,7 +3918,7 @@ function initTexture() {
     
   this.update()
     
-  if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
+  //if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
 function parseImage(image) {
@@ -3932,7 +3931,7 @@ function parseImage(image) {
 }
 
 function pipeTexture(ctx) {
-  this.dependents.push(ctx)
+  ctx.render.read(this)
   return this
 }
 

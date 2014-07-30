@@ -76,18 +76,9 @@ var findAverageHue = 'vec4 accumulator (vec4 a, vec4 b) {'
                    + '  return vec4(a.x + b.x, 0, a.z, a.w);'
                    + '}'
 
-var a = pathgl.texture('.l')
 var b =  pathgl.texture('.t')
-    a.bind(1)
-    b.bind(0)
+var a = pathgl.texture('.l')
 
-setTimeout(function () {
-    a.bind(1)
-    b.bind(0)
-}, 500)
-
-//var b = a
-//var a = b
 init()
 function init(arr) {
   //arr.width = 1024

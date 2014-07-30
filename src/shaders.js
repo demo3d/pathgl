@@ -43,7 +43,7 @@ pathgl.vertexShader = [
 , '    v_fill = unpack_color(fill);'
 
 , '    dim = vec4(x, y, pointSize, -pointSize);'
-    , '    v_stroke = replace_stroke;'
+, '    v_stroke = replace_stroke;'
 , '    gl_Position = vec4(clipspace(vec2(x, y)),  1., 1.);'
 , '}'
 ].join('\n')
@@ -69,8 +69,8 @@ pathgl.fragmentShader = [
 
 , 'void main() {'
 , '    float dist = distance(gl_PointCoord, vec2(0.5));'
-, '    if (type == 1. && dist > 0.5) discard;'
-, '    gl_FragColor = (v_stroke.x < 0.) ? chos(clipspace(dim.xy) * 2.0, v_stroke.x) : v_stroke;'
+//, '    if (type == 1. && dist > 0.5) discard;'
+, '    gl_FragColor = (v_stroke.x < 0.) ? chos(clipspace(dim.xy) * 2., -1.0)  : v_stroke;'
 , '}'
 ].join('\n')
 
@@ -130,8 +130,8 @@ function build_vs(src, subst) {
     var defaults = extend({
       stroke: '(stroke < 0.) ? vec4(stroke)  : unpack_color(stroke)'
     , r: '(r.x < 0.) ? clamp(abs(tex(xy.xy).w) + abs(tex(xy.xy).z) * 4., 2., 10.): (2. * r.x)'
-    , x: '(xy.x < 0.) ? tex(xy.xy).x * resolution.x : xy.x'
-    , y: '(xy.y < 0.) ? tex(xy.xy).y * resolution.y : xy.y'
+    , x: '(xy.x < 1.) ? tex(xy.xy).x * resolution.x : xy.x'
+    , y: '(xy.y < 1.) ? tex(xy.xy).y * resolution.y : xy.y'
     }, subst)
 
   for(var attr in defaults)

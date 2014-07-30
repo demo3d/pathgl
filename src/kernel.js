@@ -21,11 +21,12 @@ function shader() {
   , batch: simMesh()
   })
 
+  self.render = render
   var children = []
   tasks.push(step)
+
   function step() {
     for(var i = -1; ++i < stepRate;) render.update()
-    
   }
 
   return self
@@ -107,6 +108,7 @@ function shader() {
 
   function pipe (ctx) {
     render.drawTo(ctx)
+
     ctx && dependents.push(ctx)
     return self
   }
