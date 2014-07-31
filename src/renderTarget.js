@@ -39,7 +39,9 @@ function RenderTarget(screen) {
       else gl.disable(gl.BLEND)
       gl.bindFramebuffer(gl.FRAMEBUFFER, targets[i])
       setUniforms()
-      self.mats.forEach(function (m, i) { m.bind(i) })
+      self.mats.forEach(function (m, i) {
+
+          m.bind(i) })
       beforeRender(gl, screen)
       for(var j = -1; ++j < batches.length;) batches[j].draw()
     }

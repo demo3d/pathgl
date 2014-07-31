@@ -50,7 +50,6 @@ Texture.prototype = {
     gl.activeTexture(gl.TEXTURE0 + (unit || 0));
     gl.bindTexture(gl.TEXTURE_2D, this.id);
     pathgl.uniform('texture' + unit, unit);
-    console.log(unit)
 }
 , subImage: function (x, y, data) {
     gl.bindTexture(gl.TEXTURE_2D, this.id)
@@ -94,7 +93,7 @@ function initTexture() {
     , filter = gl[mipmap ? 'LINEAR' : 'NEAREST']
     
   gl.bindTexture(gl.TEXTURE_2D, this.id)
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+  //gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap)
@@ -102,7 +101,7 @@ function initTexture() {
     
   this.update()
     
-  //if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
+  if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
 function parseImage(image) {
