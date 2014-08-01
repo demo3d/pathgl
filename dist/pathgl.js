@@ -703,7 +703,7 @@ function simMesh() {
 
 , 'vec4 light (vec2 pos) {'
 , '   float value = 0.0;'
-, '   const int NUM_RAYS = 10;'
+, '   const int NUM_RAYS = 20;'
 , '   float num = float(NUM_RAYS);'
 , '   float sinT1 = sin(clock * 0.002) * 0.2;'
 , '   float sinT2 = sin(2.0 + clock * 0.0013) * 0.3;'
@@ -732,7 +732,7 @@ function simMesh() {
 , '         value += clamp(aa / bb, 0.0, 1.0);'
 , '     }'
 , '  }'
-, '   value = clamp(value, 0.05, 0.8);'
+, '   value = clamp(value * 2.0, 0.2, 2.0);'
 //, '  value = max(.9 - pow(distance(tex(xy).xy, mouse), .5), 0.);'
 , '  return vec4(value, value, value, 1.);'
 , '}'
