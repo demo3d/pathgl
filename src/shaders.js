@@ -38,20 +38,17 @@ pathgl.vertexShader = [
 , '   float num = float(NUM_RAYS);'
 , '   float sinT1 = sin(clock * 0.002) * 0.2;'
 , '   float sinT2 = sin(2.0 + clock * 0.0013) * 0.3;'
-, '   for(int i = 0; i < NUM_RAYS; i+=4) {'
-, '     float fi = float(i + 2) / num;'
+, '   for(int i = 0; i < NUM_RAYS; i+=8) {'
+ , '     float fi = float(i + 2) / num;'
 , '     float rad = float(i) * 0.2 + (1.0 + clock * 0.001) * 0.3;'
 
 , '     float m = sin(fi * 13.3 + clock * 0.0002 + sin(fi * 13.3 + clock * 0.0005)) * 0.1 + 0.8;'
 , '     vec2 light = vec2(m, cos(fi * 18.0 + clock * 0.0001) * 0.1 + 1.2);'
-//, '     light = vec2(1., 0.);'
 
 , '     float ld1 = sin(fi * 0.9 * (1.0 + 0.9 * sin(clock * 0.0001 + 2.0)) + sin(clock * 0.00005 + 3.0) * 0.1 + 0.3);'
 , '     float ld2 = cos(0.3 + fi * 0.8 + sin(1.0 + clock * 0.0003) * 0.1);'
-
 , '     vec2 lightDir = normalize(vec2(ld2, ld1));'
-
- , '     float lightAngle = dot(lightDir, normalize(light - pos));'
+, '     float lightAngle = dot(lightDir, normalize(light - pos));'
 
 , '     if (lightAngle > 0.0) {'
 , '         float dist = distance(light, pos);'
@@ -64,8 +61,8 @@ pathgl.vertexShader = [
 , '     }'
 , '  }'
 , '   value = clamp(value * 2., 0.1, 2.0);'
-//, '  value = max(.9 - pow(distance(tex(xy).xy, mouse), .5), 0.);'
-, '  return vec4(value, value, value, 1.);'
+, '  float v = max(.5 - pow(distance(tex(xy).xy, mouse), 2.), 0.) / 2.;'
+, '  return vec4(v + value, v + value, v + value, 1.);'
 , '}'
 
 , 'void main() {'
