@@ -37,7 +37,7 @@ pathgl.vertexShader = [
 , '   float num = float(NUM_RAYS);'
 , '   float sinT1 = sin(clock * 0.002) * 0.2;'
 , '   float sinT2 = sin(2.0 + clock * 0.0013) * 0.3;'
-, '   for(int i = 0; i < NUM_RAYS; i++) {'
+, '   for(int i = 0; i < NUM_RAYS; i+=2) {'
 , '     float fi = float(i + 2) / num;'
 , '     float rad = float(i) * 0.2 + (1.0 + clock * 0.001) * 0.3;'
 
@@ -62,7 +62,7 @@ pathgl.vertexShader = [
 , '         value += clamp(aa / bb, 0.0, 1.0);'
 , '     }'
 , '  }'
-, '   value = clamp(value * 2.0, 0.2, 2.0);'
+, '   value = clamp(value, 0.1, 2.0);'
 //, '  value = max(.9 - pow(distance(tex(xy).xy, mouse), .5), 0.);'
 , '  return vec4(value, value, value, 1.);'
 , '}'
