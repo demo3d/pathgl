@@ -673,6 +673,7 @@ function simMesh() {
 , 'uniform vec2 mouse;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
+, 'uniform float logo;'
 
 , 'attribute vec2 xy;'
 , 'attribute vec2 r;'
@@ -703,11 +704,11 @@ function simMesh() {
 
 , 'vec4 light (vec2 pos) {'
 , '   float value = 0.0;'
-, '   const int NUM_RAYS = 20;'
+, '   const int NUM_RAYS = 80;'
 , '   float num = float(NUM_RAYS);'
 , '   float sinT1 = sin(clock * 0.002) * 0.2;'
 , '   float sinT2 = sin(2.0 + clock * 0.0013) * 0.3;'
-, '   for(int i = 0; i < NUM_RAYS; i++) {'
+, '   for(int i = 0; i < NUM_RAYS; i+=4) {'
 , '     float fi = float(i + 2) / num;'
 , '     float rad = float(i) * 0.2 + (1.0 + clock * 0.001) * 0.3;'
 
@@ -732,7 +733,7 @@ function simMesh() {
 , '         value += clamp(aa / bb, 0.0, 1.0);'
 , '     }'
 , '  }'
-, '   value = clamp(value * 2.0, 0.2, 2.0);'
+, '   value = clamp(value * 2., 0.1, 2.0);'
 //, '  value = max(.9 - pow(distance(tex(xy).xy, mouse), .5), 0.);'
 , '  return vec4(value, value, value, 1.);'
 , '}'
