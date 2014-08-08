@@ -30,6 +30,9 @@ function Texture(image, options) {
 
 Texture.prototype = {
   update: function (data) {
+    if (this.data instanceof Float32Array) 
+        return gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.data.length /4, this.data.length / 4, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.data);
+    
     this.data ?
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data || this.data) :
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, null)
