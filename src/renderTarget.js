@@ -13,13 +13,16 @@ function RenderTarget(screen) {
   , drawTo: drawTo
   , mergeProgram: mergeProgram
   , mats: []
-  , read: function (m) { this.mats.push(m) } 
+  , read: function (m) {
+      this.mats.push(m)
+  } 
   }
    return screen.__renderTarget__ = self
 
   function drawTo(texture) {
     if (! texture) return targets.push(null)
     targets.push(initFbo(texture))
+    this.mats.push(texture)
     screen.width = texture.width
     screen.height = texture.height
   }
@@ -40,8 +43,8 @@ function RenderTarget(screen) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, targets[i])
       setUniforms()
       self.mats.forEach(function (m, i) {
-
-          m.bind(i) })
+          m.bind(i)
+      })
       beforeRender(gl, screen)
       for(var j = -1; ++j < batches.length;) batches[j].draw()
     }

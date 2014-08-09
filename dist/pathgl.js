@@ -3398,7 +3398,7 @@ function Mesh(gl, options, attr) {
     obj.colorBuffer = attributes.color.array
     obj.batch = this
   }
-    var k = 0
+    
   function draw (offset) {
     if (! count && 0 == indexPool.max - indexPool.length) return
       
@@ -3411,10 +3411,10 @@ function Mesh(gl, options, attr) {
       if (self.changed)
           gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.array)
     }
-      k += 1
+    
       self.changed = false
 
-      pathgl.options.beforeDraw && pathgl.options.beforeDraw(options)
+      //pathgl.options.beforeDraw && pathgl.options.beforeDraw(options)
            
     gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length)|| options.count || 0)
   }
@@ -3440,13 +3440,16 @@ function Mesh(gl, options, attr) {
   , drawTo: drawTo
   , mergeProgram: mergeProgram
   , mats: []
-  , read: function (m) { this.mats.push(m) } 
+  , read: function (m) {
+      this.mats.push(m)
+  } 
   }
    return screen.__renderTarget__ = self
 
   function drawTo(texture) {
     if (! texture) return targets.push(null)
     targets.push(initFbo(texture))
+    this.mats.push(texture)
     screen.width = texture.width
     screen.height = texture.height
   }
@@ -3467,8 +3470,8 @@ function Mesh(gl, options, attr) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, targets[i])
       setUniforms()
       self.mats.forEach(function (m, i) {
-
-          m.bind(i) })
+          m.bind(i)
+      })
       beforeRender(gl, screen)
       for(var j = -1; ++j < batches.length;) batches[j].draw()
     }
@@ -3838,6 +3841,7 @@ function getBBox(){
   extend(this, {
     gl: gl
   , data: image
+  , init: initTexture
   , dependents: []
   , id: gl.createTexture()
   , cursor: 0
@@ -3861,9 +3865,6 @@ function getBBox(){
 
 Texture.prototype = {
   update: function (data) {
-    if (this.data instanceof Float32Array) 
-        return gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.data.length /4, this.data.length / 4, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.data);
-    
     this.data ?
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data || this.data) :
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, null)
@@ -3938,7 +3939,7 @@ function initTexture() {
 
   this.update()
 
-  if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
+  //if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
 function parseImage(image) {
