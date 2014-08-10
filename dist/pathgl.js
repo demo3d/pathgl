@@ -3865,10 +3865,27 @@ function getBBox(){
 
 Texture.prototype = {
   update: function (data) {
+      if (this.data && this.data.getContext)
+          return gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data),console.log('fu');
+      
     this.data ?
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data || this.data) :
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, null)
   }
+ , readBack : function (x, y, width, height) {
+     x = x || 0
+     y = y || 0
+     width = width || this.width;
+     height = height || this.height;
+     var fb = gl.createFramebuffer();
+     gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.id, 0);
+     if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE) {
+         var pixels = new Uint8Array(width * height * 4);
+         gl.readPixels(x, y, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+     }
+     return pixels;
+    }
 , size: function (w, h) {
     if (! arguments.length) return this.width * this.height
     this.width = w
