@@ -3,6 +3,8 @@ pathgl.vertexShader = [
 , 'uniform vec2 mouse;'
 , 'uniform vec2 resolution;'
 , 'uniform vec2 dates;'
+, 'uniform vec4 baseColor;'
+, 'uniform vec4 lightColor;'
 , 'uniform float logo;'
 
 , 'attribute vec2 xy;'
@@ -31,7 +33,8 @@ pathgl.vertexShader = [
 
 , 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - 1., 1. - ((pos.y / resolution.y) * 2.)); }'
 
-
+,'float noise (){ return ((sin(clock / 100.) + 1.) /2. + (sin(xy.x / 100.) + 1.) / 2.) / 2.  ;}'
+    
 , 'vec4 light (vec2 pos, float factor) {'
 , '   float value = 0.0;'
 // , '   const int NUM_RAYS = 80;'
@@ -61,9 +64,9 @@ pathgl.vertexShader = [
 // , '     }'
 // , '  }'
 // , '   value = clamp(value * factor, 0.1, 2.0);'
-, '  float v = max(.5 - pow(distance(tex(xy).xy, vec2(mouse.x, mouse.y)), 2.), .1) * factor;'
+    , '  float v = max(.8 - pow(distance(tex(xy).xy, mouse), 2.), .1) * factor;'
 //(1. + sin(clock / 1000.))/ 2.
-, '  return vec4(v , v , v , 1.);'
+, '  return vec4(lightColor.xyz / 255. * v, 1.);'
 , '}'
 
 , 'void main() {'

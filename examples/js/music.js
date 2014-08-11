@@ -65,12 +65,6 @@ function play () {
 }
 
 
-function sort (a) {
-  return [].sort.call(a, function (a, b) {
-           return b - a
-         })
-}
-
 function initAudio() {
   var audioContext = new Audio();
   window.analyzer = audioContext.createAnalyser();
@@ -81,27 +75,4 @@ function initAudio() {
   this.currentTime = 83
   this.volume = .1
   this.playbackRate = 1
-}
-
-function initDnD (arrayBuffer) {
-  window.audioCtx = new Audio()
-  window.analyser = audioCtx.createAnalyser()
-
-  if (window.source)
-    source.noteOff(0)
-
-  if (window.source)
-    audio.stop()
-  audioCtx.decodeAudioData(arrayBuffer, function(buffer) {
-
-    window.source = audioCtx.createBufferSource()
-    source.buffer = buffer
-
-    source.connect(analyser)
-
-    analyser.connect(audioCtx.destination)
-
-    source.start(0)
-    analyzer = analyser
-  })
 }
