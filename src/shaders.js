@@ -34,40 +34,8 @@ pathgl.vertexShader = [
 , 'vec2 clipspace(vec2 pos) { return vec2(2. * (pos.x / resolution.x) - 1., 1. - ((pos.y / resolution.y) * 2.)); }'
 
 ,'float noise (){ return ((sin(clock / 100.) + 1.) /2. + (sin(xy.x / 100.) + 1.) / 2.) / 2.  ;}'
-    
-, 'vec4 light (vec2 pos, float factor) {'
-, '   float value = 0.0;'
-// , '   const int NUM_RAYS = 80;'
-// , '   float num = float(NUM_RAYS);'
-// , '   float sinT1 = sin(clock * 0.002) * 0.2;'
-// , '   float sinT2 = sin(2.0 + clock * 0.0013) * 0.3;'
-// , '   for(int i = 0; i < NUM_RAYS; i+=8) {'
-//  , '     float fi = float(i + 2) / num;'
-// , '     float rad = float(i) * 0.2 + (1.0 + clock * 0.001) * 0.3;'
 
-// , '     float m = sin(fi * 13.3 + clock * 0.0002 + sin(fi * 13.3 + clock * 0.0005)) * 0.1 + 0.8;'
-// , '     vec2 light = vec2(m, cos(fi * 18.0 + clock * 0.0001) * 0.1 + 1.2);'
-
-// , '     float ld1 = sin(fi * 0.9 * (1.0 + 0.9 * sin(clock * 0.0001 + 2.0)) + sin(clock * 0.00005 + 3.0) * 0.1 + 0.3);'
-// , '     float ld2 = cos(0.3 + fi * 0.8 + sin(1.0 + clock * 0.0003) * 0.1);'
-// , '     vec2 lightDir = normalize(vec2(ld2, ld1));'
-// , '     float lightAngle = dot(lightDir, normalize(light - pos));'
-
-// , '     if (lightAngle > 0.0) {'
-// , '         float dist = distance(light, pos);'
-// , '         float xd1 = sin(fi * 30.0 + sinT1 + sinT2);'
-// , '         float xd2 = sin(fi * 10.0 + sinT1 + sinT2 + 3.0);'
-// , '         float radius = (xd1 + 1.0) * 600.0 + 100.0;'
-// , '         float aa = pow(lightAngle, radius * dist * dist) * (0.4 + xd1 * 0.3);'
-// , '         float bb = pow(1.0 + dist, 9.5 + xd2 * 8.0);'
-// , '         value += clamp(aa / bb, 0.0, 1.0);'
-// , '     }'
-// , '  }'
-// , '   value = clamp(value * factor, 0.1, 2.0);'
-    , '  float v = max(.8 - pow(distance(tex(xy).xy, mouse), 2.), .1) * factor;'
-//(1. + sin(clock / 1000.))/ 2.
-, '  return vec4(lightColor.xyz / 255. * v, 1.);'
-, '}'
+, '//chunks' 
 
 , 'void main() {'
 , '    float time = clock / 1000.;'
@@ -99,7 +67,6 @@ pathgl.fragmentShader = [
 , 'varying vec4 v_fill;'
 , 'varying vec4 dim;'
 
-
 , 'vec4 chos(vec2 get, float n) { '
 , '  if (n == -1.)return texture2D(texture1, abs(get));'
 , '  if (n == -2.) return texture2D(texture0, abs(get));'
@@ -115,8 +82,12 @@ pathgl.fragmentShader = [
 ].join('\n')
 
 function createProgram(gl, vs_src, fs_src, attributes) {
+    vs_src = vs_src.replace('//chunks', shaderRegistry.join('\n'))
+
   var src = vs_src + '\n' + fs_src
   program = gl.createProgram()
+
+
 
   var vs = compileShader(gl, gl.VERTEX_SHADER, vs_src)
     , fs = compileShader(gl, gl.FRAGMENT_SHADER, fs_src)

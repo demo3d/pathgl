@@ -1,7 +1,7 @@
 var pathgl = this.pathgl = {}
-pathgl.sim = {}
 pathgl.stop = function () {}
 pathgl.context = function () { return gl }
+var shaderRegistry = []
 var id = (function id (i) { return function () { return i++ }})(1)
 
 var inited = 0
@@ -13,6 +13,10 @@ pathgl.texture = function (image) {
 
 pathgl.uniform = function (attr, value) {
   return arguments.length == 1 ? uniforms[attr] : uniforms[attr] = value
+}
+
+pathgl.registerChunk = function (chunk) {
+    shaderRegistry.push(chunk)
 }
 
 pathgl.applyCSS = applyCSSRules
