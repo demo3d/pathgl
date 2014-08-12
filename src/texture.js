@@ -127,7 +127,7 @@ function readFrom(ctx) {
 
 function unwrap() {
   var i = (this.width * this.height / this.slots) || 0, uv = new Array(i)
-  while(i--) uv[i] = { x: this.x()(0, i), y: this.y()(0, i) }
+  while(i--) uv[i] = { x: this.x()(0, i * this.slots), y: this.y()(0, i * this.slots) }
   return uv
 }
 
