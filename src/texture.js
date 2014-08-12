@@ -3,7 +3,7 @@ function Texture(image, options) {
     options = options || {}
   //if (Array.isArray(image)) this.data = batchTexture.call(this)
   //if (image.constructor == Object) image = parseJSON(image)
-    
+
   extend(this, {
     gl: gl
   , data: image
@@ -11,13 +11,14 @@ function Texture(image, options) {
   , id: gl.createTexture()
   , cursor: 0
   , val: id()
+  , slots: options.slots || 1
   , invalidate: function () {
       // tasksOnce.push(function () {
       //     this.forEach(function (d) { d.invalidate() })
       // }.bind(this.dependents))
   }
   })
-  if ('number' == typeof image) this.width = this.height = Math.sqrt(nextSquare(image)), this.data = false, initTexture.call(this)
+  if ('number' == typeof image) this.width = this.height = Math.sqrt(nextSquare(image * this.slots)), this.data = false, initTexture.call(this)
   else loadTexture.call(this)
 }
 
@@ -28,7 +29,7 @@ Texture.prototype = {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, null)
   }
 , size: function (w, h) {
-    if (! arguments.length) return this.width * this.height
+    if (! arguments.length) return this.width * this.height * this.slots
     this.width = w
     this.height = h || w
     return this
@@ -91,16 +92,16 @@ function initTexture() {
   var mipmap = mipmappable.call(this)
     , wrap = gl[mipmap ? 'REPEAT' : 'CLAMP_TO_EDGE']
     , filter = gl[mipmap ? 'LINEAR' : 'NEAREST']
-    
+
   gl.bindTexture(gl.TEXTURE_2D, this.id)
   //gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap)
-    
+
   this.update()
-    
+
   if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
@@ -149,7 +150,7 @@ function batchTexture () {
     , count = 0
 
   c.canvas.width = c.canvas.height = size
-    
+
   data.forEach(function (d, i) {
     var img = parseImage(data[i]),
         sx = tile * (i % rows),
@@ -201,9 +202,9 @@ function loadTexture()  {
 }
 
 function seed(count, origin, fn) {
-    var x = this.cursor % this.width | 0
-    , y = this.cursor / this.height | 0
-    , chunks = [{ x: x, y: y, size: count }]
+    var x = (this.slots * this.cursor) % this.width | 0
+    , y = (this.slots * this.cursor) / this.height | 0
+    , chunks = [{ x: x, y: y, size: count * this.slots}]
     , s = this.height
 
     fn = fn || function () { return 1 - Math.random() * 2 }
