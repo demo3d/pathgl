@@ -2,8 +2,6 @@ function init(c) {
     var o = (pathgl.options = pathgl.options || { })
     o.beforeDraw = o.beforeDraw || function () {}
     
-    
-    
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
 

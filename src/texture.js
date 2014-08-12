@@ -18,7 +18,13 @@ function Texture(image, options) {
       // }.bind(this.dependents))
   }
   })
-  if ('number' == typeof image) this.width = this.height = Math.sqrt(nextSquare(image * this.slots)), this.data = false, initTexture.call(this)
+
+  if ('number' == typeof image) {
+    this.height = Math.sqrt(nextSquare(image))
+    this.width = this.slots * this.height
+    this.data = false
+    initTexture.call(this)
+  }
   else loadTexture.call(this)
 }
 
@@ -29,21 +35,17 @@ Texture.prototype = {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, null)
   }
 , size: function (w, h) {
-    if (! arguments.length) return this.width * this.height * this.slots
+    if (! arguments.length) return this.width * this.height
     this.width = w
     this.height = h || w
     return this
   }
-, z: function () {
-    var sq = Math.sqrt(this.size())
-    return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
-  }
 , x: function () {
-    var sq = Math.sqrt(this.size())
+    var sq = Math.sqrt(this.width * this.height)
     return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
   }
 , y: function () {
-    var sq = Math.sqrt(this.size())
+    var sq = Math.sqrt(this.width * this.height)
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
   }
 
@@ -124,8 +126,8 @@ function readFrom(ctx) {
 }
 
 function unwrap() {
-  var i = this.size() || 0, uv = new Array(i)
-  while(i--) uv[i] = { x: this.x()(i, i), y: this.y()(i, i), z: this.z()(i, i) }
+  var i = (this.width * this.height / this.slots) || 0, uv = new Array(i)
+  while(i--) uv[i] = { x: this.x()(0, i * 2 + 1), y: this.y()(0, i * 2  + 1) }
   return uv
 }
 
@@ -203,9 +205,9 @@ function loadTexture()  {
 
 function seed(count, origin, fn) {
     var x = (this.slots * this.cursor) % this.width | 0
-    , y = (this.slots * this.cursor) / this.height | 0
-    , chunks = [{ x: x, y: y, size: count * this.slots}]
-    , s = this.height
+      , y = (this.slots * this.cursor) / this.height | 0
+      , chunks = [{ x: x, y: y, size: count * this.slots}]
+      , s = this.height
 
     fn = fn || function () { return 1 - Math.random() * 2 }
     var chunk = chunks[0]

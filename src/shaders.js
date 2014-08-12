@@ -178,13 +178,3 @@ function mergify(vs1, fs1, subst1) {
     return createProgram(this.gl, vs2, fs2)
   }
 }
-
-
-
-var dist = ['float distLight(vec2 pt1, vec2 pt2, vec2 testPt) {'
-    , 'vec2 lineDir = pt2 - pt1;'
-  , 'vec2 perpDir = vec2(lineDir.y, -lineDir.x);'
-  , 'vec2 dirToPt1 = pt1 - testPt;'
-  , 'return abs(dot(normalize(perpDir), dirToPt1));'
-, '}'
-]

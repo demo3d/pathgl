@@ -7,9 +7,9 @@ var id = (function id (i) { return function () { return i++ }})(1)
 
 var inited = 0
 var tasksOnce = []
-pathgl.texture = function (image) {
+pathgl.texture = function (image, o) {
   if (! inited) pathgl.init('canvas')
-  return new Texture(image || false)
+  return new Texture(image || false, o)
 }
 
 pathgl.uniform = function (attr, value) {
@@ -852,21 +852,9 @@ function mergify(vs1, fs1, subst1) {
     return createProgram(this.gl, vs2, fs2)
   }
 }
-
-
-
-var dist = ['float distLight(vec2 pt1, vec2 pt2, vec2 testPt) {'
-    , 'vec2 lineDir = pt2 - pt1;'
-  , 'vec2 perpDir = vec2(lineDir.y, -lineDir.x);'
-  , 'vec2 dirToPt1 = pt1 - testPt;'
-  , 'return abs(dot(normalize(perpDir), dirToPt1));'
-, '}'
-]
 ;function init(c) {
     var o = (pathgl.options = pathgl.options || { })
     o.beforeDraw = o.beforeDraw || function () {}
-    
-    
     
   if (! (gl = initContext(canvas = c)))
     return !! console.log('webGL context could not be initialized')
@@ -3846,7 +3834,7 @@ function getBBox(){
     options = options || {}
   //if (Array.isArray(image)) this.data = batchTexture.call(this)
   //if (image.constructor == Object) image = parseJSON(image)
-    
+
   extend(this, {
     gl: gl
   , data: image
@@ -3854,13 +3842,20 @@ function getBBox(){
   , id: gl.createTexture()
   , cursor: 0
   , val: id()
+  , slots: options.slots || 1
   , invalidate: function () {
       // tasksOnce.push(function () {
       //     this.forEach(function (d) { d.invalidate() })
       // }.bind(this.dependents))
   }
   })
-  if ('number' == typeof image) this.width = this.height = Math.sqrt(nextSquare(image)), this.data = false, initTexture.call(this)
+
+  if ('number' == typeof image) {
+    this.height = Math.sqrt(nextSquare(image))
+    this.width = this.slots * this.height
+    this.data = false
+    initTexture.call(this)
+  }
   else loadTexture.call(this)
 }
 
@@ -3876,16 +3871,12 @@ Texture.prototype = {
     this.height = h || w
     return this
   }
-, z: function () {
-    var sq = Math.sqrt(this.size())
-    return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
-  }
 , x: function () {
-    var sq = Math.sqrt(this.size())
+    var sq = Math.sqrt(this.width * this.height)
     return function (d, i) { return -1.0 / sq * ~~ (i % sq) }
   }
 , y: function () {
-    var sq = Math.sqrt(this.size())
+    var sq = Math.sqrt(this.width * this.height)
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
   }
 
@@ -3934,16 +3925,16 @@ function initTexture() {
   var mipmap = mipmappable.call(this)
     , wrap = gl[mipmap ? 'REPEAT' : 'CLAMP_TO_EDGE']
     , filter = gl[mipmap ? 'LINEAR' : 'NEAREST']
-    
+
   gl.bindTexture(gl.TEXTURE_2D, this.id)
   //gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap)
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap)
-    
+
   this.update()
-    
+
   if (mipmap) gl.generateMipmap(gl.TEXTURE_2D)
 }
 
@@ -3966,8 +3957,8 @@ function readFrom(ctx) {
 }
 
 function unwrap() {
-  var i = this.size() || 0, uv = new Array(i)
-  while(i--) uv[i] = { x: this.x()(i, i), y: this.y()(i, i), z: this.z()(i, i) }
+  var i = (this.width * this.height / this.slots) || 0, uv = new Array(i)
+  while(i--) uv[i] = { x: this.x()(0, i * 2 + 1), y: this.y()(0, i * 2  + 1) }
   return uv
 }
 
@@ -3992,7 +3983,7 @@ function batchTexture () {
     , count = 0
 
   c.canvas.width = c.canvas.height = size
-    
+
   data.forEach(function (d, i) {
     var img = parseImage(data[i]),
         sx = tile * (i % rows),
@@ -4044,10 +4035,10 @@ function loadTexture()  {
 }
 
 function seed(count, origin, fn) {
-    var x = this.cursor % this.width | 0
-    , y = this.cursor / this.height | 0
-    , chunks = [{ x: x, y: y, size: count }]
-    , s = this.height
+    var x = (this.slots * this.cursor) % this.width | 0
+      , y = (this.slots * this.cursor) / this.height | 0
+      , chunks = [{ x: x, y: y, size: count * this.slots}]
+      , s = this.height
 
     fn = fn || function () { return 1 - Math.random() * 2 }
     var chunk = chunks[0]

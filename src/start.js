@@ -6,9 +6,9 @@ var id = (function id (i) { return function () { return i++ }})(1)
 
 var inited = 0
 var tasksOnce = []
-pathgl.texture = function (image) {
+pathgl.texture = function (image, o) {
   if (! inited) pathgl.init('canvas')
-  return new Texture(image || false)
+  return new Texture(image || false, o)
 }
 
 pathgl.uniform = function (attr, value) {
