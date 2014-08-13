@@ -14,6 +14,7 @@ function RenderTarget(screen) {
   , mergeProgram: mergeProgram
   , mats: []
   , read: function (m) {
+      console.log(m)
       this.mats.push(m)
   } 
   }
@@ -45,6 +46,7 @@ function RenderTarget(screen) {
       self.mats.forEach(function (m, i) {
           m.bind(i)
       })
+        //if (Math.random() > .999)console.log(self.mats)
       beforeRender(gl, screen)
       for(var j = -1; ++j < batches.length;) batches[j].draw()
     }

@@ -39,7 +39,7 @@ function bindEvents(canvas) {
   canvas.addEventListener('mousemove', mousemoved)
   canvas.addEventListener('touchmove', touchmoved)
   canvas.addEventListener('touchstart', touchmoved)
-  pathgl.uniform('mouse', [.5, .5])
+  pathgl.uniform('mouse', pathgl.options.mouseOrigin || [.5, .5])
 }
 
 function clicked () {}

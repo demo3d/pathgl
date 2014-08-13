@@ -893,7 +893,7 @@ function bindEvents(canvas) {
   canvas.addEventListener('mousemove', mousemoved)
   canvas.addEventListener('touchmove', touchmoved)
   canvas.addEventListener('touchstart', touchmoved)
-  pathgl.uniform('mouse', [.5, .5])
+  pathgl.uniform('mouse', pathgl.options.mouseOrigin || [.5, .5])
 }
 
 function clicked () {}
@@ -3414,7 +3414,7 @@ function Mesh(gl, options, attr) {
     
       self.changed = false
 
-      //pathgl.options.beforeDraw && pathgl.options.beforeDraw(options)
+      pathgl.options.beforeDraw && pathgl.options.beforeDraw(options)
            
     gl.drawArrays(primitive, offset, (indexPool.max - indexPool.length)|| options.count || 0)
   }
@@ -3441,6 +3441,7 @@ function Mesh(gl, options, attr) {
   , mergeProgram: mergeProgram
   , mats: []
   , read: function (m) {
+      console.log(m)
       this.mats.push(m)
   } 
   }
@@ -3472,6 +3473,7 @@ function Mesh(gl, options, attr) {
       self.mats.forEach(function (m, i) {
           m.bind(i)
       })
+        //if (Math.random() > .999)console.log(self.mats)
       beforeRender(gl, screen)
       for(var j = -1; ++j < batches.length;) batches[j].draw()
     }
@@ -3866,7 +3868,7 @@ function getBBox(){
 Texture.prototype = {
   update: function (data) {
       if (this.data && this.data.getContext)
-          return gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data),console.log('fu');
+          return gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.data)
       
     this.data ?
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data || this.data) :
@@ -3875,16 +3877,16 @@ Texture.prototype = {
  , readBack : function (x, y, width, height) {
      x = x || 0
      y = y || 0
-     width = width || this.width;
-     height = height || this.height;
-     var fb = gl.createFramebuffer();
-     gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.id, 0);
+     width = width || this.width
+     height = height || this.height
+     var fb = gl.createFramebuffer()
+     gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
+     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.id, 0)
      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) == gl.FRAMEBUFFER_COMPLETE) {
-         var pixels = new Uint8Array(width * height * 4);
-         gl.readPixels(x, y, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+         var pixels = new Uint8Array(width * height * 4)
+         gl.readPixels(x, y, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
      }
-     return pixels;
+     return pixels
     }
 , size: function (w, h) {
     if (! arguments.length) return this.width * this.height
@@ -3905,6 +3907,7 @@ Texture.prototype = {
     gl.activeTexture(gl.TEXTURE0 + (unit || 0));
     gl.bindTexture(gl.TEXTURE_2D, this.id);
     pathgl.uniform('texture' + unit, unit);
+    //console.log(unit.shit)
 }
 , subImage: function (x, y, data) {
     gl.bindTexture(gl.TEXTURE_2D, this.id)
@@ -3970,6 +3973,7 @@ function parseImage(image) {
 
 function pipeTexture(ctx) {
   ctx.render.read(this)
+    //console.log('f', this)
   return this
 }
 
