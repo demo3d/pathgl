@@ -96,7 +96,7 @@ var particleShader = [
 ].join('\n')
 
 //size must be a perfect square
-var size  = 1e5
+var size  = 2e5
   , width = Math.sqrt(size)
   , particleIndex = 0
 
@@ -121,7 +121,7 @@ textureA.seed(size, [.5 ,.5 ])
 d3.select('canvas').selectAll("circle")
 .data(textureA.unwrap())
 .enter().append("circle")
-.attr('r', 1)
+.attr('r', 2)
 .attr('cx', function (d) { return d.x })
 .attr('cy', function (d) { return d.y })
 .shader({'stroke': 'vec4(tex(xy.xy).x, .2, tex(xy.xy).z, 1.)'})

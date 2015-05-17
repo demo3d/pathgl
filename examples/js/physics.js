@@ -42,7 +42,7 @@ var particleShader = [
 ].join('\n')
 
 //size must be a perfect square
-var size  = 1e5
+var size  = 2e5
   , width = Math.sqrt(size)
   , particleIndex = 0
 

@@ -554,7 +554,7 @@ var cssColors = {
 function shader() {
   var  target = null
     , blockSize
-    , stepRate = 2
+    , stepRate = 4
     , dependents = []
 
 
