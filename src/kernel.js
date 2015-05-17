@@ -6,6 +6,9 @@ function shader() {
     , stepRate = 2
     , dependents = []
 
+
+    var pp = false;
+    var x, y;
   var self = {
     scatter: scatter
     , reduce: reduce
@@ -14,6 +17,10 @@ function shader() {
     , match: matchWith
     , pipe: pipe
     , invalidate: invalidate
+    , pingpong: function (a,b) {
+        x = a, y = b
+        render.drawTo(a)
+    }
   }
 
   var render = RenderTarget({
@@ -25,8 +32,11 @@ function shader() {
   var children = []
   tasks.push(step)
 
-  function step() {
-    for(var i = -1; ++i < stepRate;) render.update()
+    function step() {
+        if(x)
+            x.swapWith(y), y.bind();
+
+    for(var i = -1; ++i < stepRate;) render.update(x)
   }
 
   return self
@@ -109,7 +119,7 @@ function shader() {
   function pipe (ctx) {
     render.drawTo(ctx)
 
-    ctx && dependents.push(ctx)
+    //ctx && dependents.push(ctx)
     return self
   }
 }

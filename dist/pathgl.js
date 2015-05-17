@@ -557,6 +557,9 @@ function shader() {
     , stepRate = 2
     , dependents = []
 
+
+    var pp = false;
+    var x, y;
   var self = {
     scatter: scatter
     , reduce: reduce
@@ -565,6 +568,10 @@ function shader() {
     , match: matchWith
     , pipe: pipe
     , invalidate: invalidate
+    , pingpong: function (a,b) {
+        x = a, y = b
+        render.drawTo(a)
+    }
   }
 
   var render = RenderTarget({
@@ -576,8 +583,11 @@ function shader() {
   var children = []
   tasks.push(step)
 
-  function step() {
-    for(var i = -1; ++i < stepRate;) render.update()
+    function step() {
+        if(x)
+            x.swapWith(y), y.bind();
+
+    for(var i = -1; ++i < stepRate;) render.update(x)
   }
 
   return self
@@ -660,7 +670,7 @@ function shader() {
   function pipe (ctx) {
     render.drawTo(ctx)
 
-    ctx && dependents.push(ctx)
+    //ctx && dependents.push(ctx)
     return self
   }
 }
@@ -3463,12 +3473,14 @@ function Mesh(gl, options, attr) {
     prog = prog.merge(vs, fs, subst)
   }
 
-  function update () {
+  function update (_) {
     if (program != prog) gl.useProgram(program = prog)
     for(var i = -1; ++i < targets.length;) {
       if (! targets[i]) gl.enable(gl.BLEND)
       else gl.disable(gl.BLEND)
+      if (_) initFbo(_)
       gl.bindFramebuffer(gl.FRAMEBUFFER, targets[i])
+      
       setUniforms()
       self.mats.forEach(function (m, i) {
           m.bind(i)
@@ -3505,8 +3517,9 @@ function buildBuffers(gl, types) {
   return [pointMesh, triangleMesh, lineMesh]
 }
 
+var fbo
 function initFbo(texture) {
-  var fbo = gl.createFramebuffer()
+  fbo = fbo || gl.createFramebuffer()  
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
   fbo.width = texture.width
   fbo.height = texture.height
@@ -3902,12 +3915,16 @@ Texture.prototype = {
     var sq = Math.sqrt(this.width * this.height)
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
   }
-
+, swapWith: function (other) {
+  var temp;
+    temp = other.id; other.id = this.id; this.id = temp;
+    temp = other.width; other.width = this.width; this.width = temp;
+    temp = other.height; other.height = this.height; this.height = temp;
+}
 , bind: function (unit) {
     gl.activeTexture(gl.TEXTURE0 + (unit || 0));
     gl.bindTexture(gl.TEXTURE_2D, this.id);
     pathgl.uniform('texture' + unit, unit);
-    //console.log(unit.shit)
 }
 , subImage: function (x, y, data) {
     gl.bindTexture(gl.TEXTURE_2D, this.id)

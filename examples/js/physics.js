@@ -46,24 +46,26 @@ var size  = 1e5
   , width = Math.sqrt(size)
   , particleIndex = 0
 
-var texture = pathgl.texture(size)
+var textureA = pathgl.texture(size)
+var textureB = pathgl.texture(size)
+textureB.bind(1);
 var shader = pathgl.shader().map(particleShader)
 
 //simple operation
 //no dependence between particles
 //each particle reads its own data and changes with mouse as a function
-texture.pipe(shader)
-shader.pipe(texture)
+textureB.pipe(shader)
+shader.pingpong(textureA, textureB);
 
 pathgl.uniform('dimensions', [width, width])
 pathgl.uniform('gravity', 1)
 pathgl.uniform('inertia', 0.001)
 pathgl.uniform('drag', 0.991)
 
-texture.seed(size, [.5 ,.5 ])
+textureA.seed(size, [.5 ,.5 ])
 
 d3.select('canvas').selectAll("circle")
-.data(texture.unwrap())
+.data(textureA.unwrap())
 .enter().append("circle")
 .attr('r', 1)
 .attr('cx', function (d) { return d.x })

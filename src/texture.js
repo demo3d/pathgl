@@ -66,12 +66,16 @@ Texture.prototype = {
     var sq = Math.sqrt(this.width * this.height)
     return function (d, i) { return -1.0 / sq * ~~ (i / sq) }
   }
-
+, swapWith: function (other) {
+  var temp;
+    temp = other.id; other.id = this.id; this.id = temp;
+    temp = other.width; other.width = this.width; this.width = temp;
+    temp = other.height; other.height = this.height; this.height = temp;
+}
 , bind: function (unit) {
     gl.activeTexture(gl.TEXTURE0 + (unit || 0));
     gl.bindTexture(gl.TEXTURE_2D, this.id);
     pathgl.uniform('texture' + unit, unit);
-    //console.log(unit.shit)
 }
 , subImage: function (x, y, data) {
     gl.bindTexture(gl.TEXTURE_2D, this.id)

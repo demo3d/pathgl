@@ -36,12 +36,14 @@ function RenderTarget(screen) {
     prog = prog.merge(vs, fs, subst)
   }
 
-  function update () {
+  function update (_) {
     if (program != prog) gl.useProgram(program = prog)
     for(var i = -1; ++i < targets.length;) {
       if (! targets[i]) gl.enable(gl.BLEND)
       else gl.disable(gl.BLEND)
+      if (_) initFbo(_)
       gl.bindFramebuffer(gl.FRAMEBUFFER, targets[i])
+      
       setUniforms()
       self.mats.forEach(function (m, i) {
           m.bind(i)
@@ -78,8 +80,9 @@ function buildBuffers(gl, types) {
   return [pointMesh, triangleMesh, lineMesh]
 }
 
+var fbo
 function initFbo(texture) {
-  var fbo = gl.createFramebuffer()
+  fbo = fbo || gl.createFramebuffer()  
   gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
   fbo.width = texture.width
   fbo.height = texture.height
