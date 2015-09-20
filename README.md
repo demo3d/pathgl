@@ -4,6 +4,4 @@ It reimplements SVG in webgl and packages a few functions to polyfill
 compute shaders so you can run expensive simulation, layout, and queries
 on the gpu.
 
-Want to learn more? Visit http://pathgl.com/documentation/start.html
-
 ##Disclaimer: PRE ALPHA QUALITY
